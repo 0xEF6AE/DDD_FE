@@ -1,9 +1,12 @@
 "use client";
 
 import styled from "@emotion/styled";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { colors, fontWeights } from "@/constants/tokens";
 import { recruitParts } from "@/constants/recruit";
 import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
+import { fetchCohortPartByActiveCohortId } from "@/lib/web-api";
 
 const Section = styled.section({
   background: colors.background,
@@ -57,7 +60,6 @@ const Grid = styled.div({
 });
 
 const Card = styled.article<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => ({
-  minHeight: "224px",
   borderRadius: "30px",
   padding: "40px",
   background: colors.backgroundDark,
@@ -170,6 +172,15 @@ const ApplyButton = styled.button<{ isRecruitOpen: boolean }>(({ isRecruitOpen }
 
 export const RecruitRolesSection = () => {
   const { isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
+  const router = useRouter();
+
+  useEffect(() => {
+    const printCohortPart = async () => {
+      const response = await fetchCohortPartByActiveCohortId();
+      console.warn("[RecruitRolesSection] cohort part by active cohort id:", response);
+    };
+    void printCohortPart();
+  }, []);
 
   return (
     <Section>
@@ -189,7 +200,15 @@ export const RecruitRolesSection = () => {
                     <RoleDescription isRecruitOpen={isRecruitOpen}>{description}</RoleDescription>
                   ) : null}
                 </div>
-                <ApplyButton type="button" isRecruitOpen={isRecruitOpen} disabled={!isRecruitOpen}>
+                <ApplyButton
+                  type="button"
+                  isRecruitOpen={isRecruitOpen}
+                  disabled={!isRecruitOpen}
+                  onClick={() => {
+                    if (!isRecruitOpen) return;
+                    router.push("/recruit/apply");
+                  }}
+                >
                   {recruitButtonLabels.role}
                   {isRecruitOpen ? (
                     <svg

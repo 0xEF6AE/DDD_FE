@@ -50,19 +50,26 @@ const Item = styled.article({
   minHeight: "268px",
   padding: "32px 0 62px",
   display: "grid",
-  gridTemplateColumns: "84px 1fr",
+  // minmax(0, 1fr): 콘텐츠 최소 너비로 그리드가 뷰포트를 밀어내지 않도록 함
+  gridTemplateColumns: "minmax(0, 1fr) 84px",
   gap: "32px",
   position: "relative",
   zIndex: 1,
+  minWidth: 0,
+  width: "100%",
+  maxWidth: "100%",
 
   "@media (max-width: 375px)": {
-    width: "337px",
     minHeight: "187px",
-    gridTemplateColumns: "60px 1fr",
+    gridTemplateColumns: "minmax(0, 1fr) 60px",
     gap: "12px",
     padding: "20px 0",
-    margin: "0 auto",
   },
+});
+
+const ItemBody = styled.div({
+  minWidth: 0,
+  overflowWrap: "break-word",
 });
 
 const Week = styled.p({
@@ -71,6 +78,7 @@ const Week = styled.p({
   fontSize: "20px",
   lineHeight: "28px",
   fontWeight: fontWeights.medium,
+  textAlign: "right",
 
   "@media (max-width: 1024px)": { fontSize: "18px", lineHeight: "23px" },
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "20px" },
@@ -135,12 +143,12 @@ export const RecruitCurriculumSection = () => {
         <Grid>
           {recruitCurriculum.map((item) => (
             <Item key={`${item.week}-${item.title}`}>
-              <Week>{item.week}</Week>
-              <div>
+              <ItemBody>
                 <DateText>{item.date}</DateText>
                 <ItemTitle>{item.title}</ItemTitle>
                 <Description>{item.description}</Description>
-              </div>
+              </ItemBody>
+              <Week>{item.week}</Week>
             </Item>
           ))}
         </Grid>

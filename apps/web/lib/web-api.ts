@@ -8,6 +8,11 @@ import type { RecruitStatus } from "@/constants/recruit";
 
 type JsonObject = Record<string, unknown>;
 
+function warnFallback(functionName: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[web-api:${functionName}] API failed, using fallback data`, { message });
+}
+
 function ensureApiConfigured() {
   const baseUrl =
     process.env.NEXT_PUBLIC_API_URL ??
@@ -108,8 +113,12 @@ export async function fetchPublicProjects(): Promise<ProjectItem[]> {
     const response = await webApi.getProjects({ limit: 100 });
     const items = Array.isArray(response.items) ? response.items : [];
     const mapped = items.map(mapProject).filter((item): item is ProjectItem => Boolean(item));
+    if (mapped.length === 0) {
+      console.warn("[web-api:fetchPublicProjects] Empty API payload, using fallback data");
+    }
     return mapped.length > 0 ? mapped : fallbackProjects;
-  } catch {
+  } catch (error) {
+    warnFallback("fetchPublicProjects", error);
     return fallbackProjects;
   }
 }
@@ -145,7 +154,8 @@ export async function fetchPublicProjectsPage(options?: {
       ? fallbackProjects.filter((project) => project.category === fallbackCategory)
       : fallbackProjects;
     return { items: fallback, nextCursor: null };
-  } catch {
+  } catch (error) {
+    warnFallback("fetchPublicProjectsPage", error);
     const fallbackCategory = mapPlatformToCategory(options?.platform);
     const fallback = fallbackCategory
       ? fallbackProjects.filter((project) => project.category === fallbackCategory)
@@ -170,8 +180,12 @@ export async function fetchPublicArticles(): Promise<ArticleItem[]> {
     const response = await webApi.getBlogPosts({ limit: 100 });
     const items = Array.isArray(response.items) ? response.items : [];
     const mapped = items.map(mapArticle).filter((item): item is ArticleItem => Boolean(item));
+    if (mapped.length === 0) {
+      console.warn("[web-api:fetchPublicArticles] Empty API payload, using fallback data");
+    }
     return mapped.length > 0 ? mapped : [...fallbackArticles];
-  } catch {
+  } catch (error) {
+    warnFallback("fetchPublicArticles", error);
     return [...fallbackArticles];
   }
 }
@@ -201,7 +215,8 @@ export async function fetchPublicArticlesPage(
       items: mapped.length > 0 ? mapped : [...fallbackArticles],
       nextCursor,
     };
-  } catch {
+  } catch (error) {
+    warnFallback("fetchPublicArticlesPage", error);
     return { items: [...fallbackArticles], nextCursor: null };
   }
 }
@@ -234,6 +249,29 @@ function parseActiveCohortId(payload: unknown): number | null {
   return null;
 }
 
+function parseActiveCohortPartId(payload: unknown): number | null {
+  if (!isObject(payload)) return null;
+
+  const directPartIdCandidates = [payload.cohortPartId, payload.partId, payload.activePartId];
+  const directPartId = directPartIdCandidates.find(
+    (candidate) => typeof candidate === "number" && Number.isFinite(candidate),
+  );
+  if (typeof directPartId === "number") return directPartId;
+
+  const parts = Array.isArray(payload.parts) ? payload.parts : [];
+  const openedPart = parts.find((part) => isObject(part) && part.isOpen === true);
+  if (isObject(openedPart) && typeof openedPart.id === "number" && Number.isFinite(openedPart.id)) {
+    return openedPart.id;
+  }
+
+  const firstPart = parts.find(
+    (part) => isObject(part) && typeof part.id === "number" && Number.isFinite(part.id),
+  );
+  if (isObject(firstPart) && typeof firstPart.id === "number") return firstPart.id;
+
+  return null;
+}
+
 export async function fetchRecruitStatus(): Promise<RecruitStatus> {
   try {
     ensureApiConfigured();
@@ -249,6 +287,20 @@ export async function fetchActiveCohortId(): Promise<number | null> {
     ensureApiConfigured();
     const response = await webApi.getActiveCohort();
     return parseActiveCohortId(response);
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchCohortPartByActiveCohortId(): Promise<JsonObject | null> {
+  try {
+    ensureApiConfigured();
+    const activeCohort = await webApi.getActiveCohort();
+    const activeCohortPartId = parseActiveCohortPartId(activeCohort);
+    if (!activeCohortPartId) return null;
+    const response = await webApi.getCohortPartById(activeCohortPartId);
+    if (!isObject(response)) return null;
+    return response;
   } catch {
     return null;
   }

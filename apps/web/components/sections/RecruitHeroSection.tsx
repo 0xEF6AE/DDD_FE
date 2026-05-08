@@ -175,6 +175,7 @@ const Arrow = styled.span({
 export const RecruitHeroSection = () => {
   const { recruitStatus, isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
   const heroTitle = recruitStatus === "open" ? "Now\nRecruiting" : "Currently Under\nRenewal";
+  const recruitActionHref = isRecruitOpen ? "/recruit/apply" : "/recruit";
 
   return (
     <Section>
@@ -187,7 +188,7 @@ export const RecruitHeroSection = () => {
           <Description>{recruitHeroDescriptionByStatus[recruitStatus]}</Description>
         </div>
         <CtaButton
-          href="/recruit"
+          href={recruitActionHref}
           onClick={(event) => {
             if (isRecruitOpen) return;
             event.preventDefault();

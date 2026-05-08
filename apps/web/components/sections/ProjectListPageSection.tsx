@@ -79,6 +79,8 @@ const TabList = styled.div({
   marginBottom: "80px",
   overflowX: "auto",
   paddingBottom: "4px",
+  flexWrap: "nowrap",
+  WebkitOverflowScrolling: "touch",
 
   "&::-webkit-scrollbar": {
     display: "none",
@@ -86,6 +88,7 @@ const TabList = styled.div({
   scrollbarWidth: "none",
 
   "@media (max-width: 768px)": {
+    justifyContent: "flex-start",
     marginBottom: "40px",
   },
 });

@@ -117,6 +117,7 @@ const GradientHeadline = styled.h1({
   WebkitTextFillColor: "transparent",
   fontSize: fontSizes.headingXxl,
   lineHeight: lineHeights.headingXxl,
+
   "@media (max-width: 1024px)": {
     fontSize: "100px",
     lineHeight: "110px",
@@ -126,7 +127,6 @@ const GradientHeadline = styled.h1({
     lineHeight: "100px",
     whiteSpace: "normal",
     width: "100%",
-    textWrap: "balance",
   },
   "@media (max-width: 375px)": {
     fontSize: "45px",

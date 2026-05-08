@@ -216,6 +216,7 @@ const MobileCta = styled(Link)({
 export const Navigation = () => {
   const [open, setOpen] = useState(false);
   const { isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
+  const recruitActionHref = isRecruitOpen ? "/recruit/apply" : "/recruit";
 
   return (
     <Header>
@@ -253,7 +254,7 @@ export const Navigation = () => {
           </MobileMenuButton>
         </MobileBar>
         <CtaButton
-          href="/recruit"
+          href={recruitActionHref}
           onClick={(event) => {
             if (isRecruitOpen) return;
             event.preventDefault();
@@ -269,7 +270,7 @@ export const Navigation = () => {
             </MobileItem>
           ))}
           <MobileCta
-            href="/recruit"
+            href={recruitActionHref}
             onClick={(event) => {
               setOpen(false);
               if (isRecruitOpen) return;

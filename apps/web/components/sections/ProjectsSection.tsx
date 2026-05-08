@@ -150,36 +150,45 @@ const TabList = styled.div({
   gap: "40px",
   justifyContent: "center",
   width: "100%",
+  flexWrap: "nowrap",
   role: "tablist",
+  scrollSnapType: "x mandatory",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
 
-  "@media (max-width: 375px)": { gap: "12px", overflowX: "auto", justifyContent: "flex-start" },
+  "&::-webkit-scrollbar": {
+    display: "none",
+  },
+
+  "@media (max-width: 768px)": {
+    overflowX: "auto",
+    justifyContent: "flex-start",
+    WebkitOverflowScrolling: "touch",
+  },
+  "@media (max-width: 375px)": { gap: "12px" },
 });
 
 interface TabButtonProps {
   isActive: boolean;
 }
 
-const TabButton = styled.button<TabButtonProps>(({ isActive }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "8px 20px",
-  background: "none",
+const TabButton = styled.button<TabButtonProps>(({ isActive: active }) => ({
   border: "none",
-  borderBottom: isActive ? `2px solid ${colors.primary}` : "2px solid transparent",
-  fontFamily: "'Pretendard', sans-serif",
-  fontSize: fontSizes.headingMedium,
-  fontWeight: fontWeights.medium,
-  lineHeight: lineHeights.headingMedium,
-  color: isActive ? colors.primary : colors.textInverse,
+  background: "transparent",
+  color: active ? colors.primary : "#FFF",
+  borderBottom: `2px solid ${active ? colors.primary : "FFF"}`,
+  fontSize: "16px",
+  lineHeight: "20px",
+  fontWeight: fontWeights.semiBold,
+  padding: "8px 20px",
   cursor: "pointer",
   whiteSpace: "nowrap",
-  transition: "color 0.15s, border-color 0.15s",
 
+  "@media (max-width: 1024px)": { fontSize: "14px", lineHeight: "18px" },
+  "@media (max-width: 768px)": { fontSize: "13px", lineHeight: "16px" },
   "@media (max-width: 375px)": {
-    padding: "6px 12px",
-    fontSize: "16px",
-    lineHeight: "20px",
+    fontSize: "12px",
+    lineHeight: "15px",
   },
 }));
 

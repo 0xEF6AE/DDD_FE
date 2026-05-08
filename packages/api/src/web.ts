@@ -78,6 +78,7 @@ export const webApi = {
   withdrawal: () => api.delete<null>("/api/v1/auth/withdrawal"),
 
   getActiveCohort: () => api.get<JsonObject>("/api/v1/cohorts/active"),
+  getCohortPartById: (id: number) => api.get<JsonObject>(`/api/v1/cohorts/parts/${id}`),
 
   saveApplicationDraft: (payload: SaveApplicationDraftRequest) =>
     api.post<JsonObject>("/api/v1/applications/draft", JSON.stringify(payload)),
