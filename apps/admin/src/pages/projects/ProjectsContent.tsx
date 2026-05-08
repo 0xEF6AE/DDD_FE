@@ -60,7 +60,7 @@ export const ProjectsContent = () => {
           title="프로젝트 관리"
           description="홈페이지에 노출되는 프로젝트를 등록하고 관리합니다."
         />
-        <Button size="lg" onPress={handleCreate}>
+        <Button onPress={handleCreate}>
           <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
           프로젝트 등록
         </Button>

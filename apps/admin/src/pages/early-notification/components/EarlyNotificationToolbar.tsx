@@ -1,18 +1,12 @@
 import { Button, Input, ListBox, Select } from "@heroui/react"
-import {
-  Download04Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons"
+import { Download04Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import type { CohortDto } from "@ddd/api"
 
 import { FlexBox } from "@/shared/ui/FlexBox"
 
-import {
-  STATUS_FILTER_OPTIONS,
-  type StatusFilterOption,
-} from "../constants"
+import { STATUS_FILTER_OPTIONS, type StatusFilterOption } from "../constants"
 
 type EarlyNotificationToolbarProps = {
   searchText: string
@@ -55,15 +49,9 @@ export const EarlyNotificationToolbar = ({
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-        <Select
-          variant="secondary"
-          className="max-w-40"
-          aria-label="기수 필터"
-        >
+        <Select variant="secondary" className="max-w-40" aria-label="기수 필터">
           <Select.Trigger>
-            <Select.Value>
-              {selectedCohort?.name ?? "기수 선택"}
-            </Select.Value>
+            <Select.Value>{selectedCohort?.name ?? "기수 선택"}</Select.Value>
             <Select.Indicator />
           </Select.Trigger>
           <Select.Popover>
@@ -81,11 +69,7 @@ export const EarlyNotificationToolbar = ({
             </ListBox>
           </Select.Popover>
         </Select>
-        <Select
-          variant="secondary"
-          className="max-w-36"
-          aria-label="상태 필터"
-        >
+        <Select variant="secondary" className="max-w-36" aria-label="상태 필터">
           <Select.Trigger>
             <Select.Value>{statusFilter}</Select.Value>
             <Select.Indicator />
@@ -108,7 +92,6 @@ export const EarlyNotificationToolbar = ({
       </FlexBox>
       <FlexBox className="gap-2">
         <Button
-          size="lg"
           variant="secondary"
           onPress={onExportCsv}
           isDisabled={isExportDisabled}
@@ -116,11 +99,7 @@ export const EarlyNotificationToolbar = ({
           <HugeiconsIcon icon={Download04Icon} className="mr-2" />
           {isExporting ? "내보내는 중..." : "CSV"}
         </Button>
-        <Button
-          size="lg"
-          onPress={onOpenBulkSend}
-          isDisabled={isBulkSendDisabled}
-        >
+        <Button onPress={onOpenBulkSend} isDisabled={isBulkSendDisabled}>
           <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
           알림 발송
         </Button>

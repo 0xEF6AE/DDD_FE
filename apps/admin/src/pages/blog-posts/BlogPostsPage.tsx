@@ -50,7 +50,7 @@ export default function BlogPostsPage() {
           title="블로그 관리"
           description="홈페이지에 노출되는 블로그 포스트를 등록하고 관리합니다."
         />
-        <Button size="lg" onPress={handleCreate}>
+        <Button onPress={handleCreate}>
           <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
           블로그 등록
         </Button>
