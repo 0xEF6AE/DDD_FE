@@ -1,6 +1,6 @@
 import { CohortPartConfigDtoName } from "@ddd/api"
 
-import type { CohortDto } from "@ddd/api"
+import type { CohortDto, CohortPartConfig } from "@ddd/api"
 
 const isNonEmptyString = (v: unknown): v is string =>
   typeof v === "string" && v.trim().length > 0
@@ -42,21 +42,27 @@ export const isCurriculumComplete = (curriculum: unknown): boolean => {
 }
 
 /**
- * applicationForm: 6개 파트(PM/PD/BE/FE/IOS/AND) 모두 string[] 이며
- * 각 배열에 비어있지 않은 질문이 1개 이상.
+ * parts: 6개 파트(PM/PD/BE/FE/IOS/AND) 모두 존재하고
+ * 각 파트의 formSchema.questions 에 label 이 비어있지 않은 질문이 1개 이상.
  */
-export const isApplicationFormComplete = (af: unknown): boolean => {
-  if (typeof af !== "object" || af === null) return false
-  const obj = af as Record<string, unknown>
-  return PARTS.every((part) => {
-    const list = obj[part]
-    if (!Array.isArray(list)) return false
-    return list.some((q) => isNonEmptyString(q))
+const isPartsComplete = (parts: unknown): boolean => {
+  if (!Array.isArray(parts) || parts.length === 0) return false
+  return PARTS.every((partName) => {
+    const part = (parts as CohortPartConfig[]).find((p) => p.name === partName)
+    if (!part) return false
+    const questions = (part.formSchema as Record<string, unknown>)?.questions
+    if (!Array.isArray(questions)) return false
+    return questions.some(
+      (q) =>
+        typeof q === "object" &&
+        q !== null &&
+        isNonEmptyString((q as Record<string, unknown>).label),
+    )
   })
 }
 
-/** 위 3개 모두 완료여야 cohort 가 완료된 것으로 간주 (= "새 기수 등록" 모드) */
+/** process / curriculum / parts 모두 완료여야 cohort 완료로 간주 (= "새 기수 등록" 모드) */
 export const isCohortComplete = (cohort: CohortDto): boolean =>
   isProcessComplete(cohort.process) &&
   isCurriculumComplete(cohort.curriculum) &&
-  isApplicationFormComplete(cohort.applicationForm)
+  isPartsComplete(cohort.parts)

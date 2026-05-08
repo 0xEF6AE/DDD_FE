@@ -46,6 +46,7 @@ BE `ApplicationAnswerValidator` 가 기대하는 방식 1 (권장):
 
 | 파일 | 변경 내용 |
 |---|---|
+| `apps/admin/src/entities/cohort/model/completion.ts` | ✅ **완료** — `isApplicationFormComplete`(dead 필드) 제거, `isPartsComplete`(cohort.parts 기반) 추가 |
 | `apps/admin/src/pages/semesters/types.d.ts` | 폼 타입: `applicationForms: Record<Part, string[]>` → `parts: Record<Part, CohortPartFormState>` |
 | `apps/admin/src/entities/cohort/model/serialize.ts` | `applicationForm` 제거, `serializeFormToPartsPayload` 추가, `serializeCohortToForm` 에서 `cohort.parts` 역직렬화 |
 | `apps/admin/src/entities/cohort/model/useCreateOrUpdateCohortFlow.ts` | `updateCohortParts` mutation 추가, 단일 try/catch + stage 마커 패턴 |

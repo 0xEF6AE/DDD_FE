@@ -91,7 +91,7 @@
 - ✅ 새 기수 등록 버튼 — `SemestersPage.tsx:77-85` `onPress` 연결, Drawer 정상 오픈
 - 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
 - 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
-- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — ApplicationFormSection RHF 연결, 브라우저 검증 미실시. **`cohortQueries.updateParts` 존재하나 미연결** (`packages/api/src/cohort/queries.ts`)
+- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — ApplicationFormSection RHF 연결, 브라우저 검증 미실시. **`cohortMutations.updateCohortParts()` 존재하나 미연결** (`packages/api/src/cohort/queries.ts:107`)
 - ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동
 - ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
 - ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입

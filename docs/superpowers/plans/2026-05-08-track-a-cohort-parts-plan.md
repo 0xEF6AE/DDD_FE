@@ -11,6 +11,7 @@
 ## 의존성 그래프
 
 ```
+Step 0 (completion.ts)  ← ✅ 완료
 Step 1 (types.d.ts)
   ├── Step 2 (serialize.ts)
   │     └── Step 3 (useCreateOrUpdateCohortFlow.ts)
@@ -18,16 +19,16 @@ Step 1 (types.d.ts)
         └── Step 5 (SemesterRegisterDrawer/index.tsx)  ← Step 3 도 선행 필요
 ```
 
-Step 3 과 Step 4 는 Step 1·2 완료 후 병렬 가능.
+Step 0 은 완료. Step 3 과 Step 4 는 Step 1·2 완료 후 병렬 가능.
 
 ---
 
 ## 사전 확인
 
-- [ ] `cohortMutations.updateCohortParts()` 가 `packages/api/src/cohort/queries.ts` 에 존재함 (확인 완료)
-- [ ] `CohortDto.parts?: CohortPartConfig[]` 가 응답에 포함됨 (확인 완료)
-- [ ] `PutUpdateCohortPartsRequest = { parts: CohortPartConfigDto[] }` 타입 확인 완료
-- [ ] 현재 `serialize.ts` 가 `recruitStartDate` / `recruitEndDate` 를 사용 중이나 `types.d.ts` 에 없음 → Step 1 에서 함께 추가
+- [x] `cohortMutations.updateCohortParts()` 가 `packages/api/src/cohort/queries.ts` 에 존재함 (확인 완료)
+- [x] `CohortDto.parts?: CohortPartConfig[]` 가 응답에 포함됨 (확인 완료)
+- [x] `PutUpdateCohortPartsRequest = { parts: CohortPartConfigDto[] }` 타입 확인 완료
+- [x] 현재 `serialize.ts` 가 `recruitStartDate` / `recruitEndDate` 를 사용 중이나 `types.d.ts` 에 없음 → Step 1 에서 함께 추가
 
 ---
 
@@ -366,6 +367,7 @@ const originalKeysRef = useRef<Set<string>>(
 
 ## 체크리스트
 
+- [x] Step 0: `completion.ts` — `isApplicationFormComplete` 제거, `isPartsComplete`(cohort.parts 기반) 추가
 - [ ] Step 1: `types.d.ts` — `parts` 타입, `recruitStartDate/EndDate` 추가
 - [ ] Step 2a: `emptyForm()` — `parts` 구조
 - [ ] Step 2b-c: `serializeFormToCreatePayload` / `serializeFormToUpdatePayload` — `applicationForm` 제거
