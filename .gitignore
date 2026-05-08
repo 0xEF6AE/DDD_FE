@@ -60,6 +60,9 @@ yarn-error.log*
 .agents/
 # .claude/
 
+# git worktrees
+.worktrees/
+
 # playwright-mcp screenshots / snapshots
 .playwright-mcp/
 **/.playwright-mcp/
