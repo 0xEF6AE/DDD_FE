@@ -117,7 +117,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | 서류합격 → 면접 일정 선택 링크 이메일 발송 | 백엔드 | ✅ | – | BE: 상태 변경 이벤트로 이메일 발송 |
 | 최종불합격 → 불합격 이메일 자동 발송 | 백엔드 | ✅ | – | |
 | 최종합격 → 합격 이메일 발송 | 백엔드 | ✅ | – | |
-| **서류합격 시 슬롯 없으면 팝업 안내 → 슬롯 생성 페이지 이동** | 양쪽 | ⚠️ | ❌ | BE: 팝업 없이 `400 INTERVIEW_SLOTS_NOT_READY` 로 상태 변경 거부. FE: `StatusChangeModal` 이 에러 코드 분기 없이 일반 toast 만 표시. 슬롯 생성 페이지 이동 미구현 |
+| **서류합격 시 슬롯 없으면 팝업 안내 → 슬롯 생성 페이지 이동** | 양쪽 | ⚠️ | ⚠️ | BE: `400 INTERVIEW_SLOTS_NOT_READY` 반환. FE: `StatusChangeModal` 이 코드 분기 + 강조 토스트로 안내 (모달 유지). 슬롯 생성 페이지 이동은 슬롯 관리 UI 도입 후 |
 | **최종합격 이메일에 Discord OAuth 버튼 포함** | 백엔드 | ⚠️ | ⚠️ | BE: 이메일 템플릿에 Discord OAuth URL 포함 여부 미확인. FE: `StatusChangeModal` 안내 문구로 "Discord 연결 버튼 포함" 만 노출 (실제 메일 본문은 BE 영역) |
 | PII 자동 파기 | 백엔드 | ✅ | – | `PiiPurgeScheduler` |
 
@@ -155,7 +155,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | 제출 일자 표시 | 양쪽 | ✅ | ✅ | |
 | 현재 상태 + 상태 변경 기능 | 양쪽 | ✅ | ✅ | FE: Footer 합격/불합격 버튼 |
 | 개인정보 동의 여부 표시 | 양쪽 | ✅ | ✅ | FE: `privacyAgreed` |
-| **개인정보 동의 일자 표시** | 양쪽 | ⚠️ | ❌ | FE 상세 Drawer 에 동의 일자 필드 미렌더링 (BE 응답 포함 여부 별도 확인 필요) |
+| **개인정보 동의 일자 표시** | 양쪽 | ⚠️ | ✅ | FE: `ApplicationDetailDrawer` 에 동의 일자 `InfoRow` 추가, BE 응답 부재 시 `"-"` 폴백 |
 
 ---
 
@@ -196,10 +196,10 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | 1 | 기수 | 모집중 전환 조건: 지원서 양식 필수 검증 | 양쪽 | ❌ | ❌ | BE: `updateCohort()` 에서 `RECRUITING` 전환 시 모든 파트 `applicationSchema` 검증. FE: `useTransitionCohortStatusFlow` 호출 전 양식 빈 칸 가드 + 에러 toast |
 | 2 | 기수 | 파트별 면접 슬롯 관리 UI | 프론트엔드 | ✅ | ❌ | FE: `pages/interview-slots`(가칭) 신설 또는 기수 상세 내 슬롯 관리 섹션 추가 |
 | 3 | 사전 알림 | 모집중 변경 시 즉시 이메일 발송 | 양쪽 | ⚠️ | ⚠️ | BE: 상태 변경 → 캠페인 자동 활성화 또는 즉시 발송. FE: 캠페인 PAUSED→SCHEDULED 전환 UI 추가 검토 |
-| 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ❌ | FE: `StatusChangeModal` 에서 `INTERVIEW_SLOTS_NOT_READY` 에러 코드 분기 → AlertDialog 안내 + 슬롯 생성 페이지 이동 |
+| 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ⚠️ | FE: `StatusChangeModal` 에러 코드 분기 + 강조 토스트 적용. 슬롯 생성 페이지 이동은 슬롯 관리 UI 도입 후 (별도 PR) |
 | 5 | 지원 | 최종합격 이메일 내 Discord OAuth 버튼 | 백엔드 | ⚠️ | – | BE: `EmailEventHandler` 최종합격 템플릿 Discord OAuth URL 포함 확인 |
 | 6 | 지원 | Google Meet 링크 생성 | 백엔드 | ⚠️ | – | BE: `GoogleCalendarClient` 이벤트 `conferenceData` 포함 확인 |
 | 7 | 지원 | 면접일자 컬럼 / 슬롯 중복 안내 | 양쪽 | ✅ | ❌ | FE: 지원자 테이블에 면접 슬롯 일정 컬럼 추가, 슬롯 관리 UI 도입 후 연계 |
-| 8 | 지원 | 개인정보 동의 일자 표시 | 양쪽 | ⚠️ | ❌ | BE: 상세 응답에 `privacyAgreedAt` 포함 확인. FE: `ApplicationDetailDrawer` 에 동의 일자 행 추가 |
+| 8 | 지원 | 개인정보 동의 일자 표시 | 양쪽 | ⚠️ | ✅ | FE: `ApplicationDetailDrawer` 에 동의 일자 `InfoRow` 추가 완료. BE: 상세 응답 `privacyAgreedAt` 포함 여부 확인 남음 |
 | 9 | 프로젝트 | 참여자 후기(review) 필드 | 양쪽 | ❌ | ⚠️ | BE: `ProjectMember` 에 `review` 필드 추가 + 마이그레이션 + DTO 노출. FE: `buildProjectFormDefaults` 와 `useCreateOrUpdateProjectFlow` payload 에 `review` 반영 |
 | 10 | 프로젝트 | PDF 업로드 (Phase 2) | 양쪽 | ❌ | ❌ | Phase 2 — 미착수 |

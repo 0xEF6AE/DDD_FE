@@ -134,7 +134,7 @@
 - ✅ 지원 파트 / 이름 / 휴대폰번호(가운데번호 마스킹) / 생년월일 / 거주지역 / 제출일 표시
 - ✅ 파트별 질문+답변 — `AnswerList.tsx` (answers Record 렌더링)
 - ✅ 개인정보 동의 여부 — `privacyAgreed` boolean 표시
-- ⬜ 개인정보 동의 일시 — `privacyAgreedAt` 필드 미렌더링 (BE 응답 포함 여부 확인 필요)
+- ✅ 개인정보 동의 일시 — `ApplicationDetailDrawer/index.tsx` `InfoRow` 로 `privacyAgreedAt` 렌더링 (BE 미응답 시 `formatDate` 폴백 `"-"`)
 - ✅ 상세에서 합격/불합격 분기 상태 변경 — `STATUS_BRANCH` + `StatusChangeModal`
 
 ### 3.3.4 개인정보 처리
@@ -288,5 +288,5 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 ### 우선순위 Top 3 (가장 빠르게 가치 회수)
 
 1. **`useUpdateCohortParts` 연결** — `SemesterRegisterDrawer` onSubmit에서 파트별 지원서 양식을 저장하지 않음. 훅과 UI 모두 존재하므로 순수 FE 연결 작업
-2. **`StatusChangeModal` `INTERVIEW_SLOTS_NOT_READY` 에러 분기** — 서류합격 시 슬롯 없으면 일반 toast만 표시. 에러 코드 분기 → AlertDialog + 안내 문구로 교체
-3. **`개인정보 동의 일자` 표시** — `ApplicationDetailDrawer` 에서 `privacyAgreedAt` 미렌더링. BE 응답 포함 확인 후 `InfoRow` 추가
+2. ~~`StatusChangeModal` `INTERVIEW_SLOTS_NOT_READY` 에러 분기~~ — ✅ 처리됨 (`ApiError.is("INTERVIEW_SLOTS_NOT_READY")` 분기 + 강조 토스트, 모달 유지)
+3. ~~`개인정보 동의 일자` 표시~~ — ✅ 처리됨 (`ApplicationDetailDrawer` 에 `동의 일자` `InfoRow` 추가, BE 미응답 시 `"-"` 폴백)
