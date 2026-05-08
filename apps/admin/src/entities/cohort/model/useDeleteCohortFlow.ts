@@ -1,7 +1,7 @@
 import { toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { cohortKeys, useDeleteCohort } from "@ddd/api"
+import { cohortKeys, cohortMutations } from "@ddd/api"
 
 import type { CohortDto } from "@ddd/api"
 
@@ -17,7 +17,7 @@ interface Args {
  */
 export const useDeleteCohortFlow = ({ onSuccess }: Args = {}) => {
   const queryClient = useQueryClient()
-  const deleteMutation = useDeleteCohort()
+  const deleteMutation = useMutation(cohortMutations.deleteCohort())
 
   const remove = async (cohort: Pick<CohortDto, "id" | "name">) => {
     try {

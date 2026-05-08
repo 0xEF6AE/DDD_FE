@@ -1,7 +1,7 @@
 import { toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { cohortKeys, useCreateCohort, useUpdateCohort } from "@ddd/api"
+import { cohortKeys, cohortMutations } from "@ddd/api"
 
 import type { SemesterRegisterForm } from "../../../pages/semesters/types"
 import {
@@ -31,8 +31,8 @@ export const useCreateOrUpdateCohortFlow = ({
   onSuccess,
 }: Args) => {
   const queryClient = useQueryClient()
-  const createMutation = useCreateCohort()
-  const updateMutation = useUpdateCohort()
+  const createMutation = useMutation(cohortMutations.createCohort())
+  const updateMutation = useMutation(cohortMutations.updateCohort())
 
   const isPending = createMutation.isPending || updateMutation.isPending
 

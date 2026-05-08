@@ -1,12 +1,7 @@
 import { toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import {
-  projectKeys,
-  useCreateProject,
-  useUpdateProject,
-  useUpdateProjectMembers,
-} from "@ddd/api"
+import { projectKeys, projectMutations } from "@ddd/api"
 import type {
   PostCreateProjectRequest,
   PutUpdateProjectRequest,
@@ -35,9 +30,9 @@ export const useCreateOrUpdateProjectFlow = ({
   onSuccess,
 }: Args) => {
   const queryClient = useQueryClient()
-  const createProject = useCreateProject()
-  const updateProject = useUpdateProject()
-  const updateMembers = useUpdateProjectMembers()
+  const createProject = useMutation(projectMutations.createProject())
+  const updateProject = useMutation(projectMutations.updateProject())
+  const updateMembers = useMutation(projectMutations.updateProjectMembers())
 
   const isPending =
     createProject.isPending ||

@@ -1,10 +1,10 @@
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "@heroui/react"
-import { useLogout } from "@ddd/api"
+import { authMutations } from "@ddd/api"
 import { paths } from "@/shared/lib/paths"
 
 export const useLogoutFlow = () => {
-  const { mutate: logout, isPending } = useLogout()
+  const { mutate: logout, isPending } = useMutation(authMutations.logout())
   const queryClient = useQueryClient()
 
   const logoutAndRedirect = () =>

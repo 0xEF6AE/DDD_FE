@@ -1,7 +1,7 @@
 import { toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { cohortKeys, useUpdateCohort } from "@ddd/api"
+import { cohortKeys, cohortMutations } from "@ddd/api"
 
 import type { CohortDto } from "@ddd/api"
 
@@ -13,7 +13,7 @@ import { STATUS_LABEL, nextStatus } from "./statusFlow"
  */
 export const useTransitionCohortStatusFlow = () => {
   const queryClient = useQueryClient()
-  const updateMutation = useUpdateCohort()
+  const updateMutation = useMutation(cohortMutations.updateCohort())
 
   const transition = async (cohort: CohortDto) => {
     const next = nextStatus(cohort.status)
