@@ -72,9 +72,9 @@ app → pages → widgets → entities → shared
 
 | 유형 | 예시 | 위치 |
 | ---- | ---- | ---- |
-| API 호출 훅 | `useLogout`, `useApplications` | `packages/api/src/{domain}/hooks.ts` |
-| 비즈니스 흐름 훅 | `useLogoutFlow` (API + toast/라우팅/캐시 정리) | `entities/{domain}/model/` |
-| UI/플랫폼 훅 | `useIsMobile`, `useTheme` (도메인 무관) | `shared/hooks/` |
+| **쿼리/뮤테이션 팩토리** (`queryOptions`/`mutationOptions`) | `applicationQueries.getAdminApplications`, `authMutations.logout` | `packages/api/src/{domain}/queries.ts` |
+| **비즈니스 흐름 훅** (API + toast/라우팅/캐시 정리 등) | `useLogoutFlow`, `useApplicationsBoard` | `entities/{domain}/model/` |
+| **UI/플랫폼 훅** (도메인 무관) | `useIsMobile`, `useTheme` | `shared/hooks/` |
 
 ---
 

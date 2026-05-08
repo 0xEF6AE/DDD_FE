@@ -133,11 +133,6 @@
    - 쿼리키는 `{domain}Keys` 팩토리를 그대로 사용한다 (캐시 무효화 · prefetch 등).
    - `entities` 끼리 import 금지 (§3.1 #4 재확인). 두 도메인을 묶는 흐름은 `widgets` 또는 `pages` 책임이다.
 
-   **packages/api 의 wrapper hook 운영**:
-   - `packages/api/src/{domain}/hooks.ts` 는 **deprecate → 후속 PR 에서 삭제** 의 2 단계로 정리한다.
-   - 1 단계: 파일 상단에 `@deprecated` JSDoc + 앱 측 ESLint `no-restricted-imports` 로 import 차단.
-   - 2 단계: 모든 사용처가 옵션 팩토리로 치환되면 파일을 삭제하고 `index.ts` 재노출에서 제거한다.
-
 ### 3.4 상태 관리
 
 1. **로컬 상태 우선**: 가능한 컴포넌트 로컬 상태(`useState`)를 우선 사용한다.
