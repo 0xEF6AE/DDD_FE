@@ -9,6 +9,7 @@ import { TitleSection } from "@/widgets/heading"
 import { CardSection } from "./components/Sections"
 import { ApplicationFilters } from "./components/ApplicationFilters"
 import { ApplicationTable } from "./components/ApplicationTable"
+import { ApplicationDetailDrawer } from "./components/ApplicationDetailDrawer"
 import type { ApplicationStatus } from "./constants"
 
 const pickLatestCohortId = (cohorts: CohortDto[]): number | undefined => {
@@ -29,6 +30,7 @@ export default function ApplicationsPage() {
   const [selectedCohortId, setSelectedCohortId] = useState<number | null | undefined>(undefined)
   const [selectedCohortPartId, setSelectedCohortPartId] = useState<number | undefined>(undefined)
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | undefined>(undefined)
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null)
 
   const { data: cohorts } = useCohorts()
   const cohortList = useMemo(() => cohorts ?? [], [cohorts])
@@ -119,8 +121,15 @@ export default function ApplicationsPage() {
         <ApplicationTable
           applications={filteredApplications}
           cohorts={cohortList}
+          onRowPress={(id) => setSelectedApplicationId(id)}
         />
       </div>
+
+      <ApplicationDetailDrawer
+        isOpen={selectedApplicationId !== null}
+        onOpenChange={(open) => !open && setSelectedApplicationId(null)}
+        applicationId={selectedApplicationId}
+      />
     </div>
   )
 }
