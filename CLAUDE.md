@@ -32,6 +32,8 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 > 어드민 기획 명세 + 백/프론트 구현 현황은 **[docs/admin-implementation-status.md](./docs/admin-implementation-status.md)** 를 참조한다. `/progress` 커맨드를 실행하면 이 문서와 `progress.md`, 핵심 코드 파일을 교차 분석하여 영역별 완료율 + 다음 작업 Top 3를 리포트한다.
 >
 > admin 프로젝트의 UI 컴포넌트를 생성 / 수정 / 삭제하는 작업 전에는 **[docs/hero-ui.txt](./docs/hero-ui.txt)** 를 먼저 참조하여 사용 가능한 HeroUI v3 컴포넌트와 사용법을 확인한다.
+>
+> 기수(cohort)의 **파트별 지원서 양식(`formSchema` / `parts`)** 또는 `cohort.applicationForm` 관련 작업 전에는 **[docs/admin-cohort-parts-policy.md](./docs/admin-cohort-parts-policy.md)** 를 먼저 검토한다. (`applicationForm` 는 dead 필드이며, 단일 source 는 `PUT /admin/cohorts/{id}/parts`)
 
 백엔드는 별도 레포지토리에서 관리. 이 레포는 프론트엔드 전용.
 
