@@ -62,37 +62,46 @@ const TitleArea = styled.div({
   display: "flex",
   flexDirection: "column",
   gap: "24px",
+  alignItems: "center",
 });
 
 const SectionLabel = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(16px, calc(0.925vw + 12.53px), 24px)",
+  fontSize: "20px",
   fontWeight: fontWeights.medium,
-  lineHeight: "clamp(22px, calc(1.233vw + 17.38px), 34px)",
+  lineHeight: "28px",
   color: colors.textInverse,
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "23px",
+  },
   "@media (max-width: 768px)": {
-    fontSize: "20px",
-    lineHeight: "28px",
+    fontSize: "16px",
+    lineHeight: "20px",
   },
   "@media (max-width: 375px)": {
-    fontSize: "16px",
-    lineHeight: "22px",
+    fontSize: "14px",
+    lineHeight: "18px",
   },
 });
 
 const SectionTitle = styled.h2({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(24px, calc(0.925vw + 20.53px), 32px)",
+  fontSize: "28px",
   fontWeight: fontWeights.semiBold,
-  lineHeight: "clamp(30px, calc(1.233vw + 25.38px), 40px)",
+  lineHeight: "32px",
   color: colors.textInverse,
+  "@media (max-width: 1024px)": {
+    fontSize: "24px",
+    lineHeight: "30px",
+  },
   "@media (max-width: 768px)": {
     fontSize: "28px",
     lineHeight: "34px",
   },
   "@media (max-width: 375px)": {
-    fontSize: "24px",
-    lineHeight: "30px",
+    fontSize: "16px",
+    lineHeight: "20px",
   },
 });
 
@@ -132,10 +141,17 @@ const AccordionQuestion = styled.dt({
   lineHeight: lineHeights.headingMedium,
   color: colors.textInverse,
   flex: "1 0 0",
-
+  "@media (max-width: 1024px)": {
+    fontSize: "14px",
+    lineHeight: "18px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "13px",
+    lineHeight: "16px",
+  },
   "@media (max-width: 375px)": {
-    fontSize: "16px",
-    lineHeight: "20px",
+    fontSize: "12px",
+    lineHeight: "15px",
   },
 });
 
@@ -168,10 +184,17 @@ const AccordionAnswer = styled.p({
   fontWeight: fontWeights.regular,
   lineHeight: lineHeights.paragraphMedium,
   color: colors.slate300,
-
+  "@media (max-width: 1024px)": {
+    fontSize: "14px",
+    lineHeight: "18px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "13px",
+    lineHeight: "18px",
+  },
   "@media (max-width: 375px)": {
-    fontSize: "16px",
-    lineHeight: "20px",
+    fontSize: "12px",
+    lineHeight: "15px",
   },
 });
 

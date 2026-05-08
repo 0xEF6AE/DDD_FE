@@ -20,16 +20,6 @@ const Card = styled.div({
   borderRadius: "30px",
   width: "100%",
   overflow: "hidden",
-
-  "@media (max-width: 1024px)": {
-    width: "100%",
-  },
-  "@media (max-width: 768px)": {
-    width: "100%",
-  },
-  "@media (max-width: 375px)": {
-    borderRadius: "20px",
-  },
 });
 
 const Thumbnail = styled.div({
@@ -43,11 +33,6 @@ const Thumbnail = styled.div({
     height: "100%",
     objectFit: "cover",
   },
-
-  "@media (max-width: 375px)": {
-    borderRadius: "20px",
-    overflow: "hidden",
-  },
 });
 
 const CardBody = styled.div({
@@ -55,17 +40,12 @@ const CardBody = styled.div({
   flexDirection: "column",
   gap: "8px",
   padding: "20px 24px",
-
-  "@media (max-width: 375px)": {
-    padding: "16px",
-  },
 });
 
 const CardTexts = styled.div({
   display: "flex",
   flexDirection: "column",
   gap: "8px",
-  minHeight: "80px",
 });
 
 const CardTitle = styled.p({
@@ -103,6 +83,14 @@ const CardDescription = styled.p({
   display: "-webkit-box",
   WebkitLineClamp: 2,
   WebkitBoxOrient: "vertical",
+  "@media (max-width: 1024px)": {
+    fontSize: "14px",
+    lineHeight: "18px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "13px",
+    lineHeight: "18px",
+  },
 
   "@media (max-width: 375px)": {
     fontSize: "12px",
@@ -127,13 +115,20 @@ const CategoryBadge = styled.span({
   fontFamily: "'Pretendard', sans-serif",
   fontSize: fontSizes.large,
   fontWeight: fontWeights.medium,
+  lineHeight: "28px",
   color: colors.primary,
   whiteSpace: "nowrap",
-
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "24px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
   "@media (max-width: 375px)": {
     fontSize: "14px",
     lineHeight: "18px",
-    padding: "4px 20px",
   },
 });
 
@@ -149,11 +144,18 @@ const GenerationBadge = styled.span({
   fontWeight: fontWeights.medium,
   color: colors.textSecondary,
   whiteSpace: "nowrap",
-
+  lineHeight: "28px",
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "24px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
   "@media (max-width: 375px)": {
     fontSize: "14px",
     lineHeight: "18px",
-    padding: "4px 20px",
   },
 });
 

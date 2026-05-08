@@ -34,17 +34,21 @@ const Inner = styled.div({
 
 const Headline = styled.h2({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(28px, calc(0.925vw + 24.53px), 40px)",
+  fontSize: "40px",
   fontWeight: fontWeights.bold,
-  lineHeight: "clamp(32px, calc(1.849vw + 25.07px), 50px)",
+  lineHeight: "50px",
   color: colors.textInverse,
+  "@media (max-width: 1024px)": {
+    fontSize: "34px",
+    lineHeight: "45px",
+  },
   "@media (max-width: 768px)": {
     fontSize: "30px",
-    lineHeight: "36px",
+    lineHeight: "38px",
   },
   "@media (max-width: 375px)": {
-    fontSize: "28px",
-    lineHeight: "32px",
+    fontSize: "20px",
+    lineHeight: "25px",
   },
 });
 
@@ -64,7 +68,7 @@ const CtaButton = styled(Link)({
   fontFamily: "'Pretendard', sans-serif",
   fontSize: fontSizes.large,
   fontWeight: fontWeights.medium,
-  lineHeight: lineHeights.paragraphLarge,
+  lineHeight: "28px",
   textDecoration: "none",
   whiteSpace: "nowrap",
   flexShrink: 0,
@@ -74,15 +78,15 @@ const CtaButton = styled(Link)({
     background: "#1f5fe0",
   },
 
-  "@media (max-width: 768px)": {
-    height: "68px",
-    padding: "16px 36px",
+  "@media (max-width: 1024px)": {
     fontSize: "18px",
     lineHeight: "24px",
   },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
   "@media (max-width: 375px)": {
-    height: "56px",
-    padding: "14px 24px",
     fontSize: "14px",
     lineHeight: "18px",
   },

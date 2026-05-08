@@ -48,6 +48,7 @@ const Inner = styled.div({
 const TitleArea = styled.div({
   display: "flex",
   flexDirection: "column",
+  alignItems: "center",
   gap: "24px",
 
   "@media (max-width: 375px)": {
@@ -57,10 +58,14 @@ const TitleArea = styled.div({
 
 const SectionLabel = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(14px, calc(0.6165vw + 11.69px), 24px)",
+  fontSize: "20px",
   fontWeight: fontWeights.medium,
-  lineHeight: "clamp(18px, calc(0.7705vw + 15.11px), 34px)",
+  lineHeight: "28px",
   color: colors.textInverse,
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "23px",
+  },
   "@media (max-width: 768px)": {
     fontSize: "16px",
     lineHeight: "20px",
@@ -77,35 +82,23 @@ const TitleGroup = styled.div({
   gap: "8px",
 });
 
-const SectionTitle = styled.h2({
+const SectionSubtitle = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(24px, calc(1.541vw + 18.22px), 40px)",
-  fontWeight: fontWeights.bold,
-  lineHeight: "clamp(30px, calc(2.158vw + 21.91px), 50px)",
+  fontSize: "28px",
+  fontWeight: fontWeights.semiBold,
+  lineHeight: "32px",
   color: colors.textInverse,
-  "@media (max-width: 768px)": {
-    fontSize: "30px",
-    lineHeight: "36px",
-  },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 1024px)": {
     fontSize: "24px",
     lineHeight: "30px",
   },
-});
-
-const SectionSubtitle = styled.p({
-  fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(14px, calc(1.541vw + 8.22px), 28px)",
-  fontWeight: fontWeights.semiBold,
-  lineHeight: "clamp(18px, calc(1.849vw + 11.07px), 32px)",
-  color: colors.textInverse,
   "@media (max-width: 768px)": {
     fontSize: "20px",
     lineHeight: "25px",
   },
   "@media (max-width: 375px)": {
-    fontSize: "14px",
-    lineHeight: "18px",
+    fontSize: "16px",
+    lineHeight: "20px",
   },
 });
 
@@ -185,9 +178,13 @@ const ArticleTitle = styled.h3({
   lineHeight: lineHeights.headingLarge,
   color: colors.textPrimary,
 
-  "@media (max-width: 768px)": {
+  "@media (max-width: 1024px)": {
     fontSize: "24px",
     lineHeight: "30px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "20px",
+    lineHeight: "25px",
   },
   "@media (max-width: 375px)": {
     fontSize: "16px",
@@ -206,10 +203,14 @@ const ArticleDescription = styled.p({
   WebkitLineClamp: 3,
   WebkitBoxOrient: "vertical",
 
-  "@media (max-width: 768px)": {
+  "@media (max-width: 1024px)": {
     fontSize: "14px",
     lineHeight: "18px",
     WebkitLineClamp: 2,
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "13px",
+    lineHeight: "18px",
   },
   "@media (max-width: 375px)": {
     fontSize: "12px",
@@ -268,15 +269,15 @@ const MoreButton = styled(Link)({
     background: "#1f5fe0",
   },
 
-  "@media (max-width: 768px)": {
-    height: "68px",
-    padding: "16px 36px",
+  "@media (max-width: 1024px)": {
     fontSize: "18px",
     lineHeight: "24px",
   },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
   "@media (max-width: 375px)": {
-    height: "56px",
-    padding: "30px 40px",
     fontSize: "14px",
     lineHeight: "18px",
   },
@@ -345,7 +346,6 @@ export const BlogSection = ({ items }: Props) => {
         <TitleArea>
           <SectionLabel>Article</SectionLabel>
           <TitleGroup>
-            <SectionTitle>일잘러들의 생각, 글로 남겼어요</SectionTitle>
             <SectionSubtitle>
               트렌드 분석, 실무 인사이트, 커리어 고민까지. DDD 멤버들이 직접 쓴 아티클을 먼저
               만나보세요.

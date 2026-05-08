@@ -39,37 +39,47 @@ const TitleArea = styled.div({
   flexDirection: "column",
   gap: "24px",
   width: "100%",
+  alignItems: "center",
+  textAlign: "center",
 });
 
 const SectionLabel = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(16px, calc(0.925vw + 12.53px), 24px)",
+  fontSize: "20px",
   fontWeight: fontWeights.medium,
-  lineHeight: "clamp(22px, calc(1.233vw + 17.38px), 34px)",
+  lineHeight: "28px",
   color: colors.textInverse,
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "23px",
+  },
   "@media (max-width: 768px)": {
-    fontSize: "20px",
-    lineHeight: "28px",
+    fontSize: "16px",
+    lineHeight: "20px",
   },
   "@media (max-width: 375px)": {
-    fontSize: "16px",
-    lineHeight: "22px",
+    fontSize: "14px",
+    lineHeight: "18px",
   },
 });
 
 const SectionTitle = styled.h2({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(24px, calc(0.925vw + 20.53px), 32px)",
+  fontSize: "28px",
   fontWeight: fontWeights.semiBold,
-  lineHeight: "clamp(30px, calc(1.233vw + 25.38px), 40px)",
+  lineHeight: "32px",
   color: colors.textInverse,
-  "@media (max-width: 768px)": {
-    fontSize: "28px",
-    lineHeight: "34px",
-  },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 1024px)": {
     fontSize: "24px",
     lineHeight: "30px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "20px",
+    lineHeight: "25px",
+  },
+  "@media (max-width: 375px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
   },
 });
 
@@ -110,7 +120,7 @@ const ContactButton = styled(Link)({
   fontFamily: "'Pretendard', sans-serif",
   fontSize: fontSizes.large,
   fontWeight: fontWeights.medium,
-  lineHeight: lineHeights.paragraphLarge,
+  lineHeight: "28px",
   textDecoration: "none",
   whiteSpace: "nowrap",
   flexShrink: 0,
@@ -120,9 +130,15 @@ const ContactButton = styled(Link)({
     background: "#1f5fe0",
   },
 
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "24px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
   "@media (max-width: 375px)": {
-    height: "56px",
-    padding: "30px 40px",
     fontSize: "14px",
     lineHeight: "18px",
   },

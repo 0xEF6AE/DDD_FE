@@ -102,15 +102,20 @@ const Inner = styled.div({
 const TitleArea = styled.div({
   display: "flex",
   flexDirection: "column",
+  alignItems: "center",
   gap: "24px",
 });
 
 const SectionLabel = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(14px, calc(0.6165vw + 11.69px), 24px)",
   fontWeight: fontWeights.medium,
-  lineHeight: "clamp(18px, calc(0.7705vw + 15.11px), 34px)",
   color: colors.textInverse,
+  fontSize: "20px",
+  lineHeight: "28px",
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "23px",
+  },
   "@media (max-width: 768px)": {
     fontSize: "16px",
     lineHeight: "20px",
@@ -123,17 +128,21 @@ const SectionLabel = styled.p({
 
 const SectionTitle = styled.h2({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(20px, calc(1.233vw + 15.38px), 32px)",
   fontWeight: fontWeights.semiBold,
-  lineHeight: "clamp(25px, calc(1.695vw + 18.64px), 40px)",
   color: colors.textInverse,
-  "@media (max-width: 768px)": {
+  fontSize: "28px",
+  lineHeight: "32px",
+  "@media (max-width: 1024px)": {
     fontSize: "24px",
     lineHeight: "30px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 768px)": {
     fontSize: "20px",
     lineHeight: "25px",
+  },
+  "@media (max-width: 375px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
   },
 });
 
@@ -256,7 +265,7 @@ const MoreButton = styled(Link)({
   fontFamily: "'Pretendard', sans-serif",
   fontSize: fontSizes.large,
   fontWeight: fontWeights.medium,
-  lineHeight: lineHeights.paragraphLarge,
+  lineHeight: "28px",
   textDecoration: "none",
   whiteSpace: "nowrap",
   flexShrink: 0,
@@ -266,15 +275,15 @@ const MoreButton = styled(Link)({
     background: "#1f5fe0",
   },
 
-  "@media (max-width: 768px)": {
-    height: "68px",
-    padding: "16px 36px",
+  "@media (max-width: 1024px)": {
     fontSize: "18px",
     lineHeight: "24px",
   },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
   "@media (max-width: 375px)": {
-    height: "56px",
-    padding: "30px 40px",
     fontSize: "14px",
     lineHeight: "18px",
   },

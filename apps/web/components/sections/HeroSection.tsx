@@ -109,7 +109,6 @@ const HeadlineWrapper = styled.div({
 const GradientHeadline = styled.h1({
   fontFamily: "'Pretendard', sans-serif",
   whiteSpace: "nowrap",
-  wordBreak: "keep-all",
   fontWeight: fontWeights.bold,
   background: "linear-gradient(180deg, rgba(255, 255, 255, 0.00) -3.04%, #FFF 95.35%)",
   backgroundClip: "text",
@@ -117,7 +116,6 @@ const GradientHeadline = styled.h1({
   WebkitTextFillColor: "transparent",
   fontSize: fontSizes.headingXxl,
   lineHeight: lineHeights.headingXxl,
-
   "@media (max-width: 1024px)": {
     fontSize: "100px",
     lineHeight: "110px",
@@ -163,11 +161,15 @@ const CtaButton = styled(Link)({
     background: "#1f5fe0",
   },
 
-  "@media (max-width: 768px)": {
-    height: "68px",
-    padding: "16px 36px",
+  "@media (max-width: 1024px)": {
     fontSize: "18px",
     lineHeight: "24px",
+  },
+
+  "@media (max-width: 768px)": {
+    height: "68px",
+    fontSize: "16px",
+    lineHeight: "20px",
   },
   "@media (max-width: 375px)": {
     height: "56px",

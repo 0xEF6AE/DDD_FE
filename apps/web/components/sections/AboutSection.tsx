@@ -50,19 +50,43 @@ const TitleArea = styled.div({
 
 const SectionLabel = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(16px, calc(0.925vw + 12.53px), 24px)",
   fontWeight: fontWeights.medium,
-  lineHeight: "clamp(22px, calc(1.233vw + 17.38px), 34px)",
   color: colors.textInverse,
+  fontSize: "20px",
+  lineHeight: "28px",
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "23px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
+  "@media (max-width: 375px)": {
+    fontSize: "14px",
+    lineHeight: "18px",
+  },
 });
 
 const Title = styled.h2({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(36px, calc(4.31vw + 19.83px), 80px)",
   fontWeight: fontWeights.bold,
-  lineHeight: "clamp(46px, calc(4.47vw + 29.24px), 90px)",
   color: colors.slate200,
   whiteSpace: "pre-wrap",
+  fontSize: "64px",
+  lineHeight: "75px",
+  "@media (max-width: 1024px)": {
+    fontSize: "54px",
+    lineHeight: "65px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "42px",
+    lineHeight: "52px",
+  },
+  "@media (max-width: 375px)": {
+    fontSize: "38px",
+    lineHeight: "48px",
+  },
 });
 
 const TitleHighlight = styled.span({
@@ -106,20 +130,44 @@ const StatCard = styled.div({
 
 const StatLabel = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(16px, calc(0.925vw + 12.53px), 24px)",
   fontWeight: fontWeights.medium,
-  lineHeight: "clamp(22px, calc(1.233vw + 17.38px), 34px)",
   color: colors.slate300,
   textAlign: "center",
+  fontSize: "20px",
+  lineHeight: "28px",
+  "@media (max-width: 1024px)": {
+    fontSize: "18px",
+    lineHeight: "23px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "16px",
+    lineHeight: "20px",
+  },
+  "@media (max-width: 375px)": {
+    fontSize: "14px",
+    lineHeight: "18px",
+  },
 });
 
 const StatValue = styled.p({
   fontFamily: "'Pretendard', sans-serif",
-  fontSize: "clamp(48px, calc(3.699vw + 34.13px), 80px)",
   fontWeight: fontWeights.bold,
-  lineHeight: "clamp(55px, calc(4.162vw + 39.39px), 90px)",
   color: colors.textInverse,
   textAlign: "center",
+  fontSize: "80px",
+  lineHeight: "75px",
+  "@media (max-width: 1024px)": {
+    fontSize: "70px",
+    lineHeight: "65px",
+  },
+  "@media (max-width: 768px)": {
+    fontSize: "60px",
+    lineHeight: "52px",
+  },
+  "@media (max-width: 375px)": {
+    fontSize: "28px",
+    lineHeight: "35px",
+  },
 });
 
 const useCountUpOnView = (target: number, enabled: boolean) => {
