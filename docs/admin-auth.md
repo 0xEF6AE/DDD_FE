@@ -233,7 +233,7 @@ VITE_API_URL=https://api.dddstudy.kr   # 실제 도메인 확인 필요
 | --------------------------------- | --------------------------------------------------------------- |
 | API 클라이언트 + 401/refresh 인터셉터 | `packages/api/src/client.ts`                                    |
 | Auth 도메인 API (`/refresh`, `/logout`, `/withdrawal`) | `packages/api/src/auth/api.ts`                                  |
-| Auth 훅(`useLogout`, `useRefreshToken`, `useWithdrawal`) | `packages/api/src/auth/hooks.ts`                                |
+| Auth mutations(`logout`, `refreshToken`, `withdrawal`) | `packages/api/src/auth/queries.ts` (`authMutations`)            |
 | API 초기화(`onUnauthorized`)      | `apps/admin/src/main.tsx`                                       |
 | Google 로그인 버튼/진입점         | `apps/admin/src/pages/login/LoginPage.tsx`                      |
 | 로그아웃 흐름 훅                  | `apps/admin/src/entities/auth/model/useLogoutFlow.ts`           |

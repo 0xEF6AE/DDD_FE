@@ -91,7 +91,7 @@
 - ✅ 새 기수 등록 버튼 — `SemestersPage.tsx:77-85` `onPress` 연결, Drawer 정상 오픈
 - 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
 - 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
-- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — ApplicationFormSection RHF 연결, 브라우저 검증 미실시. **`useUpdateCohortParts` 훅 존재하나 미연결** (`packages/api/src/cohort/hooks.ts`)
+- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — ApplicationFormSection RHF 연결, 브라우저 검증 미실시. **`cohortQueries.updateParts` 존재하나 미연결** (`packages/api/src/cohort/queries.ts`)
 - ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동
 - ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
 - ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입
@@ -104,7 +104,7 @@
 - ✅ 신청자 목록 조회 (이메일 / 기수 / 신청일 / 상태 / 발송 일시) — `useAdminEarlyNotifications` 연동
 - ✅ 상태별 필터 (전체 / 대기 / 발송완료) — 클라이언트 predicate
 - ✅ 이메일 검색 (클라이언트, 부분 일치)
-- ✅ 통계 카드 — 동적 집계 (`RemindersPage.tsx:68-72` `stats` useMemo)
+- ✅ 통계 카드 — 동적 집계 (`EarlyNotificationStatsSection.tsx:22` `stats` useMemo)
 - ✅ 기수별 필터 — `useCohorts()` 매핑 + 최신 모집기수 자동 선택 (`pickActiveCohortId`)
 - ✅ 전체 일괄 발송 — `RemindersBulkSendDrawer.tsx:62` `useSendBulkEarlyNotification` mutation 연동
 - ⬜ 개별 발송 버튼 — `RemindersTable.tsx:28-34` 헤더에 액션 컬럼 자체가 없음 (HTML 목업에는 있음)

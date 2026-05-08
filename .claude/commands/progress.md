@@ -22,13 +22,13 @@ allowed-tools: Read, Bash(ls:*), Bash(date:*)
 
 | 파일 | 검증 포인트 |
 |------|------------|
-| `apps/admin/src/pages/index.tsx` | `/applications/:id` 등 명세 라우트 존재 여부 |
-| `apps/admin/src/pages/applications/components/ApplicationTable.tsx` | 행 클릭 → 상세 진입 연결, 합격/불합격 분기 UI |
-| `apps/admin/src/pages/reminders/components/RemindersTable.tsx` | 개별 발송 컬럼, CSV 다운로드 트리거 |
-| `packages/api/src/cohort/hooks.ts` | generated 훅 사용 여부 (vs 직접 HTTP 클라이언트) |
-| `packages/api/src/application/hooks.ts` | 훅 커버리지 |
-| `packages/api/src/early-notification/hooks.ts` | `useAdminEarlyNotificationsCsv` 훅 존재 여부 |
-| `packages/api/src/storage/hooks.ts` | `storageListFiles`, `storageDeleteFile` 등 누락 훅 |
+| `apps/admin/src/pages/index.tsx` | 라우트 목록, Drawer 방식 상세 진입 여부 |
+| `apps/admin/src/pages/applications/components/ApplicationTable.tsx` | 행 클릭 → `onRowPress` 연결 여부 |
+| `apps/admin/src/pages/applications/components/ApplicationDetailDrawer/index.tsx` | 상세 Drawer 구현 여부, 합격/불합격 분기 UI |
+| `apps/admin/src/pages/early-notification/components/EarlyNotificationTable.tsx` | 개별 발송 액션 컬럼 존재 여부 |
+| `packages/api/src/cohort/queries.ts` | `cohortQueries` vs `cohortAPI` 직접 호출 패턴 |
+| `packages/api/src/early-notification/queries.ts` | CSV query factory 구현 여부 |
+| `packages/api/src/storage/queries.ts` | `listFiles`·`deleteFile`·`createSignedUrl` 등 누락 queries |
 
 `packages/api/src/notification-campaign/` 폴더 존재 여부도 `ls packages/api/src/notification-campaign/`로 확인한다.
 
