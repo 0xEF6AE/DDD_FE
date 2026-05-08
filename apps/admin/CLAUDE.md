@@ -2,7 +2,7 @@
 
 DDD 동아리 운영진용 어드민 페이지. Vite + React 19, Tailwind CSS 4, React Router(Data Mode), HeroUI v3 기반.
 
-> 기능 명세 대비 구현 체크리스트는 루트의 **[tasks/checklist.md](../../tasks/checklist.md)** 를 참조한다.
+> 기능 명세 대비 구현 체크리스트는 루트의 **[progress.md](../../progress.md)** 를 참조한다.
 >
 > 토스트(`toast.success/error/info/warning`) 사용 패턴은 **[docs/admin-toast.md](../../docs/admin-toast.md)** 를 단일 출처로 삼는다. 새 컴포넌트에서 알림이 필요하면 이 문서의 표준 패턴을 따른다.
 
@@ -100,7 +100,6 @@ pages/applications/
 ├── index.tsx                   # 외부 노출 배럴
 ├── components/                 # 이 페이지 전용 하위 컴포넌트 (예: Sections.tsx)
 ├── constants.ts                # 컬럼/필터/상태 라벨 등 상수
-├── mockApi.ts                  # MSW 또는 임시 목업용 fetcher
 └── types.d.ts                  # 임시 타입 (추후 `@ddd/api` 생성 타입으로 대체)
 ```
 
@@ -235,4 +234,4 @@ import { Form, Fieldset, TextField, Label } from "@heroui/react"
 
 ## 기능 개발 현황
 
-기수 관리 / 사전 알림 / 지원자 / 프로젝트 / 블로그 / SEO 등 영역별 구현 상태는 루트의 **[tasks/checklist.md](../../tasks/checklist.md)** 에서 관리한다. 본 문서에는 중복 기재하지 않는다.
+기수 관리 / 사전 알림 / 지원자 / 프로젝트 / 블로그 / SEO 등 영역별 구현 상태는 루트의 **[progress.md](../../progress.md)** 에서 관리한다. 본 문서에는 중복 기재하지 않는다.

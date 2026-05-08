@@ -1,10 +1,8 @@
 # DDD 프론트엔드 진행 현황
 
 > **기준 문서**: 어드민 기능 명세 3.x, SEO 요구사항 4.x, 데이터 모델 5.x, MVP 범위 6.x
-> **코드 스냅샷**: 2026-05-04 (branch: `dev/admin`)
+> **코드 스냅샷**: 2026-05-08 (branch: `dev/admin`)
 > **범례**: ✅ 완료 / 🔧 부분 구현 (UI만 또는 목업 연결) / ⬜ 미구현
->
-> **이번 라운드 정밀 점검**: HTML 목업(`~/Downloads/ddd-admin (1) (1).html`) 대비 현재 코드의 하드코딩·API 미연동·미구현을 file:line 단위로 재검토. 결과는 각 섹션과 문서 말미 [정밀 갭 (코드 라인 참조)](#정밀-갭-코드-라인-참조-2026-05-04-추가) 에 반영.
 
 ---
 
@@ -27,8 +25,8 @@
 
 | 영역 | 상태 | 핵심 갭 |
 | --- | --- | --- |
-| 공통 인프라 (admin) | 🔧 | 실 API 연동 (OAuth · 인증 가드 · 로그아웃 ✅) |
-| 3.1 기수 관리 | 🔧 | **mockApi.ts 의존 + Drawer/버튼 onPress 전부 미연결 — 가장 위험** |
+| 공통 인프라 (admin) | 🔧 | 대부분 도메인 연동 완료. cohort·auth·storage 3개 도메인이 generated 미사용 (직접 HTTP 클라이언트) |
+| 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경 API 연동 완료 — 브라우저 검증 미실시 |
 | 3.2 사전 알림 | 🔧 | 일괄 발송 ✅, 개별 발송 액션 컬럼 자체 부재 + CSV UI 없음 |
 | 3.3 지원자 관리 | 🔧 | 상세 라우트 미정의, 행 클릭 → 상세 진입 미연결 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
@@ -54,13 +52,17 @@
 - `AdminLayout` (SideBar + MobileHeader + Outlet)
 - `ThemeProvider` (localStorage, `d` 키 토글, 다크/라이트/시스템)
 
-**미구현**
+**API 레이어 연동 현황**
 
-- ⬜ 실제 백엔드 API 연동 (orval 생성 코드 → `@ddd/api`)
+- ✅ 대부분 도메인: application · blog · project · early-notification · discord · interview → generated 함수 사용
+- ⚠️ **cohort** — generated(`cohortGetAdminList` 등) 미사용, 직접 HTTP 클라이언트(`cohortAPI`) 구현. 다른 도메인과 패턴 불일치
+- ⚠️ **auth** — generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 구현
+- ⚠️ **storage** — generated(`storageUploadFile`) 미사용, 직접 HTTP 클라이언트. `storageListFiles` · `storageDeleteFile` · `storageCreateSignedUrl` · `storageDownloadFile` 훅 미구현
+- ⬜ **notification-campaign** — generated 6개 함수 존재(`notificationCampaignCreateAdmin` 등), `packages/api` 도메인 폴더 자체 없음
 
-**완료 (이번 라운드 추가)**
+**완료 (인프라)**
 
-- ✅ Google OAuth 실제 연결 — `LoginPage` 가 `${VITE_API_URL}/api/v1/auth/google` 로 외부 redirect, 백엔드가 `CLIENT_REDIRECT_URL` 로 되돌림 (httpOnly 쿠키)
+- ✅ Google OAuth 실제 연결 — `LoginPage`가 `${VITE_API_URL}/api/v1/auth/google`로 외부 redirect, 백엔드가 `CLIENT_REDIRECT_URL`로 되돌림 (httpOnly 쿠키)
 - ✅ 인증 보호 라우트 (Minimal) — 별도 loader 가드 없이 `client.ts` 401 인터셉터 + `main.tsx` `onUnauthorized` 콜백에 위임. 401 발생 시 `/` 로 자동 redirect
 - ✅ 사이드바 사용자 메뉴 드롭다운 + 로그아웃 흐름 — `widgets/navigation/UserMenuDropdown.tsx` + `entities/auth/model/useLogoutFlow.ts` (`@ddd/api` `useLogout` mutation → 토스트 → `/` redirect)
 
@@ -82,17 +84,17 @@
 
 ### 3.1.2 기수 등록/수정
 
-- 🔧 기수 목록 조회 — UI는 완성, **데이터 출처가 mockApi.ts (faker)**. `SemestersPage.tsx:21-27` 가 `getApiClient().get<SemesterInfo[]>("/semester")` 직접 호출 — 다른 페이지와 달리 `useCohorts()` 훅 미사용
+- ✅ 기수 목록 조회 — `useSemestersTableData` (`useCohorts` + 기수별 지원자/멤버 집계) 연동
 - ✅ 상태별 필터 / 기수 검색 (클라이언트)
-- 🔧 통계 카드 — UI 4개 카드(`SemestersPage.tsx:144-169`) 전부 **하드코딩** ("14", "활동 중 / 13기", "1204명", "520명"). 동적 집계 미구현
-- 🔧 새 기수 등록 폼 — `SemesterRegisterDrawer.tsx` 섹션 4개(기본정보/프로세스/커리큘럼/파트별 양식)는 렌더되나 **`handleSubmit`이 `console.log("등록:", form)` 만 실행** (`SemesterRegisterDrawer.tsx:131-134`). `useCreateCohort()` 가 `packages/api/src/cohort/hooks.ts:39` 에 이미 존재하나 import 없음
-- 🔧 새 기수 등록 버튼 — `TitleSection` Button(`SemestersPage.tsx:137-139`)에 `onPress` 없음. Drawer trigger 미연결로 클릭해도 열리지 않음
-- 🔧 프로세스 일정 등록/수정 — DateRangePicker(서류접수/인터뷰), DatePicker(서류발표/최종발표) UI만
-- 🔧 커리큘럼 등록/수정 (9주차 고정 배열, `SemesterRegisterDrawer.tsx:47-50`) — DatePicker + Input UI만
-- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — 질문 추가/삭제는 동작, 저장은 미연결
-- 🔧 수동 상태 변경 버튼 ("모집중 전환") — `SemestersPage.tsx:117` `onPress` 없음. `useUpdateCohort()` 미연결
-- 🔧 기수 수정 버튼 — `SemestersPage.tsx:114-116` `onPress` 없음. 편집 모드 Drawer 자체가 부재 (현재 Drawer는 create-only)
-- ⬜ `SemesterRegisterDrawer` react-hook-form 도입 — 현재 단순 useState로만 폼 관리 (다른 폼 Drawer는 react-hook-form + Zod 사용)
+- ✅ 통계 카드 — `useSemestersTableData.summary`로 동적 집계 (전체 기수 / 현재 상태 / 누적 지원자 / 누적 멤버)
+- ✅ 새 기수 등록 폼 — `SemesterRegisterDrawer` RHF + `useCreateOrUpdateCohortFlow` (`useCreateCohort`/`useUpdateCohort`) 연동
+- ✅ 새 기수 등록 버튼 — `SemestersPage.tsx:77-85` `onPress` 연결, Drawer 정상 오픈
+- 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
+- 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
+- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — ApplicationFormSection RHF 연결, 브라우저 검증 미실시. **`useUpdateCohortParts` 훅 존재하나 미연결** (`packages/api/src/cohort/hooks.ts`)
+- ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동
+- ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
+- ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입
 - ⬜ 모집 종료일 경과 시 자동 "활동중" 전환 (백엔드/스케줄러 책임)
 
 ---
@@ -106,7 +108,8 @@
 - ✅ 기수별 필터 — `useCohorts()` 매핑 + 최신 모집기수 자동 선택 (`pickActiveCohortId`)
 - ✅ 전체 일괄 발송 — `RemindersBulkSendDrawer.tsx:62` `useSendBulkEarlyNotification` mutation 연동
 - ⬜ 개별 발송 버튼 — `RemindersTable.tsx:28-34` 헤더에 액션 컬럼 자체가 없음 (HTML 목업에는 있음)
-- ⬜ 이메일 목록 CSV 다운로드 — API(`useAdminEarlyNotificationsCsv`)는 존재하나 UI 트리거 없음
+- ⬜ 이메일 목록 CSV 다운로드 — `downloadEarlyNotificationsCsv.ts`에서 `earlyNotificationAPI.exportAdminCsv()` 직접 호출 중. UI 트리거 없음. `useAdminEarlyNotificationsCsv` 훅으로 일원화 필요
+- ⬜ 개별 발송 — **백엔드 generated에 단건 발송 엔드포인트 없음**. 백엔드 추가 후 구현 가능
 - ⬜ 기수 상태 "모집중" 전환 시 자동 발송 (Phase 2)
 
 ---
@@ -223,12 +226,13 @@
 
 ## 5. 데이터 모델 (참조)
 
-백엔드 스키마이지만 프론트 타입 반영 여부 추적 목적. 현재 각 페이지의 `types.d.ts` 는 임시 타입이며, `@ddd/api` 생성 코드로 대체 예정.
+백엔드 스키마이지만 프론트 타입 반영 여부 추적 목적.
 
-- ⬜ `cohort` ENUM(UPCOMING / RECRUITING / ACTIVE / CLOSED) 타입 반영
-- ⬜ `applicant` 전체 컬럼 (part ENUM, 개인정보 필드, privacy_agreed_at, delete_scheduled_at 등)
-- ⬜ `project.platform` ENUM[] 복수 타입 반영
-- ⬜ `early_notification` 스키마 (cohort_id, email, notified_at)
+- ✅ `cohort` ENUM — `CreateCohortRequestDtoStatus`, `CohortStatus`, `CohortPartConfigDtoName` 사용 중
+- ✅ `project.platform` ENUM[] — `ProjectPlatform` 타입 사용 중
+- ✅ `early_notification` — `EarlyNotificationDto` 사용 중
+- 🔧 `applicant` — `ApplicationDto` 사용 중. 개인정보 필드(privacy_agreed_at, delete_scheduled_at 등) 상세 페이지 미구현으로 미검증
+- ⬜ `pages/semesters/types.d.ts` 폼 전용 타입(`SemesterRegisterForm` 등) — `@ddd/api` DTO와 중복 여부 재검토 필요
 
 ---
 
@@ -243,9 +247,9 @@
 | 홈페이지 — 지원 (사전 알림 / 지원서 + 개인정보 동의) | ⬜ | |
 | 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF) | ⬜ | `project/[id]` 라우트만 존재 |
 | 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
-| 어드민 — 기수 관리 (상태 + 수동 변경) | 🔧 | 목록/필터 완료, 등록·수정 폼 API 미연결 |
-| 어드민 — 지원자 목록/상세/상태 변경 | 🔧 | 목록만 구현, 상세 페이지 미구현 |
-| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계 UI, 발송 API 미연결 |
+| 어드민 — 기수 관리 (상태 + 수동 변경) | 🔧 | 목록/통계/등록/수정/상태변경 완료. 파트별 양식 저장(`useUpdateCohortParts`) 미연결 |
+| 어드민 — 지원자 목록/상세/상태 변경 | 🔧 | 목록/상태변경 완료. 상세 라우트(`/applications/:id`) 미구현 |
+| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송 완료. 개별발송(백엔드 엔드포인트 없음)·CSV UI 미구현 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | SEO — sitemap/robots/OG/Schema.org/상세 URL | ⬜ | |
@@ -262,19 +266,17 @@
 
 HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 인터랙션** 을 file:line 단위로 정리. 작업 우선순위는 ▲ 표시.
 
-### 하드코딩 (실 데이터로 교체 필요)
+### packages/api 레이어 갭
 
-- ▲ `apps/admin/src/pages/semesters/SemestersPage.tsx:144-169` — `CardSection` 4개 카드("14", "활동 중 13기", "1204명", "520명") 모두 정적 마크업. 백엔드 집계 엔드포인트 도입 또는 클라이언트 집계 로직 필요
-- ▲ `apps/admin/src/pages/semesters/mockApi.ts:1-32` — MSW handler가 faker로 `/semester` 응답 생성. `useCohorts()` 로 교체 + 본 파일 제거 필요
-- `apps/admin/src/pages/semesters/types.d.ts` — 임시 `SemesterInfo` / `SemesterStatus` 타입. `@ddd/api` `CohortDto` 로 대체
-
-### API 미연동 (훅은 존재, import 만 누락)
-
-- ▲ `apps/admin/src/pages/semesters/SemesterRegisterDrawer.tsx:131-134` — `handleSubmit` 이 `console.log("등록:", form)` 만 실행. `useCreateCohort()` (`packages/api/src/cohort/hooks.ts:39`) 미import
-- ▲ `apps/admin/src/pages/semesters/SemestersPage.tsx:21-27` — `getApiClient().get<SemesterInfo[]>("/semester")` 직접 호출. 다른 페이지처럼 `useCohorts()` 훅으로 통일
-- ▲ `apps/admin/src/pages/semesters/SemestersPage.tsx:114-117` — "수정" / "모집중 전환" 버튼 `onPress` 없음. `useUpdateCohort()` (`packages/api/src/cohort/hooks.ts:48`) 연결 필요
-- ▲ `apps/admin/src/pages/semesters/SemestersPage.tsx:137-139` — TitleSection "새 기수 등록" 버튼 `onPress` 없음. Drawer trigger 미연결 → 클릭해도 Drawer 열리지 않음
-- `apps/admin/src/pages/index.tsx:23-29` — `/semesters` loader 함수가 빈 예시 주석. 다른 라우트와 일관되게 제거 또는 prefetch 도입 결정 필요
+| 도메인 | 문제 | 영향 |
+|---|---|---|
+| **cohort** | generated(`cohortGetAdminList` 등) 미사용, 직접 HTTP 클라이언트 | 다른 도메인과 패턴 불일치 |
+| **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 | 다른 도메인과 패턴 불일치 |
+| **storage** | generated 미사용, `storageListFiles`·`storageDeleteFile`·`storageCreateSignedUrl`·`storageDownloadFile` 훅 없음 | 파일 관리 기능 확장 불가 |
+| **notification-campaign** | `packages/api` 도메인 폴더 없음 (generated 6개 존재) | 알림 캠페인 기능 전체 미구현 |
+| **interview** | `interviewCancelReservation` 훅 없음 | 예약 취소 불가 |
+| **early-notification** | `earlyNotificationSubscribeGeneral` 훅 없음 | 웹앱 대기열 신청 미지원 |
+| **early-notification** | `downloadEarlyNotificationsCsv.ts`가 훅 우회해 API 직접 호출 | `useAdminEarlyNotificationsCsv`로 통일 필요 |
 
 ### HTML 목업에는 있는데 미구현인 UI
 
@@ -283,18 +285,14 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 - ▲ `apps/admin/src/pages/applications/components/ApplicationTable.tsx:69-79` — "다음 단계: {next}" 단일 버튼. HTML 목업의 합격/불합격 분기 선택 UI 부재 (NEXT_STATUS 매핑 단방향 진행만)
 - `apps/admin/src/pages/reminders/components/RemindersTable.tsx:28-34` — 액션 컬럼 자체 부재. 개별 발송, 발송 완료 상태 변경 UI 없음
 - `apps/admin/src/pages/reminders/RemindersPage.tsx` — CSV 다운로드 트리거 부재. API(`useAdminEarlyNotificationsCsv`)는 존재
-- `apps/admin/src/pages/semesters/SemesterRegisterDrawer.tsx` — 편집(수정) 모드 부재. 현재 Drawer는 create-only로, 기존 데이터 prefill 분기 없음
-- `apps/admin/src/pages/semesters/SemesterRegisterDrawer.tsx:63` — react-hook-form + Zod 미사용 (단순 `useState`). 다른 폼 Drawer(`ProjectFormDrawer`, `BlogPostFormDrawer`)와 일관성 깨짐
 
 ### 회귀 테스트
 
 - ⬜ `/projects` — 실제 백엔드 또는 MSW 연동 후 등록·수정·삭제·필터·"더 보기" 시나리오 브라우저 검증
 - ⬜ `/blog-posts` — 동일
 
-### 우선순위 Top 5 (가장 빠르게 가치 회수)
+### 우선순위 Top 3 (가장 빠르게 가치 회수)
 
-1. **`SemesterRegisterDrawer` 제출 연동** — `useCreateCohort` import + handleSubmit 교체 + 토스트
-2. **`SemestersPage` 데이터 출처 통일** — `getApiClient` 직접 호출 → `useCohorts()` 로 교체, `mockApi.ts` 제거
-3. **기수 테이블 액션 연결** — "수정" → 편집 Drawer (Drawer를 mode prop으로 분기), "모집중 전환" → `useUpdateCohort` mutation
-4. **`/applications/:id` 라우트 + 상세 Drawer 신설** — HTML `applicantDrawer` 마크업 기반
-5. **기수 통계 카드 동적화** — 백엔드 집계 또는 클라이언트 reduce
+1. **`/applications/:id` 라우트 + 상세 Drawer 신설** — HTML `applicantDrawer` 마크업 기반 (라우트 미정의로 전혀 진입 불가)
+2. **`ApplicationTable` 행 클릭 → 상세 진입 + 합격/불합격 분기 UI** — HTML 목업 대비 단방향 NEXT_STATUS만 존재
+3. **`RemindersTable` 개별 발송 컬럼 + CSV 다운로드** — API 모두 존재, UI 트리거만 없음
