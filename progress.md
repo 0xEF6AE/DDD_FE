@@ -27,8 +27,8 @@
 | --- | --- | --- |
 | 공통 인프라 (admin) | 🔧 | 대부분 도메인 연동 완료. cohort·auth·storage 3개 도메인이 generated 미사용 (직접 HTTP 클라이언트) |
 | 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경 API 연동 완료 — 브라우저 검증 미실시 |
-| 3.2 사전 알림 | 🔧 | 일괄 발송 ✅, 개별 발송 액션 컬럼 자체 부재 + CSV UI 없음 |
-| 3.3 지원자 관리 | 🔧 | 상세 라우트 미정의, 행 클릭 → 상세 진입 미연결 |
+| 3.2 사전 알림 | 🔧 | 일괄 발송·CSV ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
+| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
 | 3.6 FAQ | ✅ | MVP 제외 결정 (FE 하드코딩) |
@@ -125,19 +125,17 @@
 - ✅ 목록 조회 (이름 / 연락처 / 파트 / 기수 / 지원일 / 상태) — `useAdminApplications` 연동
 - ✅ 상태별 필터, 이름·연락처 검색 (클라이언트), 파트별/기수별 필터
 - ✅ 통계 카드 — `ApplicationsPage.tsx:76-83` 에서 cardList 기반 동적 집계
-- ✅ 상태 변경 — `ApplicationTable.tsx:26-37` `usePatchApplicationStatus` mutation + 캐시 invalidate + 토스트
-- 🔧 상태 진행 액션 — `ApplicationTable.tsx:69-79` "다음 단계: {next}" 단일 버튼만 제공. HTML 목업의 합격/불합격 분기 선택 UI 없음 (NEXT_STATUS 매핑으로 단방향 진행만)
-- ⬜ 지원자 행 클릭 → 상세 진입 — onPress·Link·navigate 미연결
-- ⬜ 지원자 이름 행 hover 스타일 등 인터랙션 hint 없음
+- ✅ 지원자 행 클릭 → `ApplicationDetailDrawer` 오픈 — `ApplicationsPage` `onRowPress` + `selectedApplicationId` state 연결
+- ⬜ 지원자 이름 행 hover 하이라이트 스타일 없음 (`cursor-pointer` 만 적용)
 
-### 3.3.3 지원자 상세 (`/applications/:id`)
+### 3.3.3 지원자 상세 (Drawer 방식, 별도 라우트 없음)
 
-- ⬜ **상세 라우트 자체가 미정의** — `apps/admin/src/pages/index.tsx` 에 `/applications/:id` path 없음 (현재는 `/applications` 만 등록)
-- ⬜ 지원 파트 / 이름 / 휴대폰번호(가운데번호 마스킹) / 생년월일 / 거주지역 표시
-- ⬜ 파트별 질문+답변 + 제출 일시
-- ⬜ 개인정보 동의 여부 + 동의 일시
-- ⬜ 상세에서 상태 변경 기능
-- ⬜ HTML 목업의 `applicantDrawer` (지원자 상세 슬라이드 패널) — React 코드에 미존재
+- ✅ `ApplicationDetailDrawer` — `/applications` 내에서 슬라이드 패널로 진입 (별도 라우트 불필요)
+- ✅ 지원 파트 / 이름 / 휴대폰번호(가운데번호 마스킹) / 생년월일 / 거주지역 / 제출일 표시
+- ✅ 파트별 질문+답변 — `AnswerList.tsx` (answers Record 렌더링)
+- ✅ 개인정보 동의 여부 — `privacyAgreed` boolean 표시
+- ⬜ 개인정보 동의 일시 — `privacyAgreedAt` 필드 미렌더링 (BE 응답 포함 여부 확인 필요)
+- ✅ 상세에서 합격/불합격 분기 상태 변경 — `STATUS_BRANCH` + `StatusChangeModal`
 
 ### 3.3.4 개인정보 처리
 
@@ -248,8 +246,8 @@
 | 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF) | ⬜ | `project/[id]` 라우트만 존재 |
 | 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
 | 어드민 — 기수 관리 (상태 + 수동 변경) | 🔧 | 목록/통계/등록/수정/상태변경 완료. 파트별 양식 저장(`useUpdateCohortParts`) 미연결 |
-| 어드민 — 지원자 목록/상세/상태 변경 | 🔧 | 목록/상태변경 완료. 상세 라우트(`/applications/:id`) 미구현 |
-| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송 완료. 개별발송(백엔드 엔드포인트 없음)·CSV UI 미구현 |
+| 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
+| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | SEO — sitemap/robots/OG/Schema.org/상세 URL | ⬜ | |
@@ -270,21 +268,17 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 
 | 도메인 | 문제 | 영향 |
 |---|---|---|
-| **cohort** | generated(`cohortGetAdminList` 등) 미사용, 직접 HTTP 클라이언트 | 다른 도메인과 패턴 불일치 |
-| **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 | 다른 도메인과 패턴 불일치 |
-| **storage** | generated 미사용, `storageListFiles`·`storageDeleteFile`·`storageCreateSignedUrl`·`storageDownloadFile` 훅 없음 | 파일 관리 기능 확장 불가 |
-| **notification-campaign** | `packages/api` 도메인 폴더 없음 (generated 6개 존재) | 알림 캠페인 기능 전체 미구현 |
-| **interview** | `interviewCancelReservation` 훅 없음 | 예약 취소 불가 |
-| **early-notification** | `earlyNotificationSubscribeGeneral` 훅 없음 | 웹앱 대기열 신청 미지원 |
+| **cohort** | generated(`cohortGetAdminList` 등) 미사용, `cohortAPI` 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
+| **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
+| **storage** | generated 미사용. `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 | 파일 관리 기능 확장 불가 |
+| **notification-campaign** | `packages/api` 도메인 폴더 없음 (generated 6개 함수 존재) | 알림 캠페인 기능 전체 미구현 |
+| **interview** | `cancelReservation` query 미구현 | 예약 취소 불가 |
+| **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
 
 
 ### HTML 목업에는 있는데 미구현인 UI
 
-- ▲ `/applications/:id` 상세 라우트 — `apps/admin/src/pages/index.tsx` 에 path 자체 없음. HTML 목업 `applicantDrawer` (지원 파트 / 이름 / 마스킹 휴대폰 / 생년월일 / 거주지역 / 파트별 Q&A / 개인정보 동의 / 제출 일시) 전체 미구현
-- ▲ `apps/admin/src/pages/applications/components/ApplicationTable.tsx` — 행 클릭 → 상세 진입 인터랙션 없음 (현재는 "다음 단계" 버튼만). HTML 목업은 이름 클릭 → Drawer
-- ▲ `apps/admin/src/pages/applications/components/ApplicationTable.tsx:69-79` — "다음 단계: {next}" 단일 버튼. HTML 목업의 합격/불합격 분기 선택 UI 부재 (NEXT_STATUS 매핑 단방향 진행만)
-- `apps/admin/src/pages/reminders/components/RemindersTable.tsx:28-34` — 액션 컬럼 자체 부재. 개별 발송, 발송 완료 상태 변경 UI 없음
-- `apps/admin/src/pages/reminders/RemindersPage.tsx` — CSV 다운로드 트리거 부재. API(`useAdminEarlyNotificationsCsv`)는 존재
+- `apps/admin/src/pages/early-notification/components/EarlyNotificationTable.tsx` — 개별 발송 액션 컬럼 자체 부재. 단건 발송 엔드포인트가 BE generated에 없어 구현 대기
 
 ### 회귀 테스트
 
@@ -293,6 +287,6 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 
 ### 우선순위 Top 3 (가장 빠르게 가치 회수)
 
-1. **`/applications/:id` 라우트 + 상세 Drawer 신설** — HTML `applicantDrawer` 마크업 기반 (라우트 미정의로 전혀 진입 불가)
-2. **`ApplicationTable` 행 클릭 → 상세 진입 + 합격/불합격 분기 UI** — HTML 목업 대비 단방향 NEXT_STATUS만 존재
-3. **`RemindersTable` 개별 발송 컬럼 + CSV 다운로드** — API 모두 존재, UI 트리거만 없음
+1. **`useUpdateCohortParts` 연결** — `SemesterRegisterDrawer` onSubmit에서 파트별 지원서 양식을 저장하지 않음. 훅과 UI 모두 존재하므로 순수 FE 연결 작업
+2. **`StatusChangeModal` `INTERVIEW_SLOTS_NOT_READY` 에러 분기** — 서류합격 시 슬롯 없으면 일반 toast만 표시. 에러 코드 분기 → AlertDialog + 안내 문구로 교체
+3. **`개인정보 동의 일자` 표시** — `ApplicationDetailDrawer` 에서 `privacyAgreedAt` 미렌더링. BE 응답 포함 확인 후 `InfoRow` 추가
