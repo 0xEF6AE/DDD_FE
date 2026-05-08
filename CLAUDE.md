@@ -22,7 +22,7 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 
 > 기능 명세 대비 구현 체크리스트는 **[progress.md](./progress.md)** 를 참조한다.
 >
-> 어드민 기획 원문 명세는 **[docs/admin-spec.md](./docs/admin-spec.md)** 를 참조한다. `/status` 커맨드를 실행하면 이 명세와 `progress.md`, 핵심 코드 파일을 교차 분석하여 영역별 완료율 + 다음 작업 Top 3를 리포트한다.
+> 어드민 기획 원문 명세는 **[docs/admin-spec.md](./docs/admin-spec.md)** 를 참조한다. `/progress` 커맨드를 실행하면 이 명세와 `progress.md`, 핵심 코드 파일을 교차 분석하여 영역별 완료율 + 다음 작업 Top 3를 리포트한다.
 >
 > admin 프로젝트의 UI 컴포넌트를 생성 / 수정 / 삭제하는 작업 전에는 **[docs/hero-ui.txt](./docs/hero-ui.txt)** 를 먼저 참조하여 사용 가능한 HeroUI v3 컴포넌트와 사용법을 확인한다.
 
