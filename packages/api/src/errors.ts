@@ -16,6 +16,7 @@ export const ErrorMessage = {
 
   INTERVIEW_SLOT_NOT_FOUND: "면접 슬롯을 찾을 수 없습니다.",
   INTERVIEW_SLOT_ALREADY_RESERVED: "이미 예약된 면접 슬롯입니다.",
+  INTERVIEW_SLOTS_NOT_READY: "면접 슬롯이 준비되지 않았습니다.",
 
   UNKNOWN_ERROR: "알 수 없는 오류가 발생했습니다.",
   // 추가적인 에러 메시지를 여기에 정의할 수 있습니다.
