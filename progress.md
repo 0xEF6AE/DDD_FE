@@ -108,7 +108,7 @@
 - ✅ 기수별 필터 — `useCohorts()` 매핑 + 최신 모집기수 자동 선택 (`pickActiveCohortId`)
 - ✅ 전체 일괄 발송 — `RemindersBulkSendDrawer.tsx:62` `useSendBulkEarlyNotification` mutation 연동
 - ⬜ 개별 발송 버튼 — `RemindersTable.tsx:28-34` 헤더에 액션 컬럼 자체가 없음 (HTML 목업에는 있음)
-- ⬜ 이메일 목록 CSV 다운로드 — `downloadEarlyNotificationsCsv.ts`에서 `earlyNotificationAPI.exportAdminCsv()` 직접 호출 중. UI 트리거 없음. `useAdminEarlyNotificationsCsv` 훅으로 일원화 필요
+- ✅ 이메일 목록 CSV 다운로드 — `useDownloadEarlyNotificationsCsv` 훅 + `earlyNotificationQueries` 팩토리 경유. `EarlyNotificationToolbar` 버튼 연동
 - ⬜ 개별 발송 — **백엔드 generated에 단건 발송 엔드포인트 없음**. 백엔드 추가 후 구현 가능
 - ⬜ 기수 상태 "모집중" 전환 시 자동 발송 (Phase 2)
 
@@ -276,7 +276,7 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 | **notification-campaign** | `packages/api` 도메인 폴더 없음 (generated 6개 존재) | 알림 캠페인 기능 전체 미구현 |
 | **interview** | `interviewCancelReservation` 훅 없음 | 예약 취소 불가 |
 | **early-notification** | `earlyNotificationSubscribeGeneral` 훅 없음 | 웹앱 대기열 신청 미지원 |
-| **early-notification** | `downloadEarlyNotificationsCsv.ts`가 훅 우회해 API 직접 호출 | `useAdminEarlyNotificationsCsv`로 통일 필요 |
+
 
 ### HTML 목업에는 있는데 미구현인 UI
 

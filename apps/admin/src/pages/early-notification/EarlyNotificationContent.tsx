@@ -1,7 +1,6 @@
 import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { toast } from "@heroui/react"
 
 import { cohortQueries, type CohortDto } from "@ddd/api"
 
@@ -12,7 +11,7 @@ import { CohortsAreaSkeleton } from "./components/CohortsAreaSkeleton"
 import { EarlyNotificationBulkSendDrawer } from "./components/EarlyNotificationBulkSendDrawer"
 import { EarlyNotificationToolbar } from "./components/EarlyNotificationToolbar"
 import { EarlyNotificationDataView } from "./EarlyNotificationDataView"
-import { downloadEarlyNotificationsCsv } from "./lib/downloadEarlyNotificationsCsv"
+import { useDownloadEarlyNotificationsCsv } from "./hooks/useDownloadEarlyNotificationsCsv"
 import type { StatusFilterOption } from "./constants"
 import { EarlyNotificationStatsSection } from "./components/EarlyNotificationStatsSection"
 
@@ -47,7 +46,7 @@ export const EarlyNotificationContent = ({
 }: EarlyNotificationContentProps) => {
   const { data: cohorts } = useSuspenseQuery(cohortQueries.getCohorts())
   const [isBulkSendOpen, setIsBulkSendOpen] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
+  const { download: handleExport, isExporting } = useDownloadEarlyNotificationsCsv()
 
   if (cohorts.length === 0) {
     return <EmptyState>등록된 기수가 없습니다.</EmptyState>
@@ -63,25 +62,6 @@ export const EarlyNotificationContent = ({
   const selectedCohort = cohorts.find((c) => c.id === effectiveCohortId)
   if (!selectedCohort) {
     return <EmptyState>선택된 기수를 찾을 수 없습니다.</EmptyState>
-  }
-
-  const handleExport = async () => {
-    setIsExporting(true)
-    try {
-      await downloadEarlyNotificationsCsv({
-        cohortId: effectiveCohortId,
-        cohortName: selectedCohort.name,
-      })
-    } catch (error) {
-      toast.danger("CSV 내보내기에 실패했습니다", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "잠시 후 다시 시도해 주세요.",
-      })
-    } finally {
-      setIsExporting(false)
-    }
   }
 
   return (
@@ -101,7 +81,12 @@ export const EarlyNotificationContent = ({
           onStatusFilterChange={onStatusFilterChange}
           onOpenBulkSend={() => setIsBulkSendOpen(true)}
           isBulkSendDisabled={false}
-          onExportCsv={handleExport}
+          onExportCsv={() =>
+            handleExport({
+              cohortId: effectiveCohortId,
+              cohortName: selectedCohort.name,
+            })
+          }
           isExporting={isExporting}
           isExportDisabled={isExporting}
         />

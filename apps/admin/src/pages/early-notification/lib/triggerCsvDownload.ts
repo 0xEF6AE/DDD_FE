@@ -1,5 +1,3 @@
-import { earlyNotificationAPI } from "@ddd/api"
-
 const BOM = "﻿"
 
 const formatYyyyMmDd = (d: Date): string => {
@@ -9,25 +7,18 @@ const formatYyyyMmDd = (d: Date): string => {
   return `${y}${m}${day}`
 }
 
-// 파일명에 사용할 수 없는 문자(슬래시·콜론·제어문자 등)를 _ 로 치환한다.
 const sanitizeFilenameSegment = (s: string): string =>
   // eslint-disable-next-line no-control-regex
   s.replace(/[\\/:*?"<>|\x00-\x1f]/g, "_")
 
-export async function downloadEarlyNotificationsCsv({
-  cohortId,
+export function triggerCsvDownload({
+  csv,
   cohortName,
 }: {
-  cohortId: number
+  csv: string
   cohortName: string
-}): Promise<void> {
-  const csv = await earlyNotificationAPI.exportAdminCsv({
-    params: { cohortId },
-  })
-
-  const blob = new Blob([BOM + csv], {
-    type: "text/csv;charset=utf-8",
-  })
+}): void {
+  const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url

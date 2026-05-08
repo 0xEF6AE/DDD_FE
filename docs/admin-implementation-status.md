@@ -57,7 +57,7 @@
 | 기수별 목록 조회 | 양쪽 | ✅ | ✅ | BE: `GET /admin/early-notifications?cohortId=`. FE: `pages/early-notification/EarlyNotificationDataView.tsx` |
 | 검색 / 상태 필터 (전체·대기·발송완료) | 프론트엔드 | – | ✅ | FE: `EarlyNotificationToolbar` + 클라이언트 필터링 |
 | 통계 카드 (전체/대기/발송완료) | 프론트엔드 | – | ✅ | FE: `EarlyNotificationStatsSection.tsx` |
-| CSV 내보내기 | 양쪽 | ✅ | ✅ | BE: `GET /admin/early-notifications/export`. FE: `pages/early-notification/lib/downloadEarlyNotificationsCsv.ts` |
+| CSV 내보내기 | 양쪽 | ✅ | ✅ | BE: `GET /admin/early-notifications/export`. FE: `pages/early-notification/hooks/useDownloadEarlyNotificationsCsv.ts` + `lib/triggerCsvDownload.ts` |
 | **기수 상태 → 모집중 변경 시 자동 이메일 발송** | 양쪽 | ⚠️ | ⚠️ | BE: 상태 변경 트리거 없음, `NotificationCampaign`(scheduledAt) 방식으로 우회 구현. FE: 자동 트리거 대신 `EarlyNotificationBulkSendDrawer` 로 관리자 수동 일괄 발송 UI 제공 |
 
 ### NotificationCampaign 동작 방식 (현재 구현)

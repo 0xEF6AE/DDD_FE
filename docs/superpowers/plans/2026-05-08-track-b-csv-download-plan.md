@@ -138,11 +138,11 @@ isExportDisabled={isExporting}
 
 ## 체크리스트
 
-- [ ] Step 1: `triggerCsvDownload.ts` 신설
-- [ ] Step 2: `useDownloadEarlyNotificationsCsv.ts` 신설
-- [ ] Step 3: `EarlyNotificationContent.tsx` 교체
-- [ ] Step 4: `downloadEarlyNotificationsCsv.ts` 삭제
-- [ ] TypeScript 컴파일 에러 없음 (`pnpm --filter @ddd/admin tsc --noEmit`)
-- [ ] 린트 통과 (`pnpm --filter @ddd/admin lint`)
+- [x] Step 1: `triggerCsvDownload.ts` 신설
+- [x] Step 2: `useDownloadEarlyNotificationsCsv.ts` 신설
+- [x] Step 3: `EarlyNotificationContent.tsx` 교체
+- [x] Step 4: `downloadEarlyNotificationsCsv.ts` 삭제
+- [x] TypeScript 컴파일 에러 없음 (`pnpm --filter @ddd/admin tsc --noEmit`)
+- [x] 린트 통과 (`pnpm --filter @ddd/admin lint`)
 - [ ] CSV 버튼 클릭 → 다운로드 동작 확인 (dev server)
 - [ ] 실패 케이스 (네트워크 차단) → toast.danger 표시 확인
