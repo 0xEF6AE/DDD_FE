@@ -2,15 +2,10 @@ import { useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button, Drawer, Input, TextArea, toast } from "@heroui/react"
 
-import {
-  blogKeys,
-  useCreateBlogPost,
-  useUpdateBlogPost,
-  useUploadFile,
-} from "@ddd/api"
+import { blogKeys, blogMutations, storageMutations } from "@ddd/api"
 import type {
   BlogPostDto,
   PostCreateBlogPostRequest,
@@ -86,9 +81,9 @@ export const BlogPostFormDrawer = ({
     if (isOpen) reset(buildDefaults(post))
   }, [isOpen, mode, post, reset])
 
-  const createBlogPost = useCreateBlogPost()
-  const updateBlogPost = useUpdateBlogPost()
-  const uploadFile = useUploadFile()
+  const createBlogPost = useMutation(blogMutations.createBlogPost())
+  const updateBlogPost = useMutation(blogMutations.updateBlogPost())
+  const uploadFile = useMutation(storageMutations.uploadFile())
 
   const handleThumbnailUpload = async (file: File) => {
     try {

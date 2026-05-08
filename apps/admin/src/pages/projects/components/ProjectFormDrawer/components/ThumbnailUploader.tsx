@@ -1,7 +1,8 @@
 import { Button, toast } from "@heroui/react"
 import { useFormContext, useWatch } from "react-hook-form"
+import { useMutation } from "@tanstack/react-query"
 
-import { useUploadFile } from "@ddd/api"
+import { storageMutations } from "@ddd/api"
 
 import type { ProjectFormValues } from "@/entities/project"
 import { cn } from "@/shared/lib/cn"
@@ -9,7 +10,7 @@ import { cn } from "@/shared/lib/cn"
 export const ThumbnailUploader = () => {
   const { control, setValue } = useFormContext<ProjectFormValues>()
   const url = useWatch({ control, name: "thumbnailUrl" })
-  const uploadFile = useUploadFile()
+  const uploadFile = useMutation(storageMutations.uploadFile())
 
   const handleSelect = async (file: File) => {
     try {

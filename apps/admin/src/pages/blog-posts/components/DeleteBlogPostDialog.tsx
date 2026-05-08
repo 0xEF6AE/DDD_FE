@@ -1,7 +1,7 @@
 import { AlertDialog, Button, toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { blogKeys, useDeleteBlogPost } from "@ddd/api"
+import { blogKeys, blogMutations } from "@ddd/api"
 import type { BlogPostDto } from "@ddd/api"
 
 type DeleteBlogPostDialogProps = {
@@ -16,7 +16,7 @@ export const DeleteBlogPostDialog = ({
   post,
 }: DeleteBlogPostDialogProps) => {
   const queryClient = useQueryClient()
-  const deleteBlogPost = useDeleteBlogPost()
+  const deleteBlogPost = useMutation(blogMutations.deleteBlogPost())
 
   const handleConfirm = async () => {
     if (!post) return

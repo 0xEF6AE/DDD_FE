@@ -1,11 +1,11 @@
 import { useMemo } from "react"
 
-import { useQueries } from "@tanstack/react-query"
+import { useQueries, useQuery } from "@tanstack/react-query"
 
 import {
   applicationQueries,
-  useAdminProjects,
-  useCohorts,
+  cohortQueries,
+  projectQueries,
 } from "@ddd/api"
 
 import type {
@@ -48,8 +48,8 @@ interface Result {
  * - applications/projects 의 부분 실패는 행/카드 단위 graceful degrade
  */
 export const useSemestersTableData = (): Result => {
-  const cohortsQuery = useCohorts()
-  const projectsQuery = useAdminProjects()
+  const cohortsQuery = useQuery(cohortQueries.getCohorts())
+  const projectsQuery = useQuery(projectQueries.getAdminProjects())
 
   const cohorts: CohortDto[] = useMemo(
     () => cohortsQuery.data ?? [],

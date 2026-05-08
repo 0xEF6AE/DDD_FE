@@ -1,7 +1,7 @@
 import { AlertDialog, Button, toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { projectKeys, useDeleteProject } from "@ddd/api"
+import { projectKeys, projectMutations } from "@ddd/api"
 import type { ProjectDto } from "@ddd/api"
 
 type DeleteProjectDialogProps = {
@@ -16,7 +16,7 @@ export const DeleteProjectDialog = ({
   project,
 }: DeleteProjectDialogProps) => {
   const queryClient = useQueryClient()
-  const deleteProject = useDeleteProject()
+  const deleteProject = useMutation(projectMutations.deleteProject())
 
   const handleConfirm = async () => {
     if (!project) return

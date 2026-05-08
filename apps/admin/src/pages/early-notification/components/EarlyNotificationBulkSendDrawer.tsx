@@ -2,10 +2,10 @@ import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button, Drawer, Input, TextArea, toast } from "@heroui/react"
 
-import { earlyNotificationKeys, useSendBulkEarlyNotification } from "@ddd/api"
+import { earlyNotificationKeys, earlyNotificationMutations } from "@ddd/api"
 
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { FormField } from "@/shared/ui/FormField"
@@ -57,7 +57,9 @@ export const EarlyNotificationBulkSendDrawer = ({
 }: EarlyNotificationBulkSendDrawerProps) => {
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
-  const { mutateAsync, isPending } = useSendBulkEarlyNotification()
+  const { mutateAsync, isPending } = useMutation(
+    earlyNotificationMutations.sendBulkEarlyNotification(),
+  )
 
   const {
     register,

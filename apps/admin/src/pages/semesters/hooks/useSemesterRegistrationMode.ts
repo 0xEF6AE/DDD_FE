@@ -1,6 +1,8 @@
 import { useMemo } from "react"
 
-import { useCohorts } from "@ddd/api"
+import { useQuery } from "@tanstack/react-query"
+
+import { cohortQueries } from "@ddd/api"
 
 import type { CohortDto } from "@ddd/api"
 
@@ -32,7 +34,7 @@ export interface RegistrationState {
  * edit 모드는 페이지의 행 "수정" 클릭이 별도로 트리거하므로 여기서 다루지 않는다.
  */
 export const useSemesterRegistrationMode = (): RegistrationState => {
-  const { data } = useCohorts()
+  const { data } = useQuery(cohortQueries.getCohorts())
   const cohorts: CohortDto[] = useMemo(() => data ?? [], [data])
 
   return useMemo(() => {
