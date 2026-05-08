@@ -108,23 +108,25 @@ const HeadlineWrapper = styled.div({
 
 const GradientHeadline = styled.h1({
   fontFamily: "'Pretendard', sans-serif",
-  whiteSpace: "nowrap",
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
+  maxWidth: "100%",
+  width: "100%",
   fontWeight: fontWeights.bold,
   background: "linear-gradient(180deg, rgba(255, 255, 255, 0.00) -3.04%, #FFF 95.35%)",
   backgroundClip: "text",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
-  fontSize: fontSizes.headingXxl,
-  lineHeight: lineHeights.headingXxl,
+  fontSize: "clamp(45px, 6.92vw + 1px, 130px)",
+  lineHeight: "clamp(50px, 6.41vw + 7px, 130px)",
   "@media (max-width: 1024px)": {
-    fontSize: "100px",
-    lineHeight: "110px",
+    fontSize: "clamp(45px, 8.59vw + 12px, 100px)",
+    lineHeight: "clamp(50px, 9.38vw + 14px, 110px)",
   },
   "@media (max-width: 768px)": {
-    fontSize: "90px",
-    lineHeight: "100px",
-    whiteSpace: "normal",
-    width: "100%",
+    fontSize: "clamp(45px, 14.29vw - 20px, 90px)",
+    lineHeight: "clamp(50px, 15.87vw - 20px, 100px)",
   },
   "@media (max-width: 375px)": {
     fontSize: "45px",
@@ -196,11 +198,7 @@ export const HeroSection = () => {
       </Hero3D>
       <Content>
         <HeadlineWrapper>
-          <GradientHeadline>
-            일 잘하는 사람들은
-            <br />
-            어디서 성장하는 걸까요?
-          </GradientHeadline>
+          <GradientHeadline>일 잘하는 사람들은 어디서 성장하는 걸까요?</GradientHeadline>
           <Subtitle>
             10년간 470명이 선택한 IT 사이드프로젝트 동아리 DDD.
             <br />
