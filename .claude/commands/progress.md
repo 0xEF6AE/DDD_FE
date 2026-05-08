@@ -13,7 +13,7 @@ allowed-tools: Read, Bash(ls:*), Bash(date:*)
 
 다음 두 파일을 순서대로 읽는다:
 
-1. `docs/admin-spec.md` — 기획 베이스라인 (3.1 기수 ~ 3.5 블로그 명세 전문)
+1. `docs/admin-implementation-status.md` — 기획 베이스라인 + 백/프론트 구현 현황 (3.1 기수 ~ 3.5 블로그)
 2. `progress.md` — ✅/🔧/⬜ 기호로 표시된 구현 추적 현황
 
 ### 2단계: 코드 교차 검증
