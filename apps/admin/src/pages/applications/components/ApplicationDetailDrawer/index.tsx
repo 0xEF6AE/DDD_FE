@@ -1,10 +1,15 @@
 import { useState } from "react"
 import { Button, Drawer, Spinner } from "@heroui/react"
-import { useAdminApplication, useCohorts } from "@ddd/api"
+import { useQuery } from "@tanstack/react-query"
+import { applicationQueries, cohortQueries } from "@ddd/api"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { Section } from "@/shared/ui/Section"
-import { STATUS_BRANCH, PART_LABEL } from "../../constants"
-import type { ApplicationStatus, StatusBranch } from "../../constants"
+import {
+  STATUS_BRANCH,
+  type ApplicationStatus,
+  type StatusBranch,
+} from "@/entities/application"
+import { PART_LABEL } from "../../constants"
 import { AnswerList } from "./components/AnswerList"
 import { StatusChangeModal } from "./components/StatusChangeModal"
 
@@ -34,10 +39,10 @@ export const ApplicationDetailDrawer = ({
   const isMobile = useIsMobile()
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
 
-  const { data: application, isLoading } = useAdminApplication({
-    params: { id: applicationId ?? 0 },
-  })
-  const { data: cohorts } = useCohorts()
+  const { data: application, isLoading } = useQuery(
+    applicationQueries.getAdminApplication({ params: { id: applicationId ?? 0 } }),
+  )
+  const { data: cohorts } = useQuery(cohortQueries.getCohorts())
 
   const allParts = (cohorts ?? []).flatMap((c) => c.parts ?? []) as unknown as Array<{
     id: number

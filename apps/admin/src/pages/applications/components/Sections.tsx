@@ -1,8 +1,7 @@
-// apps/admin/src/pages/applications/components/Sections.tsx
 import { GridBox } from "@/shared/ui/GridBox"
 import { StatCard } from "@/shared/ui/StatCard"
 
-import type { ApplicationStatus } from "../constants"
+import type { ApplicationStatus } from "@/entities/application"
 
 type CardSectionProps = {
   total: number

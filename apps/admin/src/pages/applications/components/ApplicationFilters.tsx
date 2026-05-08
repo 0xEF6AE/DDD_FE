@@ -1,10 +1,7 @@
 import { Input, Select, ListBox } from "@heroui/react"
 import type { CohortDto } from "@ddd/api"
 import { FlexBox } from "@/shared/ui/FlexBox"
-import type { ApplicationStatus } from "../constants"
-import { NEXT_STATUS } from "../constants"
-
-const ALL_STATUSES = Object.keys(NEXT_STATUS) as ApplicationStatus[]
+import { ALL_STATUSES, type ApplicationStatus } from "@/entities/application"
 
 type ApplicationFiltersProps = {
   searchText: string

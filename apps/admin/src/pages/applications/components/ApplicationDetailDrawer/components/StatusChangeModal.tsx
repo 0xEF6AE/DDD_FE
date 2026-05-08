@@ -1,7 +1,7 @@
 import { AlertDialog, Button, toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
-import { applicationKeys, usePatchApplicationStatus } from "@ddd/api"
-import type { ApplicationStatus } from "../../../constants"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { applicationKeys, applicationMutations } from "@ddd/api"
+import type { ApplicationStatus } from "@/entities/application"
 
 type Props = {
   isOpen: boolean
@@ -23,7 +23,9 @@ export const StatusChangeModal = ({
   isPass,
 }: Props) => {
   const queryClient = useQueryClient()
-  const { mutateAsync, isPending } = usePatchApplicationStatus()
+  const { mutateAsync, isPending } = useMutation(
+    applicationMutations.patchApplicationStatus(),
+  )
 
   const handleConfirm = async () => {
     try {
