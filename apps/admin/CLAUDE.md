@@ -110,43 +110,11 @@ pages/applications/
 
 ## UI 컴포넌트 작업 규칙
 
-**기본 원칙**: 새로운 컴포넌트는 **HeroUI v3을 직접 import하여 사용**한다.
+**기본 원칙**: 새로운 컴포넌트는 **`@heroui/react`에서 직접 import**해 사용한다.
 
-> UI 컴포넌트를 **생성 / 수정 / 삭제 / 교체**하는 작업을 수행하기 전에는 반드시 루트의 **[docs/hero-ui.txt](../../docs/hero-ui.txt)** 를 먼저 참조하여, 사용 가능한 컴포넌트·props·패턴을 확인한다. (본 문서의 요약 목록은 참고용이며, 세부 API는 `docs/hero-ui.txt` 를 단일 출처로 삼는다.)
-
-### shared/ui에만 배치하는 컴포넌트
-
-| 경로                         | 용도                       | 비고                             |
-| ---------------------------- | -------------------------- | -------------------------------- |
-| `shared/ui/FlexBox.tsx`      | flex 레이아웃 유틸         | Tailwind 직접 사용으로 대체 가능 |
-| `shared/ui/GridBox.tsx`      | grid 레이아웃 유틸         | Tailwind 직접 사용으로 대체 가능 |
-| `shared/ui/DDDLogo.tsx`      | DDD 정적 로고              | 커스텀 구현                      |
-| `shared/ui/DDDAnimated.tsx`  | DDD 브랜드 로고 애니메이션 | 커스텀 구현                      |
-| `shared/ui/GoogleButton.tsx` | Google 로그인 버튼         | 커스텀 구현                      |
-
-### HeroUI v3에서 직접 import하는 컴포넌트
-
-일반적인 UI 컴포넌트는 **`@heroui/react`에서 직접 import**한다:
-
-```tsx
-// ❌ 이전 방식 (사용금지)
-import { Button } from "@/shared/ui/button"
-import { Input } from "@/shared/ui/input"
-
-// ✅ 현재 방식 (권장)
-import { Button, Input, Card, Drawer, Table, Tabs } from "@heroui/react"
-```
-
-**HeroUI v3 컴포넌트 목록** (자주 사용되는 것들):
-
-- **기본**: Button, Input, TextArea, Checkbox, Radio, Switch, Label
-- **선택**: Select, ComboBox, Autocomplete
-- **폼**: Form, Fieldset, TextField (복합 필드)
-- **레이아웃**: Card (CardHeader, CardBody, CardFooter), Drawer (DrawerContent 등)
-- **테이블**: Table (TableHeader, TableBody, TableColumn, TableRow, TableCell)
-- **탭**: Tabs (Tab)
-- **모달**: Modal, AlertDialog
-- **기타**: Tooltip, Badge, Pagination, Spinner, ProgressBar
+> UI 컴포넌트 작업 시 **`admin-heroui` 스킬**이 자동 호출된다.
+> 컴포넌트 props·slots·패턴의 세부 API는 **[docs/hero-ui.txt](../../docs/hero-ui.txt)** 를 단일 출처로 삼는다.
+> 스킬에는 shared/ui 배치 기준, 금지 패턴, Drawer/Table compound 패턴이 포함된다.
 
 ### shared/hooks와 shared/lib
 
@@ -166,71 +134,6 @@ import { Button, Input, Card, Drawer, Table, Tabs } from "@heroui/react"
 - **아이콘**: `@hugeicons/react`
 - **테마**: `ThemeProvider` — localStorage 유지, `d` 키로 토글, 다크/라이트/시스템 지원
 - **API**: `@ddd/api` 패키지에서 import, `main.tsx`에서 `configureApi()` 초기화
-
----
-
-## HeroUI v3 개발 가이드
-
-새로운 컴포넌트나 UI 작업을 할 때는 로컬의 **[docs/hero-ui.txt](../../docs/hero-ui.txt)** 를 우선 참조한다. (이전에 사용하던 HeroUI MCP 대신 이 파일을 단일 출처로 삼는다.)
-
-### 작업 순서
-
-1. **컴포넌트 확인**: 필요한 HeroUI v3 컴포넌트가 있는지 `docs/hero-ui.txt` 에서 검색
-2. **문서 조회**: 해당 컴포넌트의 props·slots·compound 구조를 `docs/hero-ui.txt` 에서 확인
-3. **구현**: HeroUI의 compound component 패턴 및 props 활용
-4. **스타일링**: Tailwind CSS + `cn()` 유틸로 커스터마이징
-
-### 자주 사용되는 패턴
-
-#### Compound Components (조합형)
-
-HeroUI v3는 compound component 패턴을 사용한다:
-
-```tsx
-import { Card, Drawer, Table, Tabs } from "@heroui/react"
-
-// Card 예시
-<Card>
-  <Card.Header>제목</Card.Header>
-  <Card.Body>본문</Card.Body>
-  <Card.Footer>푸터</Card.Footer>
-</Card>
-
-// Table 예시
-<Table>
-  <Table.Header>
-    <Table.Column>컬럼명</Table.Column>
-  </Table.Header>
-  <Table.Body>
-    <Table.Row>
-      <Table.Cell>셀 데이터</Table.Cell>
-    </Table.Row>
-  </Table.Body>
-</Table>
-
-// Tabs 예시
-<Tabs>
-  <Tab key="tab1" title="탭1">내용1</Tab>
-  <Tab key="tab2" title="탭2">내용2</Tab>
-</Tabs>
-```
-
-#### Form 필드
-
-폼 작업은 HeroUI의 Form, Fieldset, TextField, Label을 조합:
-
-```tsx
-import { Form, Fieldset, TextField, Label } from "@heroui/react"
-
-<Form>
-  <Fieldset>
-    <TextField name="username" type="text" required>
-      <Label>사용자명</Label>
-      <Input />
-    </TextField>
-  </Fieldset>
-</Form>
-```
 
 ## 기능 개발 현황
 
