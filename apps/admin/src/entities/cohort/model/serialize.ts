@@ -57,11 +57,11 @@ const emptyForm = (): SemesterRegisterForm => ({
 
 /** 폼 → CreateCohortRequestDto */
 export const serializeFormToCreatePayload = (
-  form: SemesterRegisterForm,
+  form: SemesterRegisterForm
 ): CreateCohortRequestDto => ({
   name: buildName(form.cohortNumber),
-  recruitStartAt: form.recruitStartDate,
-  recruitEndAt: form.recruitEndDate,
+  recruitStartAt: form.process.documentAcceptStartDate, // API 스펙상 process 안에 넣기로 했으므로
+  recruitEndAt: form.process.documentAcceptEndDate,
   status: form.status,
   process: { ...form.process },
   curriculum: form.curriculum.map((w) => ({ ...w })),
@@ -74,11 +74,11 @@ export const serializeFormToCreatePayload = (
  * dirty 추적 없이 모든 필드를 보낸다 (PATCH 옵셔널이라 안전, 단순함 우선).
  */
 export const serializeFormToUpdatePayload = (
-  form: SemesterRegisterForm,
+  form: SemesterRegisterForm
 ): UpdateCohortRequestDto => ({
   name: buildName(form.cohortNumber),
-  recruitStartAt: form.recruitStartDate,
-  recruitEndAt: form.recruitEndDate,
+  recruitStartAt: form.process.documentAcceptStartDate,
+  recruitEndAt: form.process.documentAcceptEndDate,
   status: form.status,
   process: { ...form.process },
   curriculum: form.curriculum.map((w) => ({ ...w })),
@@ -87,7 +87,7 @@ export const serializeFormToUpdatePayload = (
 
 /** CohortDto → SemesterRegisterForm. 잘못된 shape 은 빈 폼으로 폴백 */
 export const serializeCohortToForm = (
-  cohort: CohortDto,
+  cohort: CohortDto
 ): SemesterRegisterForm => {
   const base = emptyForm()
   return {
@@ -108,7 +108,7 @@ const isNonEmptyString = (v: unknown): v is string =>
   typeof v === "string" && v.length > 0
 
 const extractProcess = (
-  raw: unknown,
+  raw: unknown
 ): SemesterRegisterForm["process"] | null => {
   if (typeof raw !== "object" || raw === null) return null
   const o = raw as Record<string, unknown>
@@ -135,12 +135,13 @@ const extractProcess = (
 }
 
 const extractCurriculum = (
-  raw: unknown,
+  raw: unknown
 ): SemesterRegisterForm["curriculum"] | null => {
   if (!Array.isArray(raw)) return null
   const padded = Array.from({ length: 9 }, (_, i) => {
     const w = raw[i]
-    if (typeof w !== "object" || w === null) return { date: "", description: "" }
+    if (typeof w !== "object" || w === null)
+      return { date: "", description: "" }
     const o = w as Record<string, unknown>
     return {
       date: isNonEmptyString(o.date) ? o.date : "",
@@ -151,7 +152,7 @@ const extractCurriculum = (
 }
 
 const extractApplicationForms = (
-  raw: unknown,
+  raw: unknown
 ): SemesterRegisterForm["applicationForms"] | null => {
   if (typeof raw !== "object" || raw === null) return null
   const o = raw as Record<string, unknown>
