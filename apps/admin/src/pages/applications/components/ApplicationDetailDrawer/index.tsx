@@ -106,6 +106,10 @@ export const ApplicationDetailDrawer = ({
                         label="개인정보 동의"
                         value={application.privacyAgreed ? "동의" : "미동의"}
                       />
+                      <InfoRow
+                        label="동의 일자"
+                        value={formatDate(application.privacyAgreedAt)}
+                      />
                       <InfoRow label="현재 상태" value={application.status} />
                     </dl>
                   </Section>
