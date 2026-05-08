@@ -213,66 +213,84 @@ import 추가: `CohortPartConfig`, `CohortPartQuestion` (types.d.ts 에서).
 **파일**: `apps/admin/src/entities/cohort/model/useCreateOrUpdateCohortFlow.ts`
 
 변경 사항:
-1. `Args` 인터페이스에 `onSwitchToEdit?: (newCohortId: number) => void` 추가
+1. `Args` 에서 `onSuccess`, `onSwitchToEdit` 콜백 제거 — 호출부의 try/catch 로 분기
 2. `updateCohortParts` mutation 추가
 3. `serializeFormToPartsPayload` import
-4. 단일 try/catch + stage 마커 패턴으로 교체 (스펙 §A-5 참조)
-5. `isPending` 에 `updatePartsMutation.isPending` 포함
+4. 부분 실패 시 `PartsSaveAfterCreateError` throw — 호출부에서 `instanceof` 로 복구 분기
+5. 토스트 호출 제거 — 모두 호출부 (Drawer onSubmit) 로 이동
+6. `submit` 이 `{ cohortId, name, createdInThisCall }` 반환
 
 ```ts
-import { serializeFormToCreatePayload, serializeFormToUpdatePayload, serializeFormToPartsPayload } from "./serialize"
+import {
+  serializeFormToCreatePayload,
+  serializeFormToUpdatePayload,
+  serializeFormToPartsPayload,
+} from "./serialize"
+
+export class PartsSaveAfterCreateError extends Error {
+  readonly name = "PartsSaveAfterCreateError"
+  constructor(public readonly newCohortId: number, public readonly cause: unknown) {
+    super("Cohort created but parts save failed")
+  }
+}
+
+type Mode = "create" | "resume" | "edit"
 
 interface Args {
   mode: Mode
+  /** resume/edit 에서 채워짐. create 모드면 null */
   targetId: number | null
-  onSuccess?: () => void
-  onSwitchToEdit?: (newCohortId: number) => void
 }
 
-export const useCreateOrUpdateCohortFlow = ({ mode, targetId, onSuccess, onSwitchToEdit }: Args) => {
+interface SubmitResult {
+  cohortId: number
+  name: string
+  createdInThisCall: boolean
+}
+
+export const useCreateOrUpdateCohortFlow = ({ mode, targetId }: Args) => {
   const queryClient = useQueryClient()
   const createMutation = useMutation(cohortMutations.createCohort())
   const updateMutation = useMutation(cohortMutations.updateCohort())
   const updatePartsMutation = useMutation(cohortMutations.updateCohortParts())
 
-  const isPending = createMutation.isPending || updateMutation.isPending || updatePartsMutation.isPending
+  const isPending =
+    createMutation.isPending || updateMutation.isPending || updatePartsMutation.isPending
 
-  const submit = async (form: SemesterRegisterForm) => {
-    let stage: "cohort" | "parts" = "cohort"
-    let cohortId: number | null = targetId
+  const submit = async (form: SemesterRegisterForm): Promise<SubmitResult> => {
+    let cohortId = targetId
+    let name = ""
+    let createdInThisCall = false
 
     try {
       if (mode === "create") {
-        const created = await createMutation.mutateAsync({ payload: serializeFormToCreatePayload(form) })
+        const created = await createMutation.mutateAsync({
+          payload: serializeFormToCreatePayload(form),
+        })
         cohortId = created.id
-        toast.success(`기수 ${created.name}을(를) 등록했습니다`)
+        name = created.name
+        createdInThisCall = true
       } else {
-        if (cohortId == null) { toast.danger("저장할 기수를 찾을 수 없습니다"); return }
-        await updateMutation.mutateAsync({ params: { id: cohortId }, payload: serializeFormToUpdatePayload(form) })
+        if (cohortId == null) throw new Error("저장할 기수를 찾을 수 없습니다")
+        await updateMutation.mutateAsync({
+          params: { id: cohortId },
+          payload: serializeFormToUpdatePayload(form),
+        })
       }
 
-      stage = "parts"
-      await updatePartsMutation.mutateAsync({
-        params: { id: cohortId! },
-        payload: serializeFormToPartsPayload(form),
-      })
-
-      if (mode !== "create") toast.success("기수 정보를 저장했습니다")
-      onSuccess?.()
-    } catch (error) {
-      const description = (error as Error)?.message
-      if (stage === "cohort") {
-        toast.danger(mode === "create" ? "기수 등록에 실패했습니다" : "저장에 실패했습니다", { description })
-      } else {
-        if (mode === "create") {
-          toast.danger("파트 양식 저장에 실패했습니다", {
-            description: "수정 화면에서 다시 저장해주세요. (기수는 이미 등록되었습니다)",
-          })
-          onSwitchToEdit?.(cohortId!)
-        } else {
-          toast.danger("파트 양식 저장에 실패했습니다", { description })
+      try {
+        await updatePartsMutation.mutateAsync({
+          params: { id: cohortId! },
+          payload: serializeFormToPartsPayload(form),
+        })
+      } catch (partsError) {
+        if (createdInThisCall) {
+          throw new PartsSaveAfterCreateError(cohortId!, partsError)
         }
+        throw partsError
       }
+
+      return { cohortId: cohortId!, name, createdInThisCall }
     } finally {
       queryClient.invalidateQueries({ queryKey: cohortKeys.all })
     }
@@ -281,6 +299,11 @@ export const useCreateOrUpdateCohortFlow = ({ mode, targetId, onSuccess, onSwitc
   return { submit, isPending }
 }
 ```
+
+**설계 노트**:
+- 흐름 훅은 mutation 합성 + 부분 실패 시그널만 책임진다. 토스트/드로어 닫기/모드 전환 같은 UI 부수효과는 호출부가 결정 (CODE_RULES §3.3 흐름 훅 SRP 준수).
+- 부분 실패는 콜백 주입 대신 의미가 명시된 커스텀 에러 (`PartsSaveAfterCreateError`) 로 표현 — 타입에 `newCohortId` 가 보장 필드로 들어가 호출부의 non-null assertion 불필요.
+- mode 별 흐름 훅 분리(`useCreateCohortRegistration` / `useUpdateCohortRegistration`)는 호출부가 1개인 현 시점에는 분리 비용이 가치를 만들지 못해 보류 (호출부 분화 시 재검토).
 
 ---
 
@@ -319,7 +342,7 @@ const originalKeysRef = useRef<Set<string>>(
 **파일**: `apps/admin/src/pages/semesters/components/SemesterRegisterDrawer/index.tsx`
 
 변경 사항:
-1. `Props` 에 `onSwitchToEdit?: (newCohortId: number) => void` 추가
+1. `Props` 에 `onSwitchToEdit?: (newCohortId: number) => void` 추가 (부분 실패 복구용)
 2. `buildDefaults` 에서 `applicationForms` → `parts` 교체:
    ```ts
    parts: Object.fromEntries(
@@ -327,13 +350,36 @@ const originalKeysRef = useRef<Set<string>>(
    ) as SemesterRegisterForm["parts"]
    ```
    - `PARTS` import 추가 (`@/entities/cohort` 에서)
-3. `useCreateOrUpdateCohortFlow` 에 `onSwitchToEdit` 전달:
+3. `useCreateOrUpdateCohortFlow` 호출 — 콜백 없이 `{ mode, targetId }` 만 전달:
    ```ts
-   const { submit, isPending: isMutating } = useCreateOrUpdateCohortFlow({
-     mode,
-     targetId,
-     onSuccess: () => onOpenChange(false),
-     onSwitchToEdit,
+   const { submit, isPending: isMutating } = useCreateOrUpdateCohortFlow({ mode, targetId })
+   ```
+4. `onSubmit` 핸들러 — try/catch 로 토스트와 분기 직접 처리:
+   ```ts
+   const onSubmit = methods.handleSubmit(async (form) => {
+     try {
+       const result = await submit(form)
+       toast.success(
+         result.createdInThisCall
+           ? `기수 ${result.name}을(를) 등록했습니다`
+           : "기수 정보를 저장했습니다",
+       )
+       onOpenChange(false)
+       methods.reset(emptyForm())
+     } catch (error) {
+       if (error instanceof PartsSaveAfterCreateError) {
+         toast.danger("파트 양식 저장에 실패했습니다", {
+           description: "수정 화면에서 다시 저장해주세요. (기수는 이미 등록되었습니다)",
+         })
+         onSwitchToEdit?.(error.newCohortId)
+         // 드로어는 닫지 않음 — 부모가 mode/targetId 를 edit 으로 전환
+       } else {
+         toast.danger(
+           mode === "create" ? "기수 등록에 실패했습니다" : "저장에 실패했습니다",
+           { description: (error as Error)?.message },
+         )
+       }
+     }
    })
    ```
 
@@ -373,7 +419,7 @@ const originalKeysRef = useRef<Set<string>>(
 - [ ] Step 2b-c: `serializeFormToCreatePayload` / `serializeFormToUpdatePayload` — `applicationForm` 제거
 - [ ] Step 2d: `serializeFormToPartsPayload` 신설
 - [ ] Step 2e: `serializeCohortToForm` — `extractParts` 로 교체, `extractApplicationForms` 삭제
-- [ ] Step 3: `useCreateOrUpdateCohortFlow` — mutation 추가, stage 마커 패턴
+- [ ] Step 3: `useCreateOrUpdateCohortFlow` — mutation 추가, 부분 실패 시 `PartsSaveAfterCreateError` throw, 토스트/콜백 호출부 이관
 - [ ] Step 4: `ApplicationFormSection` — key/required/isOpen UI, key readonly 처리
 - [ ] Step 5: `SemesterRegisterDrawer` — `parts` 초기값, `onSwitchToEdit` prop 전달
 - [ ] Step 6: 드로어 호출부 `onSwitchToEdit` 구현

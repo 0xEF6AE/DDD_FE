@@ -49,14 +49,18 @@ main (dev/admin)
 5. `apps/admin/src/pages/semesters/components/SemesterRegisterDrawer/index.tsx` — `parts` 초기값, `onSwitchToEdit` prop 전달
 6. `apps/admin/src/pages/semesters/SemestersPage.tsx` (혹은 호출부) — `onSwitchToEdit` 구현
 
-### Step 6 (`onSwitchToEdit`) 미정 사항 처리
+### 부분 실패 처리 패턴 (Step 3 / 5 결정)
 
-플랜의 Step 6 호출부 동작은 worktree 진입 직후 실제 호출부 파일을 직접 확인한 뒤 결정.
+흐름 훅 (`useCreateOrUpdateCohortFlow`) 의 부분 실패 (cohort 는 만들어졌으나 parts 저장 실패) 처리는 **B 안: throw + 호출부 catch** 채택.
 
-- **디폴트**: 수동 — 사용자가 등록 후 토스트 확인 → 다시 수정 버튼으로 진입
-- **승격 조건**: 호출부에서 `editTarget` 상태와 Drawer mode 전환이 단순하면 자동 — 신규 생성 직후 응답 cohort id 로 즉시 수정 모드 재오픈
+- 흐름 훅의 `Args` 에서 `onSuccess` / `onSwitchToEdit` 콜백 모두 제거 — 흐름 훅은 mutation 합성 + 부분 실패 시그널만 책임
+- 부분 실패 시 `PartsSaveAfterCreateError(newCohortId, cause)` throw — 의미가 타입 자체에 명시되고 `newCohortId` 가 보장 필드
+- 토스트·드로어 닫기·모드 전환 등 UI 부수효과는 모두 호출부 (`SemesterRegisterDrawer.onSubmit`) 의 try/catch 안에서 처리
+- mode 별 흐름 훅 분리 (`useCreateCohortRegistration` / `useUpdateCohortRegistration`) 는 호출부가 1 개인 현 시점에서는 분리 비용이 가치를 못 만들어 보류 — 호출부가 분화되면 재검토 (CODE_RULES §3.3 흐름 훅 SRP)
 
-본 디자인 단계에서는 디폴트(수동) 채택. 자동화는 후속 PR.
+### Step 6 (`onSwitchToEdit`) 호출부 처리
+
+`SemesterRegisterDrawer` 를 사용하는 부모 컴포넌트(`SemestersPage` 등) 에서 `onSwitchToEdit` prop 구현. 의미는 "create 흐름에서 parts 저장 실패 시 → 부모가 mode/targetId 를 edit 으로 전환, 드로어는 열린 채 유지" 한 가지로 한정. worktree 진입 직후 호출부 파일 직접 확인하고 단순한 setter 호출로 마감.
 
 ### PR 단위
 
