@@ -6,11 +6,12 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 /**
- * `@ddd/api` 의 wrapper hook 들 (CODE_RULES §3.3 #5 — deprecate-then-remove 단계 1).
- * 이 목록의 훅을 import 하면 ESLint 가 차단한다.
- * 옵션 팩토리(`xxxQueries` / `xxxMutations`)를 `useQuery` / `useMutation` 에 전달해야 한다.
+ * `@ddd/api` 의 옛 wrapper hook 들 (CODE_RULES §3.3 #5).
+ * deprecate-then-remove 가 완료되어 packages/api 에서 파일이 삭제됐다.
+ * 만일 누군가 같은 이름의 훅을 다시 만들면 이 룰이 차단한다.
+ * 옵션 팩토리(`xxxQueries` / `xxxMutations`)를 `useQuery` / `useMutation` 에 전달한다.
  */
-const DEPRECATED_DDD_API_WRAPPER_HOOKS = [
+const REMOVED_DDD_API_WRAPPER_HOOKS = [
   'useActiveCohort',
   'useAdminApplication',
   'useAdminApplications',
@@ -75,14 +76,14 @@ export default defineConfig([
     },
     rules: {
       'no-restricted-imports': [
-        'warn',
+        'error',
         {
           paths: [
             {
               name: '@ddd/api',
-              importNames: DEPRECATED_DDD_API_WRAPPER_HOOKS,
+              importNames: REMOVED_DDD_API_WRAPPER_HOOKS,
               message:
-                '@ddd/api 의 wrapper hook 은 더 이상 사용하지 않는다. xxxQueries / xxxMutations 옵션 팩토리를 useQuery / useMutation 에 직접 전달하라 (CODE_RULES §3.3 #5). 잔여 사용처가 모두 마이그레이션되면 후속 PR 에서 error 로 승격한다.',
+                '@ddd/api 의 wrapper hook 은 제거됐다. xxxQueries / xxxMutations 옵션 팩토리를 useQuery / useMutation 에 직접 전달하라 (CODE_RULES §3.3 #5).',
             },
           ],
         },
