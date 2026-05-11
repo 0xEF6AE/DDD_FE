@@ -10,6 +10,7 @@ import type {
   DeleteInterviewSlotParams,
   PostCreateInterviewReservationParams,
   PostCreateInterviewReservationRequest,
+  DeleteInterviewReservationParams,
 } from "./types";
 
 export const interviewQueries = {
@@ -119,5 +120,20 @@ export const interviewMutations = {
         params: PostCreateInterviewReservationParams;
         payload: PostCreateInterviewReservationRequest;
       }) => interviewAPI.createInterviewReservation({ params, payload }),
+    }),
+
+  /**
+   * 면접 예약 취소 mutation
+   *
+   * @returns {MutationOptions} TanStack Query Mutation 옵션 객체
+   *
+   * @example
+   * const mutation = useMutation(interviewMutations.cancelInterviewReservation())
+   * mutation.mutate({ params: { reservationId: 1 } })
+   */
+  cancelInterviewReservation: () =>
+    mutationOptions({
+      mutationFn: ({ params }: { params: DeleteInterviewReservationParams }) =>
+        interviewAPI.cancelInterviewReservation({ params }),
     }),
 };

@@ -5,6 +5,7 @@ import {
   interviewUpdateSlot,
   interviewDeleteSlot,
   interviewCreateReservation,
+  interviewCancelReservation,
 } from "../generated/admin-interview/admin-interview";
 import type {
   GetInterviewSlotsParams,
@@ -15,6 +16,7 @@ import type {
   DeleteInterviewSlotParams,
   PostCreateInterviewReservationParams,
   PostCreateInterviewReservationRequest,
+  DeleteInterviewReservationParams,
 } from "./types";
 
 export const interviewAPI = {
@@ -54,4 +56,11 @@ export const interviewAPI = {
     params: PostCreateInterviewReservationParams;
     payload: PostCreateInterviewReservationRequest;
   }) => interviewCreateReservation(params.slotId, payload),
+
+  /** 면접 예약을 취소합니다. */
+  cancelInterviewReservation: ({
+    params,
+  }: {
+    params: DeleteInterviewReservationParams;
+  }) => interviewCancelReservation(params.reservationId),
 };
