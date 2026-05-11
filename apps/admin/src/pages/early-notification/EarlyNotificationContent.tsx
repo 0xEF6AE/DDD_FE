@@ -14,6 +14,7 @@ import { EarlyNotificationDataView } from "./EarlyNotificationDataView"
 import { useDownloadEarlyNotificationsCsv } from "./hooks/useDownloadEarlyNotificationsCsv"
 import type { StatusFilterOption } from "./constants"
 import { EarlyNotificationStatsSection } from "./components/EarlyNotificationStatsSection"
+import { NotificationCampaignSection } from "./components/NotificationCampaignSection"
 
 const pickActiveCohortId = (cohorts: CohortDto[]): number | null => {
   if (cohorts.length === 0) return null
@@ -101,6 +102,12 @@ export const EarlyNotificationContent = ({
           </Suspense>
         </ErrorBoundary>
       </div>
+
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Suspense fallback={<CohortsAreaSkeleton />}>
+          <NotificationCampaignSection cohortId={effectiveCohortId} />
+        </Suspense>
+      </ErrorBoundary>
 
       <EarlyNotificationBulkSendDrawer
         isOpen={isBulkSendOpen}

@@ -46,8 +46,20 @@ BE `ApplicationAnswerValidator` 가 읽는 형태:
 
 - `key` 값은 `POST /api/v1/applications` 의 `answers` 필드 키와 1:1 대응한다.
 - 한 번 저장된 key 는 변경하지 않는다. 변경 시 기존 answers 와 매핑이 깨진다.
-- FE 에서는 cohort.parts 에서 로드된 question 의 key 를 **readonly** 처리한다.
-- 새로 추가된 question 의 key 는 의미 있는 slug 를 사용한다 (`motivation`, `tech_stack`).
+- FE 에서는 cohort.parts 에서 로드된 question 의 `label` 을 **readonly** 처리해 key↔label 의미 불일치를 원천 차단하고, 카드에 `저장됨: <key>` caption 으로 운영자에게 식별자를 노출한다.
+- 새 question 의 key 는 UI 에서 입력하지 않으며, 저장 직전 `serializeFormToPartsPayload` 안에서 `slugify(label)` 결과로 자동 생성한다.
+  - 정규화 규칙: `trim → NFC → toLowerCase → [^가-힣a-z0-9_]+ → "_"`
+  - 예: `지원 동기` → `지원_동기`, `Tech Stack?` → `tech_stack`, `FE 기술 스택` → `fe_기술_스택`
+  - 유틸: `apps/admin/src/shared/lib/slug.ts`
+
+### 클라이언트 검증
+
+저장 직전 `validateFormParts` (`apps/admin/src/entities/cohort/model/validateParts.ts`) 가 다음을 차단한다:
+
+1. **빈 label** — 어떤 question 의 label 이 trim 후 빈 문자열이면 toast 로 알리고 저장 중단.
+2. **part 내부 중복 key** — `key.trim() || slugify(label)` 결과가 같은 part 안에서 충돌하면 toast 로 알리고 저장 중단.
+
+토스트는 `@heroui/react` 의 `toast.danger`, 위반 question 카드에 `border-danger` 강조. 폼 입력이 변경되면 강조는 자동 해제.
 
 ## 직렬화 위치
 

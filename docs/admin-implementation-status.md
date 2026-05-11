@@ -58,7 +58,7 @@
 | 검색 / 상태 필터 (전체·대기·발송완료) | 프론트엔드 | – | ✅ | FE: `EarlyNotificationToolbar` + 클라이언트 필터링 |
 | 통계 카드 (전체/대기/발송완료) | 프론트엔드 | – | ✅ | FE: `EarlyNotificationStatsSection.tsx` |
 | CSV 내보내기 | 양쪽 | ✅ | ✅ | BE: `GET /admin/early-notifications/export`. FE: `pages/early-notification/hooks/useDownloadEarlyNotificationsCsv.ts` + `lib/triggerCsvDownload.ts` |
-| **기수 상태 → 모집중 변경 시 자동 이메일 발송** | 양쪽 | ⚠️ | ⚠️ | BE: 상태 변경 트리거 없음, `NotificationCampaign`(scheduledAt) 방식으로 우회 구현. FE: 자동 트리거 대신 `EarlyNotificationBulkSendDrawer` 로 관리자 수동 일괄 발송 UI 제공. 캠페인 도메인은 `packages/api/src/notification-campaign/` 에 SDK 추가됨 (queries/mutations 노출), 어드민 UI 미연결 |
+| **기수 상태 → 모집중 변경 시 자동 이메일 발송** | 양쪽 | ⚠️ | ✅ | BE: 상태 변경 트리거 없음, `NotificationCampaign`(scheduledAt) 방식으로 우회 구현. FE: `NotificationCampaignSection` (`pages/early-notification/components/`) 으로 캠페인 목록·편집·PAUSED↔SCHEDULED 토글 제공. 운영자가 본문·시각을 손본 뒤 SCHEDULED 로 풀면 백엔드 스케줄러가 자동 발송. 즉시 발송이 필요할 때는 기존 `EarlyNotificationBulkSendDrawer` 사용 |
 
 ### NotificationCampaign 동작 방식 (현재 구현)
 
@@ -69,9 +69,9 @@
   → scheduledAt 도달 시 스케줄러가 자동 발송
 ```
 
-> ⚠️ FE 의 일괄 발송 UI(`EarlyNotificationBulkSendDrawer`)는 캠페인이 아닌 즉시 발송 엔드포인트(`useSendBulkEarlyNotification`)를 호출한다.
->
-> 캠페인 도메인 SDK(`notificationCampaignQueries` / `notificationCampaignMutations` — create/list/update/delete/pause/resume) 는 `packages/api/src/notification-campaign/` 에 추가 완료. 단, 어드민 UI(캠페인 목록·편집·PAUSED↔SCHEDULED 전환) 는 아직 미구현.
+> 두 가지 발송 흐름이 공존한다:
+> - **즉시 일괄 발송** (`EarlyNotificationBulkSendDrawer` → `useSendBulkEarlyNotification`) — 예외 상황용
+> - **예약 발송 캠페인** (`NotificationCampaignSection` → `useUpdateCampaignFlow` / `useToggleCampaignScheduleFlow`) — 평상시. PAUSED 캠페인을 SCHEDULED 로 풀면 백엔드 스케줄러가 `scheduledAt` 도달 시 자동 발송
 
 ---
 
@@ -197,7 +197,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 |---|--------|------|-----------|--------|-----------|------------|
 | 1 | 기수 | 모집중 전환 조건: 지원서 양식 필수 검증 | 양쪽 | ❌ | ❌ | BE: `updateCohort()` 에서 `RECRUITING` 전환 시 모든 파트 `applicationSchema` 검증. FE: `useTransitionCohortStatusFlow` 호출 전 양식 빈 칸 가드 + 에러 toast |
 | 2 | 기수 | 파트별 면접 슬롯 관리 UI | 프론트엔드 | ✅ | ❌ | FE: `pages/interview-slots`(가칭) 신설 또는 기수 상세 내 슬롯 관리 섹션 추가 |
-| 3 | 사전 알림 | 모집중 변경 시 즉시 이메일 발송 | 양쪽 | ⚠️ | ⚠️ | BE: 상태 변경 → 캠페인 자동 활성화 또는 즉시 발송. FE: `notificationCampaign*` SDK 추가됨 — 어드민 UI(캠페인 목록·편집·PAUSED↔SCHEDULED 전환) 연결 남음 |
+| 3 | 사전 알림 | 모집중 변경 시 **즉시** 이메일 발송 | 양쪽 | ⚠️ | ✅ | BE: 상태 변경 트리거 부재 — 캠페인 + scheduledAt 우회. FE: 캠페인 어드민 UI 연결 완료(`NotificationCampaignSection`). 명세상 "상태 변경 즉시" 발송은 BE 가 트리거를 도입해야 100% 충족 |
 | 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ⚠️ | FE: `StatusChangeModal` 에러 코드 분기 + 강조 토스트 적용. 슬롯 생성 페이지 이동은 슬롯 관리 UI 도입 후 (별도 PR) |
 | 5 | 지원 | 최종합격 이메일 내 Discord OAuth 버튼 | 백엔드 | ⚠️ | – | BE: `EmailEventHandler` 최종합격 템플릿 Discord OAuth URL 포함 확인 |
 | 6 | 지원 | Google Meet 링크 생성 | 백엔드 | ⚠️ | – | BE: `GoogleCalendarClient` 이벤트 `conferenceData` 포함 확인 |

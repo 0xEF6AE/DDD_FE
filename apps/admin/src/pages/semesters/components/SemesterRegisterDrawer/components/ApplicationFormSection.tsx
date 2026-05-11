@@ -1,12 +1,5 @@
 import { useId, useState } from "react"
-import {
-  Button,
-  Checkbox,
-  Input,
-  Switch,
-  Tabs,
-  TextArea,
-} from "@heroui/react"
+import { Button, Switch, Tabs, TextArea } from "@heroui/react"
 import { PlusSignIcon, X } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useFormContext, useWatch } from "react-hook-form"
@@ -14,14 +7,16 @@ import { useFormContext, useWatch } from "react-hook-form"
 import type { CohortPartName } from "@ddd/api"
 
 import { PART_LABEL, SEMESTER_PARTS } from "@/entities/cohort"
+import { cn } from "@/shared/lib/cn"
 import { Section } from "@/shared/ui/Section"
 
-import type {
-  CohortPartQuestion,
-  SemesterRegisterForm,
-} from "../../../types"
+import type { CohortPartQuestion, SemesterRegisterForm } from "../../../types"
 
-export function ApplicationFormSection() {
+interface Props {
+  invalidCells: ReadonlySet<string>
+}
+
+export function ApplicationFormSection({ invalidCells }: Props) {
   const { control, setValue, getValues } =
     useFormContext<SemesterRegisterForm>()
   const parts = useWatch({ control, name: "parts" })
@@ -108,24 +103,33 @@ export function ApplicationFormSection() {
 
         {SEMESTER_PARTS.map((part) => (
           <Tabs.Panel key={part} id={part} className="space-y-3 py-4">
-            <div className="flex items-center justify-between rounded-md border border-default-200 px-3 py-2">
-              <span className="text-sm font-medium">모집 오픈</span>
+            <div className="border-default-200 flex items-center justify-between rounded-md border px-3 py-2">
               <Switch
                 isSelected={parts[part].isOpen}
                 onChange={(isSelected) => setPartIsOpen(part, isSelected)}
                 aria-label={`${PART_LABEL[part]} 모집 오픈`}
-              />
+              >
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                <Switch.Content>
+                  <span className="text-sm font-medium">모집 오픈</span>
+                </Switch.Content>
+              </Switch>
             </div>
 
             {parts[part].questions.map((question, qIndex) => {
               const labelId = `${baseLabelId}-${part}-${qIndex}-label`
-              const keyId = `${baseLabelId}-${part}-${qIndex}-key`
-              const isKeyReadOnly =
+              const isLocked =
                 Boolean(question.key) && originalKeys.has(question.key)
+              const isInvalid = invalidCells.has(`${part}:${qIndex}`)
               return (
                 <div
                   key={qIndex}
-                  className="space-y-2 rounded-md border border-default-200 p-3"
+                  className={cn(
+                    "border-default-200 space-y-2 rounded-md border p-3",
+                    isInvalid && "border-danger"
+                  )}
                 >
                   <div className="flex items-center justify-between">
                     <label
@@ -146,42 +150,38 @@ export function ApplicationFormSection() {
                     )}
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={keyId}
-                      className="text-xs text-foreground-secondary"
-                    >
-                      key (저장 후 변경 불가)
-                    </label>
-                    <Input
-                      id={keyId}
-                      placeholder="motivation"
-                      value={question.key}
-                      isReadOnly={isKeyReadOnly}
-                      onChange={(e) =>
-                        updateQuestion(part, qIndex, { key: e.target.value })
-                      }
-                    />
-                  </div>
-
                   <TextArea
                     aria-labelledby={labelId}
                     placeholder="질문을 입력하세요"
                     className="w-full resize-none"
                     value={question.label}
+                    isReadOnly={isLocked}
                     onChange={(e) =>
                       updateQuestion(part, qIndex, { label: e.target.value })
                     }
                   />
 
-                  <Checkbox
-                    isSelected={question.required}
-                    onChange={(isSelected) =>
-                      updateQuestion(part, qIndex, { required: isSelected })
-                    }
-                  >
-                    필수 응답
-                  </Checkbox>
+                  <div className="flex items-center justify-between">
+                    <Switch
+                      isSelected={question.required}
+                      onChange={(isSelected) =>
+                        updateQuestion(part, qIndex, { required: isSelected })
+                      }
+                      aria-label="필수 응답"
+                    >
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      <Switch.Content>
+                        <span className="text-sm font-medium">필수 응답</span>
+                      </Switch.Content>
+                    </Switch>
+                    {isLocked && (
+                      <span className="text-foreground-secondary text-xs">
+                        저장됨: {question.key}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}

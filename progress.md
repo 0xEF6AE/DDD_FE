@@ -27,7 +27,7 @@
 | --- | --- | --- |
 | 공통 인프라 (admin) | 🔧 | 대부분 도메인 연동 완료. cohort·auth·storage 3개 도메인이 generated 미사용 (직접 HTTP 클라이언트) |
 | 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
-| 3.2 사전 알림 | 🔧 | 일괄 발송·CSV ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
+| 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
 | 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
@@ -58,7 +58,7 @@
 - ⚠️ **cohort** — generated(`cohortGetAdminList` 등) 미사용, 직접 HTTP 클라이언트(`cohortAPI`) 구현. 다른 도메인과 패턴 불일치
 - ⚠️ **auth** — generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 구현
 - ⚠️ **storage** — generated(`storageUploadFile`) 미사용, 직접 HTTP 클라이언트. `storageListFiles` · `storageDeleteFile` · `storageCreateSignedUrl` · `storageDownloadFile` 훅 미구현
-- 🔧 **notification-campaign** — `packages/api/src/notification-campaign/` 도메인 폴더 추가 완료 (`notificationCampaignQueries`/`notificationCampaignMutations` 노출). 어드민 UI(캠페인 목록·편집·PAUSED↔SCHEDULED 전환) 미연결
+- ✅ **notification-campaign** — `packages/api/src/notification-campaign/` SDK + 어드민 UI(`/early-notification` 페이지 안 캠페인 섹션: 목록·편집 Drawer·PAUSED↔SCHEDULED 토글) 연결 완료
 
 **완료 (인프라)**
 
@@ -91,7 +91,7 @@
 - ✅ 새 기수 등록 버튼 — `SemestersPage.tsx:77-85` `onPress` 연결, Drawer 정상 오픈
 - 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
 - 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
-- ✅ 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — `ApplicationFormSection` 에 key Input + label TextArea + required Checkbox + isOpen Switch. 저장된 key 는 `useState` lazy init 으로 readonly 보존. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패 시 `PartsSaveAfterCreateError` throw → 호출부가 edit 모드로 전환. `cohort.applicationForm` 은 dead 필드로 제거 — 단일 source 는 `PUT /admin/cohorts/{id}/parts` ([정책](./docs/admin-cohort-parts-policy.md))
+- ✅ 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — `ApplicationFormSection` 에 label TextArea + required Switch + isOpen Switch (key Input 제거). 저장 직전 `serializeFormToPartsPayload` 가 빈 key 를 `slugify(label)` 결과로 자동 생성(한글 그대로 허용, 예: `지원_동기`). 저장된 question 은 label 이 `isReadOnly`, 카드에 `저장됨: <key>` caption 노출. Drawer `onSubmit` 게이트가 `validateFormParts` 로 빈 label·part 내부 중복 key 를 클라에서 차단 + `toast.danger` + 위반 카드 `border-danger` 강조. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패 시 `PartsSaveAfterCreateError` throw → 호출부가 edit 모드로 전환. `cohort.applicationForm` 은 dead 필드로 제거 — 단일 source 는 `PUT /admin/cohorts/{id}/parts` ([정책](./docs/admin-cohort-parts-policy.md))
 - ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동
 - ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
 - ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입
@@ -110,7 +110,8 @@
 - ⬜ 개별 발송 버튼 — `RemindersTable.tsx:28-34` 헤더에 액션 컬럼 자체가 없음 (HTML 목업에는 있음)
 - ✅ 이메일 목록 CSV 다운로드 — `useDownloadEarlyNotificationsCsv` 훅 + `earlyNotificationQueries` 팩토리 경유. `EarlyNotificationToolbar` 버튼 연동
 - ⬜ 개별 발송 — **백엔드 generated에 단건 발송 엔드포인트 없음**. 백엔드 추가 후 구현 가능
-- ⬜ 기수 상태 "모집중" 전환 시 자동 발송 (Phase 2)
+- ✅ 캠페인(예약 발송) 관리 — `NotificationCampaignSection` (목록·상태 배지·편집 Drawer·PAUSED↔SCHEDULED 토글). 기수 생성 시 자동 생성된 캠페인을 운영자가 본문·시각 수정 후 SCHEDULED 로 풀면 백엔드 스케줄러가 자동 발송
+- ⬜ 기수 상태 "모집중" 전환 시 **즉시** 자동 발송 (Phase 2 — 현재는 캠페인 scheduledAt 기반)
 
 ---
 
@@ -247,7 +248,7 @@
 | 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
 | 어드민 — 기수 관리 (상태 + 수동 변경) | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패 시 edit 모드 자동 전환 |
 | 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
-| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
+| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV/캠페인(예약 발송 관리) 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | SEO — sitemap/robots/OG/Schema.org/상세 URL | ⬜ | |
@@ -271,7 +272,7 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 | **cohort** | generated(`cohortGetAdminList` 등) 미사용, `cohortAPI` 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
 | **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
 | **storage** | generated 미사용. `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 | 파일 관리 기능 확장 불가 |
-| **notification-campaign** | 도메인 폴더 추가 완료 (`packages/api/src/notification-campaign/`). 소비처(어드민 UI: 캠페인 섹션·편집 Drawer·상태 전환) 미구현 | 백엔드 자동 발송 흐름과 어드민 연결 대기 |
+| ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료 | 갭 해소 |
 | **interview** | `cancelReservation` query 미구현 | 예약 취소 불가 |
 | **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
 

@@ -9,6 +9,8 @@ import type {
   UpdateCohortRequestDto,
 } from "@ddd/api"
 
+import { slugify } from "@/shared/lib/slug"
+
 import type {
   CohortPartFormState,
   CohortPartQuestion,
@@ -89,7 +91,7 @@ export const serializeFormToPartsPayload = (
     isOpen: form.parts[name].isOpen,
     formSchema: {
       questions: form.parts[name].questions.map(({ key, label, required }) => ({
-        key,
+        key: key.trim() || slugify(label),
         label,
         required,
       })),

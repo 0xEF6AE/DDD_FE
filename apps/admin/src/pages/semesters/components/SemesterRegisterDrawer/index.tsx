@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button, Drawer, toast } from "@heroui/react"
 import { FormProvider, useForm } from "react-hook-form"
 
@@ -8,6 +8,7 @@ import {
   PartsSaveAfterCreateError,
   SEMESTER_PARTS,
   useCreateOrUpdateCohortFlow,
+  validateFormParts,
 } from "@/entities/cohort"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 
@@ -91,11 +92,24 @@ export function SemesterRegisterDrawer({
     handleSubmit,
     formState: { isSubmitting },
     reset,
+    watch,
   } = methods
 
   useEffect(() => {
     if (isOpen) reset(buildDefaults(prefill))
   }, [isOpen, mode, prefill, reset])
+
+  const [invalidCells, setInvalidCells] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  useEffect(() => {
+    const subscription = watch((_, { name }) => {
+      if (name?.startsWith("parts")) {
+        setInvalidCells((prev) => (prev.size === 0 ? prev : new Set()))
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [watch])
 
   const { submit, isPending: isMutating } = useCreateOrUpdateCohortFlow({
     mode,
@@ -103,6 +117,17 @@ export function SemesterRegisterDrawer({
   })
 
   const onSubmit = handleSubmit(async (values) => {
+    const validationError = validateFormParts(values)
+    if (validationError) {
+      toast.danger(validationError.message)
+      setInvalidCells(
+        new Set(
+          validationError.invalidCells.map((c) => `${c.part}:${c.index}`)
+        )
+      )
+      return
+    }
+
     try {
       const result = await submit(values)
       toast.success(
@@ -112,6 +137,7 @@ export function SemesterRegisterDrawer({
       )
       onOpenChange(false)
       reset(buildDefaults())
+      setInvalidCells(new Set())
     } catch (error) {
       if (error instanceof PartsSaveAfterCreateError) {
         toast.danger("파트 양식 저장에 실패했습니다", {
@@ -148,7 +174,7 @@ export function SemesterRegisterDrawer({
                 <BasicInfoSection />
                 <ProcessSection />
                 <CurriculumSection />
-                <ApplicationFormSection />
+                <ApplicationFormSection invalidCells={invalidCells} />
               </form>
             </FormProvider>
           </Drawer.Body>
