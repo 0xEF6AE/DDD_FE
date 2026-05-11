@@ -32,7 +32,6 @@
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
 | 3.6 FAQ | ✅ | MVP 제외 결정 (FE 하드코딩) |
-| 4. SEO (web) | ⬜ | 스켈레톤만, 거의 전부 미구현 |
 | 5. 데이터 모델 타입 반영 | 🔧 | `@ddd/api` 생성 타입 도입 진행 중 — `pages/semesters/types.d.ts` 임시 타입 잔존 |
 
 ---
@@ -62,14 +61,15 @@
 
 **완료 (인프라)**
 
-- ✅ Google OAuth 실제 연결 — `LoginPage`가 `${VITE_API_URL}/api/v1/auth/google`로 외부 redirect, 백엔드가 `CLIENT_REDIRECT_URL`로 되돌림 (httpOnly 쿠키)
-- ✅ 인증 보호 라우트 (Minimal) — 별도 loader 가드 없이 `client.ts` 401 인터셉터 + `main.tsx` `onUnauthorized` 콜백에 위임. 401 발생 시 `/` 로 자동 redirect
-- ✅ 사이드바 사용자 메뉴 드롭다운 + 로그아웃 흐름 — `widgets/navigation/UserMenuDropdown.tsx` + `entities/auth/model/useLogoutFlow.ts` (`@ddd/api` `useLogout` mutation → 토스트 → `/` redirect)
+- ✅ Google OAuth 실제 연결 — `LoginPage` 가 `/api/v1/auth/google` 로 top-level navigation (same-origin), 백엔드가 `CLIENT_REDIRECT_URL` 로 되돌림 (httpOnly 쿠키)
+- ✅ 인증 보호 라우트 (Minimal) — 별도 loader 가드 없이 `client.ts` 401 인터셉터 + `main.tsx` `onUnauthorized` 콜백에 위임. 401 발생 시 `paths.login` 으로 자동 redirect
+- ✅ 사이드바 사용자 메뉴 드롭다운 + 로그아웃 흐름 — `widgets/navigation/UserMenuDropdown.tsx` + `entities/auth/model/useLogoutFlow.ts` (`@ddd/api` `useLogout` mutation → 토스트 → `paths.login` redirect)
+- ✅ same-origin 배포 환경 코드 준비 — `client.ts` `buildUrl()` 이 `window.location.origin` 자동 결합, Vite dev proxy (`/api → localhost:3000`), `.github/workflows/deploy-admin.yml` (SCP + atomic swap). 머지 전 GitHub Secrets 등록 + BE 측 Caddy/compose 부트스트랩 필요 — 단일 출처: [docs/admin-deploy.md](./docs/admin-deploy.md)
 
 **비-목표 (별도 라운드)**
 
 - 회원가입 — 별도 흐름 없음 (Google OAuth 첫 로그인이 곧 가입)
-- 로그인 사용자 컨텍스트 (me 표시) — 백엔드 `/me` 엔드포인트 추가 후
+- 로그인 사용자 컨텍스트 (me 표시) — 백엔드 `GET /api/v1/users/me` 추가 합의됨 (별도 PR 에서 옵션 A 가드 도입 예정)
 - 회원 탈퇴 UI — 별도 라운드
 - 권한(roles) 기반 접근 제어 — 별도 라운드
 
@@ -92,7 +92,7 @@
 - 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
 - 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
 - ✅ 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — `ApplicationFormSection` 에 label TextArea + required Switch + isOpen Switch (key Input 제거). 저장 직전 `serializeFormToPartsPayload` 가 빈 key 를 `slugify(label)` 결과로 자동 생성(한글 그대로 허용, 예: `지원_동기`). 저장된 question 은 label 이 `isReadOnly`, 카드에 `저장됨: <key>` caption 노출. Drawer `onSubmit` 게이트가 `validateFormParts` 로 빈 label·part 내부 중복 key 를 클라에서 차단 + `toast.danger` + 위반 카드 `border-danger` 강조. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패 시 `PartsSaveAfterCreateError` throw → 호출부가 edit 모드로 전환. `cohort.applicationForm` 은 dead 필드로 제거 — 단일 source 는 `PUT /admin/cohorts/{id}/parts` ([정책](./docs/admin-cohort-parts-policy.md))
-- ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동
+- ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동. RECRUITING 전환 시 `validateCohortPartsForRecruiting` 가드(isOpen 파트 0개 또는 양식 비어있는 파트가 있으면 mutation 호출 없이 `TransitionBlockedDialog` 노출 → "수정 화면 열기" 시 해당 cohort edit Drawer 자동 오픈). 위반 파트 자동 스크롤·강조는 후속 PR
 - ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
 - ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입
 - ⬜ 모집 종료일 경과 시 자동 "활동중" 전환 (백엔드/스케줄러 책임)
@@ -187,42 +187,6 @@
 
 ---
 
-## 4. SEO 요구사항 (apps/web)
-
-> 현재 `apps/web` 은 App Router 스켈레톤(`layout.tsx`, `page.tsx`, 빈 섹션 페이지들)만 존재. 대부분 미구현.
-
-### 4.1 페이지 구조
-
-- ⬜ 프로젝트 상세 `/projects/[id]` SSG 빌드 + 텍스트 콘텐츠
-- ⬜ 페이지별 고유 `<title>` ("페이지명 | DDD" 형식)
-- ⬜ 페이지별 `<meta name="description">` (120자 이내)
-- ⬜ `sitemap.xml` 자동 생성 (프로젝트 상세 포함)
-- ⬜ `robots.txt` (`/admin/*` Disallow)
-- ⬜ Canonical URL 설정 (중복 콘텐츠 방지)
-- ⬜ 이미지 alt 텍스트 (프로젝트 썸네일 포함)
-- ⬜ Phase 2: `/blog/[slug]` 내부 아티클 페이지화
-
-### 4.2 Open Graph (SNS 공유)
-
-- ⬜ `og:title` / `og:description` (페이지별 개별 설정)
-- ⬜ `og:image` (프로젝트 상세: 썸네일 / 나머지: DDD 기본)
-- ⬜ `og:url` (canonical과 동일)
-- ⬜ `twitter:card = summary_large_image`
-
-### 4.3 구조화 데이터 (Schema.org)
-
-- ⬜ 홈 FAQ 섹션 — `FAQPage`
-- ⬜ 홈 — `Organization`
-- ⬜ 프로젝트 상세 — `SoftwareApplication`
-
-### 4.4 성능 (Core Web Vitals)
-
-- ⬜ LCP < 2.5s — Next.js `<Image>` 우선 로딩 적용
-- ⬜ CLS < 0.1 — 이미지 width/height 명시, 폰트 preload
-- ⬜ INP < 200ms — 불필요 JS 번들 제거, 코드 스플리팅
-
----
-
 ## 5. 데이터 모델 (참조)
 
 백엔드 스키마이지만 프론트 타입 반영 여부 추적 목적.
@@ -251,7 +215,6 @@
 | 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV/캠페인(예약 발송 관리) 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
-| SEO — sitemap/robots/OG/Schema.org/상세 URL | ⬜ | |
 
 ### 6.2 Phase 2
 
