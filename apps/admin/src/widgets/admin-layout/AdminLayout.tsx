@@ -18,7 +18,7 @@ export const AdminLayout = () => {
       </div>
     )
   }
-
+  console.log("인증 상태:", status)
   if (status === "unauthenticated") {
     return <Navigate to={paths.login} replace />
   }

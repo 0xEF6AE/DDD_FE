@@ -18,11 +18,9 @@ export interface RequireAuthResult {
  * - `authenticated`: `me` 데이터 보유
  */
 export function useRequireAuth(): RequireAuthResult {
-  const { data, isPending, isError } = useQuery(usersQueries.getMe())
+  const { data: me, isPending, isError } = useQuery(usersQueries.getMe())
 
   if (isPending) return { status: "loading", me: undefined }
-
-  const me = data?.data
   if (isError || !me) return { status: "unauthenticated", me: undefined }
 
   return { status: "authenticated", me }
