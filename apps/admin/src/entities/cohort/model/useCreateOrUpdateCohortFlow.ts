@@ -1,4 +1,3 @@
-import { toast } from "@heroui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { cohortKeys, cohortMutations } from "@ddd/api"
@@ -6,8 +5,19 @@ import { cohortKeys, cohortMutations } from "@ddd/api"
 import type { SemesterRegisterForm } from "../../../pages/semesters/types"
 import {
   serializeFormToCreatePayload,
+  serializeFormToPartsPayload,
   serializeFormToUpdatePayload,
 } from "./serialize"
+
+export class PartsSaveAfterCreateError extends Error {
+  readonly name = "PartsSaveAfterCreateError"
+  constructor(
+    public readonly newCohortId: number,
+    public readonly cause: unknown
+  ) {
+    super("Cohort created but parts save failed")
+  }
+}
 
 type Mode = "create" | "resume" | "edit"
 
@@ -15,54 +25,62 @@ interface Args {
   mode: Mode
   /** resume/edit 에서 채워짐. create 모드면 null */
   targetId: number | null
-  /** 성공 시 호출 (Drawer 닫기 등) */
-  onSuccess?: () => void
 }
 
-/**
- * 등록/저장 흐름 훅.
- * - mode=create   → POST /admin/cohorts
- * - mode=resume   → PATCH /admin/cohorts/:targetId
- * - mode=edit     → PATCH /admin/cohorts/:targetId
- */
-export const useCreateOrUpdateCohortFlow = ({
-  mode,
-  targetId,
-  onSuccess,
-}: Args) => {
+interface SubmitResult {
+  cohortId: number
+  name: string
+  createdInThisCall: boolean
+}
+
+export const useCreateOrUpdateCohortFlow = ({ mode, targetId }: Args) => {
   const queryClient = useQueryClient()
   const createMutation = useMutation(cohortMutations.createCohort())
   const updateMutation = useMutation(cohortMutations.updateCohort())
+  const updatePartsMutation = useMutation(cohortMutations.updateCohortParts())
 
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const isPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    updatePartsMutation.isPending
 
-  const submit = async (form: SemesterRegisterForm) => {
+  const submit = async (form: SemesterRegisterForm): Promise<SubmitResult> => {
+    let cohortId = targetId
+    let name = ""
+    let createdInThisCall = false
+
     try {
       if (mode === "create") {
-        const payload = serializeFormToCreatePayload(form)
-        const created = await createMutation.mutateAsync({ payload })
-        queryClient.invalidateQueries({ queryKey: cohortKeys.all })
-        toast.success(`기수 ${created.name}을(를) 등록했습니다`)
-      } else {
-        if (targetId == null) {
-          toast.danger("저장할 기수를 찾을 수 없습니다")
-          return
-        }
-        const payload = serializeFormToUpdatePayload(form)
-        await updateMutation.mutateAsync({
-          params: { id: targetId },
-          payload,
+        const created = await createMutation.mutateAsync({
+          payload: serializeFormToCreatePayload(form),
         })
-        queryClient.invalidateQueries({ queryKey: cohortKeys.all })
-        toast.success("기수 정보를 저장했습니다")
+        cohortId = created.id
+        name = created.name
+        createdInThisCall = true
+      } else {
+        if (cohortId == null) throw new Error("저장할 기수를 찾을 수 없습니다")
+        const updated = await updateMutation.mutateAsync({
+          params: { id: cohortId },
+          payload: serializeFormToUpdatePayload(form),
+        })
+        name = updated.name
       }
-      onSuccess?.()
-    } catch (error) {
-      const fallback =
-        mode === "create" ? "기수 등록에 실패했습니다" : "저장에 실패했습니다"
-      toast.danger(fallback, {
-        description: (error as Error)?.message,
-      })
+
+      try {
+        await updatePartsMutation.mutateAsync({
+          params: { id: cohortId! },
+          payload: serializeFormToPartsPayload(form),
+        })
+      } catch (partsError) {
+        if (createdInThisCall) {
+          throw new PartsSaveAfterCreateError(cohortId!, partsError)
+        }
+        throw partsError
+      }
+
+      return { cohortId: cohortId!, name, createdInThisCall }
+    } finally {
+      queryClient.invalidateQueries({ queryKey: cohortKeys.all })
     }
   }
 
