@@ -1,7 +1,7 @@
 # DDD 프론트엔드 진행 현황
 
 > **기준 문서**: 어드민 기능 명세 3.x, SEO 요구사항 4.x, 데이터 모델 5.x, MVP 범위 6.x
-> **코드 스냅샷**: 2026-05-08 (branch: `dev/admin`)
+> **코드 스냅샷**: 2026-05-11 (branch: `dev/admin`)
 > **범례**: ✅ 완료 / 🔧 부분 구현 (UI만 또는 목업 연결) / ⬜ 미구현
 
 ---
@@ -26,7 +26,7 @@
 | 영역 | 상태 | 핵심 갭 |
 | --- | --- | --- |
 | 공통 인프라 (admin) | 🔧 | 대부분 도메인 연동 완료. cohort·auth·storage 3개 도메인이 generated 미사용 (직접 HTTP 클라이언트) |
-| 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경 API 연동 완료 — 브라우저 검증 미실시 |
+| 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
 | 3.2 사전 알림 | 🔧 | 일괄 발송·CSV ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
 | 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
@@ -91,7 +91,7 @@
 - ✅ 새 기수 등록 버튼 — `SemestersPage.tsx:77-85` `onPress` 연결, Drawer 정상 오픈
 - 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
 - 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
-- 🔧 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — ApplicationFormSection RHF 연결, 브라우저 검증 미실시. **`cohortMutations.updateCohortParts()` 존재하나 미연결** (`packages/api/src/cohort/queries.ts:107`)
+- ✅ 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — `ApplicationFormSection` 에 key Input + label TextArea + required Checkbox + isOpen Switch. 저장된 key 는 `useState` lazy init 으로 readonly 보존. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패 시 `PartsSaveAfterCreateError` throw → 호출부가 edit 모드로 전환. `cohort.applicationForm` 은 dead 필드로 제거 — 단일 source 는 `PUT /admin/cohorts/{id}/parts` ([정책](./docs/admin-cohort-parts-policy.md))
 - ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동
 - ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
 - ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입
@@ -230,7 +230,7 @@
 - ✅ `project.platform` ENUM[] — `ProjectPlatform` 타입 사용 중
 - ✅ `early_notification` — `EarlyNotificationDto` 사용 중
 - 🔧 `applicant` — `ApplicationDto` 사용 중. 개인정보 필드(privacy_agreed_at, delete_scheduled_at 등) 상세 페이지 미구현으로 미검증
-- ⬜ `pages/semesters/types.d.ts` 폼 전용 타입(`SemesterRegisterForm` 등) — `@ddd/api` DTO와 중복 여부 재검토 필요
+- ✅ `pages/semesters/types.d.ts` 의 `SemesterRegisterForm` / `CohortPartFormState` 는 폼 입력 전용 (UI state). `serialize.ts` 가 DTO(`CohortPartConfigDto` 등) 와 매핑 — 의도된 분리, 중복 아님
 
 ---
 
@@ -245,7 +245,7 @@
 | 홈페이지 — 지원 (사전 알림 / 지원서 + 개인정보 동의) | ⬜ | |
 | 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF) | ⬜ | `project/[id]` 라우트만 존재 |
 | 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
-| 어드민 — 기수 관리 (상태 + 수동 변경) | 🔧 | 목록/통계/등록/수정/상태변경 완료. 파트별 양식 저장(`useUpdateCohortParts`) 미연결 |
+| 어드민 — 기수 관리 (상태 + 수동 변경) | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패 시 edit 모드 자동 전환 |
 | 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
 | 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
@@ -287,6 +287,6 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 
 ### 우선순위 Top 3 (가장 빠르게 가치 회수)
 
-1. **`useUpdateCohortParts` 연결** — `SemesterRegisterDrawer` onSubmit에서 파트별 지원서 양식을 저장하지 않음. 훅과 UI 모두 존재하므로 순수 FE 연결 작업
+1. ~~`useUpdateCohortParts` 연결~~ — ✅ 처리됨 (`useCreateOrUpdateCohortFlow` 안에 `updateCohortParts` mutation 추가, 부분 실패는 `PartsSaveAfterCreateError` throw → 호출부 instanceof 분기. 흐름 훅에서 토스트/콜백 제거하고 호출부 onSubmit 으로 이관)
 2. ~~`StatusChangeModal` `INTERVIEW_SLOTS_NOT_READY` 에러 분기~~ — ✅ 처리됨 (`ApiError.is("INTERVIEW_SLOTS_NOT_READY")` 분기 + 강조 토스트, 모달 유지)
 3. ~~`개인정보 동의 일자` 표시~~ — ✅ 처리됨 (`ApplicationDetailDrawer` 에 `동의 일자` `InfoRow` 추가, BE 미응답 시 `"-"` 폴백)

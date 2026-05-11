@@ -41,9 +41,9 @@
 | 모집기간 종료 시 자동으로 활동중 전환 | 백엔드 | ✅ | – | `CohortScheduler` 매일 자정 실행 |
 | 모집예정 → 모집중 자동 전환 (recruitStartAt 도달) | 백엔드 | ✅ | – | `CohortScheduler.transitionUpcomingToRecruiting()` |
 | 수동 상태 전환 (모집예정→모집중→활동중→활동종료) | 양쪽 | ✅ | ✅ | FE: `useTransitionCohortStatusFlow.ts` + `SemesterTableRow` "다음 단계 전환" 버튼 |
-| 파트별 지원서 양식 설정 | 양쪽 | ✅ | ✅ | BE: `PUT /admin/cohorts/:id/parts`. FE: `SemesterRegisterDrawer/components/ApplicationFormSection.tsx` (PM/PD/BE/FE/IOS/AND 탭) |
+| 파트별 지원서 양식 설정 | 양쪽 | ✅ | ✅ | BE: `PUT /admin/cohorts/:id/parts` 단일 source. FE: `ApplicationFormSection` 에 key Input + label TextArea + required Checkbox + isOpen Switch. 저장된 key 는 readonly. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패는 `PartsSaveAfterCreateError` throw → 호출부 edit 모드 전환 |
 | 파트별 면접 슬롯 설정 | 양쪽 | ✅ | ❌ | BE: `InterviewSlot` 도메인 분리. FE: 슬롯 관리 UI(생성/수정/삭제 페이지·드로어) 미구현 |
-| process / curriculum / applicationForm JSON 필드 | 양쪽 | ✅ | ✅ | FE: `ProcessSection` / `CurriculumSection` / `ApplicationFormSection` |
+| process / curriculum / parts JSON 필드 | 양쪽 | ✅ | ✅ | FE: `ProcessSection` / `CurriculumSection` / `ApplicationFormSection` — `cohort.applicationForm` 은 dead 필드로 제거, 양식은 `cohort.parts` 단일 source ([정책](./admin-cohort-parts-policy.md)) |
 | **모집중 전환 조건: 파트별 지원서 양식 필수 검증** | 양쪽 | ❌ | ❌ | BE: 검증 미구현. FE: 전환 버튼 클릭 전 모든 파트 양식 채워졌는지 가드도 없음 |
 
 ---
