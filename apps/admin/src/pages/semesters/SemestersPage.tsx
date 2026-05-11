@@ -9,13 +9,18 @@ import type { CohortDto } from "@ddd/api"
 import {
   serializeCohortToForm,
   useTransitionCohortStatusFlow,
+  type PartsRecruitingViolation,
 } from "@/entities/cohort"
 import { FlexBox } from "@/shared/ui/FlexBox"
 import { GridBox } from "@/shared/ui/GridBox"
 import { StatCard } from "@/shared/ui/StatCard"
 import { TitleSection } from "@/widgets/heading"
 
-import { SemesterRegisterDrawer, SemesterTableSection } from "./components"
+import {
+  SemesterRegisterDrawer,
+  SemesterTableSection,
+  TransitionBlockedDialog,
+} from "./components"
 import {
   useSemesterRegistrationMode,
   useSemestersTableData,
@@ -31,6 +36,10 @@ export default function SemestersPage() {
   // 행 "수정" 클릭 시 채워지는 edit 타겟. registration 모드를 오버라이드.
   const [editTarget, setEditTarget] = useState<CohortDto | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [pendingBlocked, setPendingBlocked] = useState<{
+    cohort: CohortDto
+    violation: PartsRecruitingViolation
+  } | null>(null)
 
   const drawerProps = useMemo(() => {
     if (editTarget) {
@@ -105,9 +114,31 @@ export default function SemestersPage() {
             setEditTarget(row)
             setIsDrawerOpen(true)
           }}
-          onTransitionRow={(row) => transition(row)}
+          onTransitionRow={async (row) => {
+            const result = await transition(row)
+            if (result.status === "blocked") {
+              setPendingBlocked({
+                cohort: result.cohort,
+                violation: result.violation,
+              })
+            }
+          }}
         />
       </div>
+
+      {pendingBlocked && (
+        <TransitionBlockedDialog
+          isOpen
+          onClose={() => setPendingBlocked(null)}
+          cohortName={pendingBlocked.cohort.name}
+          violation={pendingBlocked.violation}
+          onOpenEditDrawer={() => {
+            setEditTarget(pendingBlocked.cohort)
+            setIsDrawerOpen(true)
+            setPendingBlocked(null)
+          }}
+        />
+      )}
     </div>
   )
 }
