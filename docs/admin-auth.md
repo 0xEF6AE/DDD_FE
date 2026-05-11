@@ -17,12 +17,12 @@
 
 ```ts
 // "Google로 로그인" 버튼 클릭 시
-window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/google`
+window.location.href = "/api/v1/auth/google"
 ```
 
 - SPA fetch가 아니라 **반드시 top-level navigation** (`window.location.href` 또는 `<a href>`).
   OAuth는 브라우저 redirect 체인이라 fetch로 시작하면 작동하지 않는다.
-- 운영 환경 베이스: `https://api.dddstudy.kr` (도메인은 환경별 env로 관리).
+- 상대 경로로 시작 → 브라우저가 현재 origin 기준 절대 URL 로 확장. **same-origin 배포**(`admin.dddstudy.kr`) 라서 별도 도메인 prefix 불필요.
 - 현재 구현: `apps/admin/src/pages/login/LoginPage.tsx`.
 
 ---
@@ -30,21 +30,22 @@ window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/google`
 ## 3. 로그인 플로우 (전체)
 
 ```
-[Frontend] /login 페이지에서 버튼 클릭
-   ↓ window.location.href = "{API_BASE}/api/v1/auth/google"
+[Frontend] / 진입 → 로그인 페이지에서 버튼 클릭
+   ↓ window.location.href = "/api/v1/auth/google"
 [Backend] GET /api/v1/auth/google
    ↓ 302 → Google authorize URL
 [Google] 사용자 동의
-   ↓ 302 → "{API_BASE}/api/v1/auth/google/callback?code=..."
+   ↓ 302 → "https://admin.dddstudy.kr/api/v1/auth/google/callback?code=..."
 [Backend] GET /api/v1/auth/google/callback
    ↓ code → token 교환, 사용자 upsert, 자체 JWT 발급
    ↓ Set-Cookie: access_token, refresh_token (httpOnly)
-   ↓ 302 → CLIENT_REDIRECT_URL (= 프론트 URL)
+   ↓ 302 → CLIENT_REDIRECT_URL (= https://admin.dddstudy.kr/applications)
 [Frontend] 쿠키 들고 도착. 인증 상태 확인 후 라우팅 결정.
 ```
 
 - 프론트가 `?code=...` 같은 OAuth 파라미터를 직접 파싱할 일은 **없다**. 그건 전부 백엔드 책임.
-- 프론트 도착 URL은 단순 `https://admin.dddstudy.kr/` 같은 루트(또는 env 설정값). 토큰을 URL에 실어 보내지 않는다.
+- 프론트 도착 URL 은 `CLIENT_REDIRECT_URL` 환경변수(BE 측)로 관리. 운영은 `/applications`, dev 는 `localhost:5173/`.
+- 같은 도메인이라 redirect 후에도 `access_token` / `refresh_token` 쿠키가 자동으로 첫 페이지 fetch 에 동행한다.
 
 ---
 
@@ -76,13 +77,16 @@ window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/google`
 ### 어드민 측 초기화 — `apps/admin/src/main.tsx`
 
 ```ts
+const apiUrl = import.meta.env.VITE_API_URL ?? ""
 configureApi(apiUrl, {
   onUnauthorized: () => {
-    window.location.replace("/")
+    window.location.replace(paths.login)
   },
 })
 ```
 
+- `VITE_API_URL` 이 빈 값이면 `client.ts` 의 `buildUrl()` 이 `window.location.origin` 을 자동 결합한다 (same-origin 배포 전제).
+- `onUnauthorized` 리다이렉트는 항상 `paths.login` (`shared/lib/paths.ts`) 상수를 통해서 — 경로 변경 시 한 곳만 고치면 된다.
 - 새 API fetch 래퍼/axios 인스턴스를 **별도로 만들지 않는다**. 항상 `@ddd/api` 의 `getApiClient()` 또는 도메인별 hook(`useLogout` 등)을 통해 호출한다.
 - **금지**: 직접 `fetch(...)` / `axios.create(...)` 를 새로 만들고 `credentials` 누락. 401 인터셉터를 우회하는 결과를 만든다.
 
@@ -109,7 +113,7 @@ GET /api/v1/auth/me
 - 페이지 데이터 fetch에서 401 → `client.ts` 의 `onUnauthorized()` 가 자동으로 `/`로 redirect.
 - ad-hoc하지만 추가 백엔드 작업 없이 진행 가능.
 
-**현재 어드민은 옵션 B로 동작 중.** 사용성이 떨어진다고 판단되면 백엔드에 `/auth/me` 추가를 요청한다.
+**현재 어드민은 옵션 B로 동작 중.** BE 에 `GET /api/v1/users/me` 추가 작업이 합의되어 있으며, 추가되는 대로 별도 PR 에서 옵션 A 가드(loader 또는 RequireAuth)를 도입한다.
 
 ---
 
@@ -191,27 +195,27 @@ DELETE /api/v1/auth/withdrawal
 
 ## 12. 환경 변수
 
-프론트의 `.env`에 백엔드 베이스 URL만 관리하면 충분하다.
+same-origin 배포라 프론트는 별도 베이스 URL 을 알 필요가 없다.
 
 ```
-# dev
-VITE_API_URL=http://localhost:3000
-
-# prod
-VITE_API_URL=https://api.dddstudy.kr   # 실제 도메인 확인 필요
+# dev / prod 모두
+VITE_API_URL=
 ```
 
+- 빈 값이면 `client.ts` 의 `buildUrl()` 이 `window.location.origin` 을 자동 결합 → dev (`localhost:5173`) / prod (`admin.dddstudy.kr`) 모두 동일 코드 경로.
+- dev 에서는 Vite proxy (`vite.config.ts: server.proxy['/api']`) 가 `/api/*` 를 `localhost:3000` 으로 전달.
 - OAuth 관련 secret / client id 는 프론트가 가지지 않는다(전부 백엔드 책임).
-- `VITE_API_URL`이 없으면 `main.tsx` 에서 즉시 throw 한다.
+- `VITE_API_URL` 누락 시 `main.tsx` 가 throw 하지 않고 `?? ""` 로 fallback 한다.
 
 ---
 
 ## 13. 로컬 개발 시 주의사항
 
 - 백엔드가 `NODE_ENV=development` 모드일 때, OAuth 콜백 후 **프론트로 redirect 하지 않고 JSON `{ accessToken: ... }`을 화면에 띄우는 디버그 분기**가 있다 (`google-auth.controller.ts:80-83`).
-  - 운영처럼 자동 redirect를 보고 싶으면 백엔드 담당에게 해당 분기 비활성화를 요청하거나, JSON 화면이 뜨면 직접 `localhost:5173` 으로 이동.
+  - 운영처럼 자동 redirect를 보고 싶으면 백엔드 담당에게 해당 분기 비활성화를 요청하거나, JSON 화면이 뜨면 직접 `localhost:5173/applications` 로 이동.
   - 쿠키는 어쨌든 셋팅되므로 그 후 프론트에서 보호 API 호출은 정상 작동.
-- 백엔드 CORS는 `credentials: true` + 화이트리스트 origin (`localhost:3000`, `localhost:5173`) 으로 열려 있다.
+- Vite dev proxy 가 `/api/*` 를 `localhost:3000` 으로 전달하므로 브라우저 입장에서 same-origin → CORS 가 작동할 일이 없다. BE 가 dev 모드일 때 CORS 화이트리스트에 `localhost:5173` 이 있어야 하는 케이스는 **프록시를 우회하는 절대 URL fetch** 가 있을 때뿐이다 (그런 코드가 있다면 잘못된 패턴).
+- `cookieDomainRewrite: ""` 옵션으로 BE 가 내려준 쿠키의 domain 속성을 제거해 localhost 에서도 정상 저장된다.
 
 ---
 
@@ -231,15 +235,16 @@ VITE_API_URL=https://api.dddstudy.kr   # 실제 도메인 확인 필요
 
 | 책임                              | 파일                                                            |
 | --------------------------------- | --------------------------------------------------------------- |
-| API 클라이언트 + 401/refresh 인터셉터 | `packages/api/src/client.ts`                                    |
+| API 클라이언트 + 401/refresh 인터셉터 + origin 자동 결합 | `packages/api/src/client.ts`                                    |
 | Auth 도메인 API (`/refresh`, `/logout`, `/withdrawal`) | `packages/api/src/auth/api.ts`                                  |
 | Auth mutations(`logout`, `refreshToken`, `withdrawal`) | `packages/api/src/auth/queries.ts` (`authMutations`)            |
 | API 초기화(`onUnauthorized`)      | `apps/admin/src/main.tsx`                                       |
 | Google 로그인 버튼/진입점         | `apps/admin/src/pages/login/LoginPage.tsx`                      |
 | 로그아웃 흐름 훅                  | `apps/admin/src/entities/auth/model/useLogoutFlow.ts`           |
 | 라우트 경로 상수                  | `apps/admin/src/shared/lib/paths.ts`                            |
-| 인증 가드 유틸 (TODO)             | `apps/admin/src/shared/lib/auth.ts`                             |
+| Vite dev proxy (`/api → localhost:3000`) | `apps/admin/vite.config.ts`                              |
+| 인증 가드 유틸 (TODO — `/users/me` 추가 후) | `apps/admin/src/shared/lib/auth.ts`                       |
 
 ---
 
-**마지막 수정**: 2026-05-03
+**마지막 수정**: 2026-05-11

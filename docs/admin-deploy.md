@@ -1,227 +1,240 @@
-# DDD 어드민 배포 — Vercel + 백엔드 연동 가이드 (단일 출처)
+# DDD 어드민 배포 — same-origin (Caddy + GCP VM) 가이드 (단일 출처)
 
-> 본 문서는 `apps/admin` 프론트엔드를 Vercel 에 배포하고 기존 백엔드와 연동하기 위한
-> **단일 출처(single source of truth)** 다. 도메인 / CORS / 쿠키 / OAuth 관련 작업은 이 문서를 기준으로 한다.
+> 본 문서는 `apps/admin` 프론트엔드를 백엔드와 **같은 도메인(`admin.dddstudy.kr`)** 으로 배포하기 위한
+> **단일 출처(single source of truth)** 다. 도메인 / 라우팅 / 배포 워크플로 관련 작업은 이 문서를 기준으로 한다.
 >
-> 인증 흐름 자체는 [docs/admin-auth.md](./admin-auth.md) 가 단일 출처. 본 문서는 **배포·도메인 컷오버**에 초점.
+> 인증 흐름 자체는 [docs/admin-auth.md](./admin-auth.md) 가 단일 출처. 본 문서는 **배포·도메인 구성**에 초점.
 
 ---
 
-## 1. 도메인 매핑 (결정된 구도)
+## 1. 배포 구도
 
-| 역할 | 도메인 | 비고 |
-| ---- | ------ | ---- |
-| 어드민 프론트 (Vercel) | `https://manage.dddstudy.kr` | 신규 배포 대상 |
-| 백엔드 API | `https://admin.dddstudy.kr` | **현재 운영 중인 도메인 유지** |
+| 역할 | 도메인 | 호스트 |
+| ---- | ------ | ------ |
+| 어드민 프론트 | `https://admin.dddstudy.kr/` (모든 경로) | GCP VM 의 정적 파일 |
+| 백엔드 API | `https://admin.dddstudy.kr/api/*` | 같은 VM 의 Nest 앱(`app:3000`) |
+| Swagger | `https://admin.dddstudy.kr/api-docs`, `/api-docs-json` | 같은 VM 의 Nest 앱 |
 
-- 두 도메인 모두 eTLD+1 이 `dddstudy.kr` 로 동일 → **same-site** → `SameSite=Lax` httpOnly 쿠키 그대로 동작.
-- 백엔드 도메인은 그대로 두므로, 백엔드 쿠키 정책·OAuth Google Cloud 콘솔 redirect URI 는 **변경 불필요**.
-- (향후 백엔드를 `api.dddstudy.kr` 로 옮길 계획이 잡히면 본 문서 §7 참고하여 컷오버.)
+- **same-origin** → CORS 설정/예외 케이스 사실상 소멸
+- **httpOnly 쿠키 단순화** — `SameSite=Lax` 그대로 동작
+- **OAuth redirect URI 도 같은 도메인** — Google Cloud Console 변경 불필요
+
+### 1.1 Caddy 라우팅
+
+```
+/api/*                       → app:3000 (BE)
+/api-docs, /api-docs-json    → app:3000 (BE, Swagger)
+그 외 모든 경로              → /srv/frontend (정적 파일 + try_files {path} /index.html)
+```
+
+OAuth 콜백은 전부 `/api/v1/*` 아래라 BE 가 처리. **프론트는 콜백 페이지를 만들지 않는다.**
+
+| OAuth 엔드포인트 | 실제 경로 |
+| --- | --- |
+| Google 콜백 | `/api/v1/auth/google/callback` |
+| Discord 콜백 | `/api/v1/discord/oauth/callback` |
 
 ---
 
-## 2. 백엔드 담당자에게 요청할 항목 (배포 전 필수)
+## 2. 배포 전략
 
-별도 레포 작업이라 프론트에서는 변경 불가. 아래 3가지를 한 번에 전달한다.
-
-### 2.1 CORS allow-origin 화이트리스트
-
-```
-https://manage.dddstudy.kr         # prod
-https://*-ddd-admin.vercel.app     # Vercel preview (정규식 매칭으로)
-http://localhost:5173              # local dev (이미 등록되어 있을 가능성 높음)
-```
-
-- `Access-Control-Allow-Credentials: true` 유지.
-- preview 도메인 패턴은 Vercel 프로젝트 이름에 따라 달라진다 (예: `ddd-admin-git-<branch>-<team>.vercel.app`). 정확한 패턴은 첫 preview 배포 후 한 번 확인 후 전달.
-
-### 2.2 `CLIENT_REDIRECT_URL` 환경변수 갱신
-
-OAuth 콜백 완료 후 사용자가 돌아오는 프론트 주소.
-
-```
-CLIENT_REDIRECT_URL=https://manage.dddstudy.kr/
-```
-
-- dev 모드의 JSON 디버그 분기(`google-auth.controller.ts:80-83`) 는 prod 환경에서 비활성화 보장.
-
-### 2.3 Google Cloud Console — 변경 없음 (확인만)
-
-OAuth 클라이언트의 Authorized redirect URI 가 백엔드 콜백을 가리키고 있는지 확인.
-
-```
-https://admin.dddstudy.kr/api/v1/auth/google/callback
-```
-
-- 프론트 도메인은 OAuth redirect URI 와 무관 → 추가 등록 불필요.
-
-### 2.4 (선택) 쿠키 / 보안 헤더 점검
-
-prod 환경에서 다음이 활성화되어 있는지 확인 — 이미 되어있다면 회신만.
-
-- `access_token`, `refresh_token` 모두 `httpOnly: true`, `secure: true`, `sameSite: 'lax'`
-- `refresh_token` 의 path 가 `/api/v1/auth/refresh` 로 한정되어 있음
-- `domain` 속성은 미설정(host-only) 권장
+| 항목 | 결정 |
+| --- | --- |
+| 배포 트리거 | **FE 레포 CI 단독** — BE 배포와 독립 |
+| 정적 파일 위치 | VM 호스트 `/opt/ddd-be/frontend/current/` (BE compose 가 `/srv/frontend` 로 마운트) |
+| 배포 원자성 | **Symlink 스왑** — `releases/<sha>/` 에 풀고 `current` 심볼릭 링크 교체 |
+| SSH 사용자 | BE 배포용 user 재사용 (`GCP_VM_USER` / `GCP_VM_SSH_KEY`) |
+| 빌드 환경변수 | `VITE_API_URL=""` (코드가 `window.location.origin` 자동 결합) |
+| 빌드 범위 | `pnpm --filter @ddd/admin... build` (의존 워크스페이스 포함) |
+| 로그인 후 랜딩 | `/applications` |
+| 인증 상태 체크 | 현재 옵션 B (보호 API 첫 호출 시 401). BE 가 `/users/me` 추가하면 옵션 A 로 전환 (별도 PR) |
 
 ---
 
-## 3. 프론트 측 변경 (이 레포)
+## 3. 백엔드 측 작업 (참고용 — FE 가 직접 할 일 아님)
 
-### 3.1 환경변수
+BE 가 선행해야 FE 첫 배포가 정상 동작한다. 핵심 작업:
 
-Vercel 콘솔의 **Environment Variables** (Production + Preview):
-
-```
-VITE_API_URL=https://admin.dddstudy.kr
-VITE_MSW_ENABLED=false
-```
-
-- 로컬 개발용 `apps/admin/.env.local` 은 그대로 (`http://localhost:3000`).
-- `VITE_API_URL` 누락 시 `main.tsx:12` 에서 즉시 throw.
-
-### 3.2 `apps/admin/vercel.json` 신규
-
-SPA fallback + 어드민 비노출 헤더.
-
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    }
-  ]
-}
-```
-
-### 3.3 `apps/admin/public/robots.txt` 신규
-
-```
-User-agent: *
-Disallow: /
-```
-
-### 3.4 `apps/admin/index.html` `<head>` 에 meta 추가
-
-```html
-<meta name="robots" content="noindex, nofollow" />
-```
+- Caddyfile 에 `/api/*` 분기 + SPA fallback 추가
+- `docker-compose.yml` 의 caddy 서비스에 `./frontend/current:/srv/frontend:ro` 볼륨 마운트
+- `deploy.yml` 또는 부트스트랩 스크립트에 `mkdir -p /opt/ddd-be/frontend/current` + placeholder `index.html`
+- 환경변수 `CLIENT_REDIRECT_URL=https://admin.dddstudy.kr/applications` 갱신
+- (선택) `GET /api/v1/users/me` 엔드포인트 추가 — 옵션 A 가드 도입 시 필요
+- 외부 콘솔(Google/Discord)의 OAuth redirect URI 가 이미 `admin.dddstudy.kr` 라면 변경 없음
 
 ---
 
-## 4. Vercel 프로젝트 설정
+## 4. 프론트엔드 — 적용 완료 항목 (참고용)
 
-| 항목 | 값 |
-| ---- | --- |
-| Framework Preset | Vite (또는 Other) |
-| **Root Directory** | `apps/admin` |
-| Install Command | `cd ../.. && pnpm install --frozen-lockfile` |
-| Build Command | `pnpm --filter @ddd/admin build` |
-| Output Directory | `dist` |
-| Node Version | 20.x |
-| Ignored Build Step | `git diff --quiet HEAD^ HEAD -- apps/admin packages/api` |
+다음 변경은 same-origin 전환 PR 에서 이미 반영됨.
 
-### 4.1 커스텀 도메인 연결
+| 파일 | 변경 |
+| --- | --- |
+| `packages/api/src/client.ts` | `buildUrl()` 이 `baseUrl === ""` 일 때 `window.location.origin` 자동 결합 |
+| `apps/admin/src/main.tsx` | `VITE_API_URL` 빈 값 허용 (`?? ""`), `onUnauthorized` 콜백을 `paths.login` 사용으로 통일 |
+| `apps/admin/src/pages/login/LoginPage.tsx` | OAuth 진입을 `/api/v1/auth/google` 상대 경로로 (origin 자동) |
+| `apps/admin/vite.config.ts` | `server.proxy['/api'] → http://localhost:3000` (cookieDomainRewrite 포함) |
+| `apps/admin/.env.local`, `.env.production` | `VITE_API_URL=` (빈 값) |
+| `apps/admin/index.html` | `<meta name="robots" content="noindex, nofollow">` (선재 존재) |
+| `apps/admin/public/robots.txt` | `User-agent: * / Disallow: /` (선재 존재) |
 
-1. Vercel 프로젝트 → Settings → Domains → `manage.dddstudy.kr` 추가
-2. DNS(가비아/Cloudflare 등)에 CNAME 등록:
+> **확장 규칙**: API path 는 항상 `/api/v1/...` 절대 prefix 로 시작한다. baseURL 은 origin 자동 결합이므로 path 가 `/` 로 시작하지 않으면 `new URL` 이 의도와 다르게 동작한다.
+
+---
+
+## 5. GitHub Actions — `.github/workflows/deploy-admin.yml`
+
+main 브랜치 push 시 트리거. `workflow_dispatch` 로 수동 실행도 가능.
+
+### 5.1 단계 요약
+
+1. `pnpm install --frozen-lockfile`
+2. `pnpm --filter @ddd/admin... build` (env: `VITE_API_URL=""`, `VITE_MSW_ENABLED='false'`)
+3. `apps/admin/dist` 를 tar 로 묶어 SCP (`appleboy/scp-action`)
+4. SSH 로 atomic swap (`appleboy/ssh-action`)
+   ```bash
+   REL="releases/$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+   tar -xzf admin-dist.tar.gz -C "$REL"
+   ln -sfn "$REL" current.new
+   mv -Tf current.new current      # 진짜 원자적 스왑
+   ls -1dt releases/*/ | tail -n +6 | xargs -r rm -rf  # 5개 보관, 나머지 정리
    ```
-   manage  CNAME  cname.vercel-dns.com.
-   ```
-3. Vercel 측에서 자동으로 Let's Encrypt 인증서 발급 (보통 수 분 이내)
+5. `curl -fsI https://admin.dddstudy.kr/` 헬스체크 6회 폴링
 
-### 4.2 Preview 배포 보호 — 선택
+### 5.2 핵심 포인트
 
-어드민 미인증 상태 노출이 부담스러우면 Vercel **Deployment Protection** (Standard Protection) 활성화. Preview 도메인을 사내만 볼 수 있게 잠금. (Pro 플랜 필요)
+- `mv -Tf` 패턴이 진짜 원자적 (단순 `ln -sf` 는 중간 상태 발생)
+- 릴리스 5개만 보관, 나머지 자동 정리
+- Caddy 재시작 불필요 (정적 파일이라 즉시 반영)
+- `concurrency: deploy-admin` 으로 동시 실행 방지, `cancel-in-progress: false` 로 롤백 안전성 확보
 
 ---
 
-## 5. 배포 후 검증 시나리오
+## 6. GitHub Secrets
+
+프론트 레포 Settings → Secrets and variables → Actions:
+
+- `GCP_VM_HOST` — VM IP/호스트
+- `GCP_VM_USER` — BE 와 동일 user
+- `GCP_VM_SSH_KEY` — BE 와 동일 private key
+
+BE 레포의 동일 값을 그대로 복사. 추후 보안 강화가 필요하면 frontend-deploy 전용 user 로 분리하는 방안 재검토.
+
+---
+
+## 7. 첫 배포 순서 (1회성)
+
+1. **BE 가 먼저** — Caddyfile / compose / 부트스트랩 스크립트 변경 + placeholder 세팅 배포
+   - 이 단계까지는 Caddy 가 placeholder `index.html` 을 서빙
+2. **GitHub Secrets 등록** (§6) — 머지 전 필수
+3. **FE 가 다음** — main 머지 또는 Actions 탭 `workflow_dispatch` 실행
+   - `current` 가 실제 빌드로 교체됨
+4. **(선택) OAuth 콘솔 점검** — 이미 `admin.dddstudy.kr` 면 변경 없음
+5. **검증** — §8 시나리오 통과 확인
+
+---
+
+## 8. 배포 후 검증 시나리오
 
 브라우저 DevTools(Network + Application 탭) 열고 순서대로 통과 확인.
 
-1. `https://manage.dddstudy.kr/` 진입 → 보호 페이지에서 401 → 로그인 페이지로 리다이렉트
-2. "Google로 로그인" 클릭 → `https://admin.dddstudy.kr/api/v1/auth/google` 로 **top-level navigation** (fetch X)
-3. Google 동의 → 백엔드 콜백 → `https://manage.dddstudy.kr/` 로 복귀
-4. Application → Cookies → `admin.dddstudy.kr` 에 `access_token`, `refresh_token` 둘 다 표시:
+1. `https://admin.dddstudy.kr/` 진입 → 로그인 페이지 노출 (`paths.login = "/"`)
+2. "Google로 로그인" 클릭 → `https://admin.dddstudy.kr/api/v1/auth/google` 로 **top-level navigation**
+3. Google 동의 → 백엔드 콜백 → `https://admin.dddstudy.kr/applications` 로 복귀
+4. Application → Cookies → `admin.dddstudy.kr` 에 `access_token`, `refresh_token` 둘 다:
    - HttpOnly ✅ / Secure ✅ / SameSite=Lax ✅
-5. 어드민 보호 API 호출(예: 코호트 목록) → 200 + Request Headers 의 Cookie 자동 첨부 ✅
+5. 보호 API 호출 (예: 코호트 목록) → 200 + Request Headers 의 Cookie 자동 첨부 ✅
 6. (선택) access_token 만료 강제 — 쿠키 직접 삭제 후 보호 API 호출 →
    401 → `POST /api/v1/auth/refresh` 자동 호출 → 원 요청 재시도 → 200 ✅
 7. 로그아웃 버튼 (`useLogoutFlow`) → 쿠키 삭제 + 쿼리 캐시 클리어 + `/` 로 리다이렉트 ✅
+8. `/applications` 직접 URL 입력 + 새로고침 → 404 안 뜨고 SPA 라우트 유지 (Caddy `try_files` 동작 확인)
 
 ---
 
-## 6. Preview 배포에서 로그인까지 동작시키기
+## 9. 롤백 방법
 
-기본 Vercel preview 도메인(`*.vercel.app`)에서 실제 OAuth 흐름을 돌리려면 백엔드 측 §2.1 화이트리스트에 preview 패턴이 포함되어야 한다.
+VM 에서:
+```bash
+cd /opt/ddd-be/frontend
+ls releases/                    # 보관된 릴리스 확인
+ln -sfn releases/<previous-sha> current.new && mv -Tf current.new current
+```
 
-- preview 도메인 패턴 확인 방법: 첫 PR 배포 후 발급된 URL 확인 (예: `ddd-admin-git-<branch>-<team>.vercel.app`)
-- 백엔드 CORS 가 정규식/와일드카드를 지원하면 패턴 한 줄로 처리. 미지원이면 PR 단위로 도메인이 바뀔 때마다 화이트리스트 갱신이 필요해 비효율적이라 정규식 매칭 권장.
-- preview에서 OAuth 콜백을 prod 쿠키 도메인과 분리하기 위해 백엔드는 preview 도메인 검출 시 `CLIENT_REDIRECT_URL` 를 동적으로 설정하거나, preview 전용 stage 백엔드를 띄우는 방안도 고려.
-
-> 운영 부담을 줄이려면 **Preview 는 UI 확인용으로만 쓰고 인증 흐름은 prod 에서만 검증** 하는 정책도 충분히 합리적이다.
-
----
-
-## 7. 향후 백엔드 도메인 정리 (옵션 2-A 컷오버)
-
-언젠가 백엔드를 `api.dddstudy.kr` 로 옮기기로 결정되면:
-
-1. 백엔드 신규 도메인 `api.dddstudy.kr` 발급 + 인증서 + DNS
-2. Google Cloud Console OAuth Authorized redirect URI 에 신규 콜백 추가:
-   `https://api.dddstudy.kr/api/v1/auth/google/callback`
-3. 백엔드 env 변경: 자기 자신 self-URL / CORS / `CLIENT_REDIRECT_URL`
-4. 프론트 Vercel env `VITE_API_URL` 만 신규 도메인으로 갱신 → 재배포
-5. 기존 `admin.dddstudy.kr` 는 grace period 동안 301 redirect (또는 양쪽 모두 trafficable)
-6. 본 문서 §1 표와 §2 / §5 의 도메인 표기 일괄 정정
-
-프론트 코드는 env 한 줄만 바뀌므로 영향 최소.
+Caddy 재시작 불필요. 즉시 반영.
 
 ---
 
-## 8. 작업 시 확인 항목 (체크리스트)
+## 10. 로컬 개발
 
-배포 직전 한 번 더 훑는다.
+`apps/admin/vite.config.ts` 의 `server.proxy['/api']` 가 `http://localhost:3000` 으로 프록시한다. 코드 입장에서 prod 와 같은 same-origin 동작.
 
-### 백엔드 측 (담당자 회신 필요)
-- [ ] CORS 화이트리스트에 `https://manage.dddstudy.kr` 추가됨
-- [ ] CORS 화이트리스트에 Vercel preview 패턴 추가됨 (preview 로그인 테스트 가능 정책 선택 시)
-- [ ] `CLIENT_REDIRECT_URL=https://manage.dddstudy.kr/` 갱신됨
-- [ ] prod 쿠키 플래그 (`httpOnly`, `secure`, `sameSite=lax`) 점검 완료
-- [ ] dev JSON 디버그 분기 prod 비활성화 확인
+```bash
+# BE 가 localhost:3000 에서 실행 중이라고 가정
+pnpm dev:admin
+# → http://localhost:5173 진입
+# → /api/* 호출은 vite proxy 가 localhost:3000 으로 전달, 쿠키 자동 동행
+```
 
-### 프론트 측 (이 레포)
-- [ ] `apps/admin/vercel.json` 추가
-- [ ] `apps/admin/public/robots.txt` 추가
-- [ ] `apps/admin/index.html` 에 `<meta name="robots" content="noindex, nofollow">` 추가
-- [ ] Vercel 프로젝트 생성 + Root Directory `apps/admin` 설정
-- [ ] Vercel Env (`VITE_API_URL`, `VITE_MSW_ENABLED`) 등록 (Production + Preview)
-- [ ] 커스텀 도메인 `manage.dddstudy.kr` 연결 + DNS CNAME 등록
+- `cookieDomainRewrite: ""` 설정으로 BE 가 내려준 쿠키의 domain 속성을 제거 → localhost 에서도 정상 저장
+- `VITE_API_URL=` 빈 값 그대로 두면 `window.location.origin` 사용 (즉, `http://localhost:5173`) → proxy 가 `/api/*` 를 가로채므로 same-origin 흉내가 완성됨
+
+---
+
+## 11. 자주 묻는 질문
+
+**Q. 같은 도메인인데 `credentials: "include"` 진짜 필요한가요?**
+A. same-origin 이라도 fetch 기본값은 쿠키를 안 실어보낸다. **명시적으로 켜야** httpOnly 쿠키가 동행. `client.ts` 가 기본값으로 처리하므로 신경 쓸 필요 없음.
+
+**Q. 새로고침 시 `/applications` 가 404 떠요.**
+A. Caddy 의 `try_files {path} /index.html` 가 빠진 경우. BE 측에 확인 요청.
+
+**Q. CDN 앞단에 둘 계획이 있나요?**
+A. 현재 없음. 추후 Cloudflare 등 도입 시 캐시 정책 (`index.html` no-cache, hashed assets immutable) 을 거기서도 맞춰야 함.
+
+**Q. preview 배포가 필요한가요?**
+A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 Vercel 같은 별도 호스팅을 다시 검토하거나, 같은 패턴으로 staging VM 추가.
+
+---
+
+## 12. 체크리스트 (PR 머지 전)
+
+### BE 측 (담당자 회신 필요)
+- [ ] Caddyfile 에 `/api/*` 분기 + `try_files` SPA fallback 추가
+- [ ] `docker-compose.yml` 의 caddy 서비스에 frontend 볼륨 마운트
+- [ ] `/opt/ddd-be/frontend/current/` 부트스트랩 + placeholder `index.html`
+- [ ] `CLIENT_REDIRECT_URL=https://admin.dddstudy.kr/applications` 갱신
+- [ ] prod 쿠키 플래그 (`httpOnly`, `secure`, `sameSite=lax`) 점검
+
+### FE 측 (이 레포)
+- [x] `packages/api/src/client.ts` buildUrl 보강 (origin 자동)
+- [x] `apps/admin/src/main.tsx` VITE_API_URL 빈 값 허용 + paths.login 통일
+- [x] `apps/admin/src/pages/login/LoginPage.tsx` OAuth 진입 상대 경로
+- [x] `apps/admin/vite.config.ts` dev proxy 추가
+- [x] `apps/admin/.env.local`, `.env.production` 빈 값
+- [x] `.github/workflows/deploy-admin.yml` 추가
+- [x] `apps/admin/index.html` `<meta robots>` (선재 존재)
+- [x] `apps/admin/public/robots.txt` `Disallow: /` (선재 존재)
+- [ ] GitHub Secrets 등록 (`GCP_VM_HOST`, `GCP_VM_USER`, `GCP_VM_SSH_KEY`)
 
 ### 배포 후 (브라우저)
-- [ ] §5 검증 시나리오 1~7 전 통과
+- [ ] §8 검증 시나리오 1~8 전 통과
 - [ ] DevTools Network 탭에서 보호 API 호출에 Cookie 자동 첨부 확인
-- [ ] 새로고침 시 SPA 라우트가 404 없이 살아남는지 (`/cohorts/123` 등)
+- [ ] 새로고침 시 SPA 라우트가 404 없이 살아남는지
 
 ---
 
-## 9. 핵심 파일 매핑
+## 13. 핵심 파일 매핑
 
 | 책임 | 파일 |
-| ---- | ---- |
-| Vite 빌드 설정 | `apps/admin/vite.config.ts` |
-| 환경변수 사용 | `apps/admin/src/main.tsx`, `apps/admin/src/pages/login/LoginPage.tsx` |
-| API 클라이언트 + 401/refresh 인터셉터 | `packages/api/src/client.ts` |
-| 로그인 진입점 | `apps/admin/src/pages/login/LoginPage.tsx` |
+| --- | --- |
+| Vite 빌드 + dev proxy | `apps/admin/vite.config.ts` |
+| 환경변수 진입점 | `apps/admin/src/main.tsx` |
+| API 클라이언트 + 401/refresh 인터셉터 + origin 자동 결합 | `packages/api/src/client.ts` |
+| 로그인 진입점 (OAuth top-level navigation) | `apps/admin/src/pages/login/LoginPage.tsx` |
 | 로그아웃 흐름 | `apps/admin/src/entities/auth/model/useLogoutFlow.ts` |
-| Vercel 설정 (신규) | `apps/admin/vercel.json` |
-| 크롤러 차단 (신규) | `apps/admin/public/robots.txt`, `apps/admin/index.html` |
+| 라우트 경로 상수 | `apps/admin/src/shared/lib/paths.ts` |
+| CI/CD 워크플로 | `.github/workflows/deploy-admin.yml` |
+| 크롤러 차단 | `apps/admin/public/robots.txt`, `apps/admin/index.html` |
 
 ---
 

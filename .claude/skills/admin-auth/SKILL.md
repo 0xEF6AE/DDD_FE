@@ -31,9 +31,10 @@ description: |
    프론트는 다음 한 줄만 책임진다.
 
    ```ts
-   window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/google`;
+   window.location.href = "/api/v1/auth/google";
    ```
 
+   - same-origin 배포(`admin.dddstudy.kr`) 라서 상대 경로로 충분하다. 브라우저가 현재 origin 기준 절대 URL 로 확장한다.
    - SPA `fetch()` 로 호출하지 않는다(redirect 체인이라 동작 안 함).
    - `?code=` 파라미터 파싱 / Google OAuth client id / popup 창 — **전부 프론트 책임이 아니다.**
 
@@ -53,12 +54,14 @@ description: |
    ```ts
    configureApi(apiUrl, {
      onUnauthorized: () => {
-       window.location.replace("/");
+       window.location.replace(paths.login);
      },
    });
    ```
 
-   페이지/컴포넌트에서 401을 개별 catch 해서 redirect 하지 않는다.
+   - `apiUrl` 은 `import.meta.env.VITE_API_URL ?? ""`. 빈 값이면 `client.ts` 가 `window.location.origin` 을 자동 결합한다.
+   - 리다이렉트 경로는 `paths.login` 상수로만 — 하드코딩한 `"/"` 사용 금지.
+   - 페이지/컴포넌트에서 401을 개별 catch 해서 redirect 하지 않는다.
 
 5. **로그아웃은 `useLogoutFlow` 한 곳에서**
    `apps/admin/src/entities/auth/model/useLogoutFlow.ts` 가 **`useLogout()` mutation + `queryClient.clear()` + `window.location.replace(paths.login)`** 을 묶어둔다.
@@ -70,9 +73,9 @@ description: |
    ```
 
 6. **인증 상태 확인은 옵션 B (보호 API 401 처리) 가 현재 표준**
-   - `/auth/me` 엔드포인트는 아직 없다. 부팅 시 별도 인증 체크 호출을 만들지 않는다.
-   - 보호 페이지의 데이터 fetch가 401을 받으면 `client.ts` 가 자동 redirect.
-   - 사용성 이슈가 누적되면 `docs/admin-auth.md` §6 의 "옵션 A — `/auth/me` 도입" 으로 전환을 백엔드에 요청한다(임의 도입 X).
+   - `/users/me` 엔드포인트는 아직 없다. 부팅 시 별도 인증 체크 호출을 만들지 않는다.
+   - 보호 페이지의 데이터 fetch 가 401 을 받으면 `client.ts` 가 자동 redirect.
+   - BE 가 `GET /api/v1/users/me` 를 추가하기로 합의되어 있으며, 추가 시 별도 PR 에서 옵션 A 가드(loader 또는 RequireAuth)로 전환한다. **현 시점에 임의 도입 X**.
 
 ## 금지 사항 (Anti-pattern)
 
@@ -97,14 +100,15 @@ description: |
 
 | 책임                                            | 파일                                                  |
 | ----------------------------------------------- | ----------------------------------------------------- |
-| API 클라이언트 + 401/refresh 인터셉터           | `packages/api/src/client.ts`                          |
+| API 클라이언트 + 401/refresh + origin 자동 결합 | `packages/api/src/client.ts`                          |
 | Auth API (`/refresh`, `/logout`, `/withdrawal`) | `packages/api/src/auth/api.ts`                        |
 | Auth 훅                                         | `packages/api/src/auth/hooks.ts`                      |
 | API 초기화 + `onUnauthorized`                   | `apps/admin/src/main.tsx`                             |
 | 로그인 진입점                                   | `apps/admin/src/pages/login/LoginPage.tsx`            |
 | 로그아웃 흐름 훅                                | `apps/admin/src/entities/auth/model/useLogoutFlow.ts` |
-| 인증 가드 유틸 (TODO)                           | `apps/admin/src/shared/lib/auth.ts`                   |
+| Vite dev proxy (`/api → localhost:3000`)        | `apps/admin/vite.config.ts`                           |
+| 인증 가드 유틸 (TODO — `/users/me` 추가 후)     | `apps/admin/src/shared/lib/auth.ts`                   |
 
 ---
 
-**마지막 수정**: 2026-05-03
+**마지막 수정**: 2026-05-11
