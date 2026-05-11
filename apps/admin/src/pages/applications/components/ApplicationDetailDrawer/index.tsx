@@ -154,6 +154,9 @@ export const ApplicationDetailDrawer = ({
           onOpenChange={(open) => !open && setConfirmState(null)}
           applicationId={application.id}
           applicantName={application.applicantName}
+          cohortId={application.cohortId}
+          cohortPartId={application.cohortPartId}
+          partLabel={partLabel}
           nextStatus={confirmState.nextStatus}
           label={confirmState.label}
           isPass={confirmState.isPass}

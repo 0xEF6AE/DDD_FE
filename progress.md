@@ -28,7 +28,8 @@
 | 공통 인프라 (admin) | 🔧 | 대부분 도메인 연동 완료. cohort·auth·storage 3개 도메인이 generated 미사용 (직접 HTTP 클라이언트) |
 | 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
 | 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
-| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
+| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자 표시. 면접일자 컬럼은 후속 (예약 join 표시) |
+| 3.3.5 면접 슬롯 | ✅ | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 표시·취소는 후속 PR |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
 | 3.6 FAQ | ✅ | MVP 제외 결정 (FE 하드코딩) |
@@ -143,6 +144,23 @@
 - ⬜ 합격 발표 후 6개월 자동 파기 스케줄러 (Cron)
 - ⬜ 개인정보 필드 null 처리 또는 레코드 삭제 로직
 - ⬜ 감사 로그 / 관리자 알림 (필요 시)
+
+### 3.3.5 면접 슬롯 관리 (`/interview-slots`)
+
+- ✅ 별도 사이드바 라우트 `/interview-slots` — `apps/admin/src/pages/interview-slots/`
+- ✅ 기수 + 파트 필터 (`InterviewSlotsToolbar`) — 파트는 "전체" 또는 단일 선택
+- ✅ 슬롯 테이블 (`InterviewSlotsTable`) — 날짜/시간/파트/예약-정원/장소/액션
+- ✅ 슬롯 등록·수정 통합 Drawer (`InterviewSlotRegisterDrawer`) — RHF + Zod
+  - DatePicker 1개 + 시작/종료 TimeField 2개 (같은 날짜 시작·종료)
+  - capacity / location / description
+  - 수정 모드 시 cohortId/cohortPartId Select 는 isReadOnly + 안내 caption (BE PATCH DTO 가 두 필드를 미지원)
+- ✅ 슬롯 삭제 Dialog (`DeleteInterviewSlotDialog`) — `DeleteCohortDialog` 패턴 미러링
+- ✅ 흐름 훅 — `entities/interview-slot/model/useCreateOrUpdateSlotFlow` + `useDeleteSlotFlow` + `serialize`
+- ✅ Phase B — `StatusChangeModal` 의 `INTERVIEW_SLOTS_NOT_READY` 분기에서 `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → "슬롯 등록하러 가기" 시 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill)
+- ⬜ 예약자 목록 표시 (`InterviewSlotResponseDto.reservations` nested 활용) — 후속 PR
+- ⬜ 예약 취소 어드민 UI (`cancelInterviewReservation` 사용) — 후속 PR
+- ⬜ 슬롯 일괄 등록 (날짜 + 시간대 그리드) — 후속 PR
+- ⬜ 지원자 테이블에 면접일자 컬럼 추가 — 슬롯-지원서 join 데이터 활용
 
 ---
 

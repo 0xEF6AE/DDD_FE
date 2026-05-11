@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router"
 import LoginPage from "./login/LoginPage"
 import SemestersPage from "./semesters/SemestersPage"
 import EarlyNotificationPage from "./early-notification/EarlyNotificationPage"
+import InterviewSlotsPage from "./interview-slots/InterviewSlotsPage"
 import ProjectsPage from "./projects/ProjectsPage"
 import BlogPostsPage from "./blog-posts/BlogPostsPage"
 import { ErrorPage } from "./error/ErrorPage"
@@ -33,6 +34,11 @@ const router = createBrowserRouter([
       {
         path: "/early-notification",
         element: <EarlyNotificationPage />,
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: "/interview-slots",
+        element: <InterviewSlotsPage />,
         errorElement: <ErrorPage />,
       },
       {

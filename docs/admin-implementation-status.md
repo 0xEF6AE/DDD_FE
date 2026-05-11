@@ -42,9 +42,9 @@
 | 모집예정 → 모집중 자동 전환 (recruitStartAt 도달) | 백엔드 | ✅ | – | `CohortScheduler.transitionUpcomingToRecruiting()` |
 | 수동 상태 전환 (모집예정→모집중→활동중→활동종료) | 양쪽 | ✅ | ✅ | FE: `useTransitionCohortStatusFlow.ts` + `SemesterTableRow` "다음 단계 전환" 버튼 |
 | 파트별 지원서 양식 설정 | 양쪽 | ✅ | ✅ | BE: `PUT /admin/cohorts/:id/parts` 단일 source. FE: `ApplicationFormSection` 에 key Input + label TextArea + required Checkbox + isOpen Switch. 저장된 key 는 readonly. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패는 `PartsSaveAfterCreateError` throw → 호출부 edit 모드 전환 |
-| 파트별 면접 슬롯 설정 | 양쪽 | ✅ | ❌ | BE: `InterviewSlot` 도메인 분리. FE: 슬롯 관리 UI(생성/수정/삭제 페이지·드로어) 미구현 |
+| 파트별 면접 슬롯 설정 | 양쪽 | ✅ | ✅ | BE: `InterviewSlot` 도메인 분리. FE: `/interview-slots` 신설 페이지 + `InterviewSlotRegisterDrawer` (등록/수정 통합, 수정 모드는 기수/파트 readonly) + `DeleteInterviewSlotDialog` |
 | process / curriculum / parts JSON 필드 | 양쪽 | ✅ | ✅ | FE: `ProcessSection` / `CurriculumSection` / `ApplicationFormSection` — `cohort.applicationForm` 은 dead 필드로 제거, 양식은 `cohort.parts` 단일 source ([정책](./admin-cohort-parts-policy.md)) |
-| **모집중 전환 조건: 파트별 지원서 양식 필수 검증** | 양쪽 | ❌ | ❌ | BE: 검증 미구현. FE: 전환 버튼 클릭 전 모든 파트 양식 채워졌는지 가드도 없음 |
+| **모집중 전환 조건: 파트별 지원서 양식 필수 검증** | 양쪽 | ❌ | ✅ | BE: 검증 미구현. FE: `useTransitionCohortStatusFlow` 가 RECRUITING 분기에서 `validateCohortPartsForRecruiting` 호출 — `isOpen=true` 파트 0개이거나 그 중 `formSchema.questions` 가 비면 `TransitionBlockedDialog` 노출 → "수정 화면 열기" 시 해당 cohort edit Drawer 자동 오픈 |
 
 ---
 
@@ -119,7 +119,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | 서류합격 → 면접 일정 선택 링크 이메일 발송 | 백엔드 | ✅ | – | BE: 상태 변경 이벤트로 이메일 발송 |
 | 최종불합격 → 불합격 이메일 자동 발송 | 백엔드 | ✅ | – | |
 | 최종합격 → 합격 이메일 발송 | 백엔드 | ✅ | – | |
-| **서류합격 시 슬롯 없으면 팝업 안내 → 슬롯 생성 페이지 이동** | 양쪽 | ⚠️ | ⚠️ | BE: `400 INTERVIEW_SLOTS_NOT_READY` 반환. FE: `StatusChangeModal` 이 코드 분기 + 강조 토스트로 안내 (모달 유지). 슬롯 생성 페이지 이동은 슬롯 관리 UI 도입 후 |
+| **서류합격 시 슬롯 없으면 팝업 안내 → 슬롯 생성 페이지 이동** | 양쪽 | ⚠️ | ✅ | BE: `400 INTERVIEW_SLOTS_NOT_READY` 반환. FE: `StatusChangeModal` 이 분기 시 `InterviewSlotsRequiredModal` 노출 → "슬롯 등록하러 가기" 버튼이 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill) |
 | **최종합격 이메일에 Discord OAuth 버튼 포함** | 백엔드 | ⚠️ | ⚠️ | BE: 이메일 템플릿에 Discord OAuth URL 포함 여부 미확인. FE: `StatusChangeModal` 안내 문구로 "Discord 연결 버튼 포함" 만 노출 (실제 메일 본문은 BE 영역) |
 | PII 자동 파기 | 백엔드 | ✅ | – | `PiiPurgeScheduler` |
 
@@ -129,7 +129,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 |-----------|-----------|--------|-----------|------|
 | 슬롯 중복 감지 (capacity 초과 / 지원자 중복) | 백엔드 | ✅ | – | BE: `400 INTERVIEW_SLOT_ALREADY_RESERVED` |
 | 슬롯 중복 시 "이미 선택된 시간" 안내 | 양쪽 | ✅ | ❌ | BE: 에러 코드 반환. FE: 지원자용 일정 선택 페이지 자체가 admin 영역 아님(추후 `apps/web`) |
-| 슬롯 생성 / 수정 / 삭제 관리 페이지 | 프론트엔드 | ✅ | ❌ | BE: `interviewAPI` 엔드포인트 존재. FE: 어드민 슬롯 관리 UI 미구현 |
+| 슬롯 생성 / 수정 / 삭제 관리 페이지 | 프론트엔드 | ✅ | ✅ | FE: `apps/admin/src/pages/interview-slots/` — 기수·파트 필터 + 테이블 + 등록/수정 Drawer + 삭제 Dialog. BE PR #57 후 응답 타입(`InterviewSlotResponseDto`) 좁아짐 |
 | Google Calendar 이벤트 생성 | 백엔드 | ✅ | – | `GoogleCalendarClient` |
 | **Google Meet 링크 생성** | 백엔드 | ⚠️ | – | Calendar 이벤트 생성 시 `conferenceData` 포함 여부 별도 확인 필요 |
 | ICS 파일 첨부 이메일 발송 | 백엔드 | ✅ | – | |
@@ -195,10 +195,10 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 
 | # | 도메인 | 항목 | 처리 주체 | 백엔드 | 프론트엔드 | 필요한 작업 |
 |---|--------|------|-----------|--------|-----------|------------|
-| 1 | 기수 | 모집중 전환 조건: 지원서 양식 필수 검증 | 양쪽 | ❌ | ❌ | BE: `updateCohort()` 에서 `RECRUITING` 전환 시 모든 파트 `applicationSchema` 검증. FE: `useTransitionCohortStatusFlow` 호출 전 양식 빈 칸 가드 + 에러 toast |
-| 2 | 기수 | 파트별 면접 슬롯 관리 UI | 프론트엔드 | ✅ | ❌ | FE: `pages/interview-slots`(가칭) 신설 또는 기수 상세 내 슬롯 관리 섹션 추가 |
+| 1 | 기수 | 모집중 전환 조건: 지원서 양식 필수 검증 | 양쪽 | ❌ | ✅ | BE: `updateCohort()` 에서 `RECRUITING` 전환 시 파트 양식 검증 미구현. FE: `validateCohortPartsForRecruiting` + `TransitionBlockedDialog` 로 사전 차단·수정 Drawer 자동 오픈 완료. 위반 파트 자동 스크롤·강조는 후속 PR |
+| 2 | 기수 | 파트별 면접 슬롯 관리 UI | 프론트엔드 | ✅ | ✅ | FE: `apps/admin/src/pages/interview-slots/` 신설 — 페이지 + Drawer + Dialog 완성. 예약자 표시/취소는 Phase C (후속 PR, BE `reservations` nested 필드 활용) |
 | 3 | 사전 알림 | 모집중 변경 시 **즉시** 이메일 발송 | 양쪽 | ⚠️ | ✅ | BE: 상태 변경 트리거 부재 — 캠페인 + scheduledAt 우회. FE: 캠페인 어드민 UI 연결 완료(`NotificationCampaignSection`). 명세상 "상태 변경 즉시" 발송은 BE 가 트리거를 도입해야 100% 충족 |
-| 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ⚠️ | FE: `StatusChangeModal` 에러 코드 분기 + 강조 토스트 적용. 슬롯 생성 페이지 이동은 슬롯 관리 UI 도입 후 (별도 PR) |
+| 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ✅ | FE: `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → `/interview-slots?cohortId&cohortPartId` 로 navigate. BE 측은 여전히 trigger 만 정상 |
 | 5 | 지원 | 최종합격 이메일 내 Discord OAuth 버튼 | 백엔드 | ⚠️ | – | BE: `EmailEventHandler` 최종합격 템플릿 Discord OAuth URL 포함 확인 |
 | 6 | 지원 | Google Meet 링크 생성 | 백엔드 | ⚠️ | – | BE: `GoogleCalendarClient` 이벤트 `conferenceData` 포함 확인 |
 | 7 | 지원 | 면접일자 컬럼 / 슬롯 중복 안내 | 양쪽 | ✅ | ❌ | FE: 지원자 테이블에 면접 슬롯 일정 컬럼 추가, 슬롯 관리 UI 도입 후 연계 |

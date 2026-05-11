@@ -4,6 +4,7 @@ export const paths = {
   applications: "/applications",
   semesters: "/semesters",
   reminders: "/early-notification",
+  interviewSlots: "/interview-slots",
   projects: "/projects",
   blogPosts: "/blog-posts",
 }
