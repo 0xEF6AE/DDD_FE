@@ -93,6 +93,9 @@ export default function SemestersPage() {
         mode={drawerProps.mode}
         targetId={drawerProps.targetId}
         prefill={drawerProps.prefill}
+        onSwitchToEdit={(newCohortId) => {
+          setEditTarget({ id: newCohortId } as CohortDto)
+        }}
       />
 
       <div className="rounded-lg bg-white p-5 shadow">
