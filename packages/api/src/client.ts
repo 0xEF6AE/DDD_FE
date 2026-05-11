@@ -45,7 +45,8 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
   let waitQueue: Array<{ resolve: () => void; reject: (err: unknown) => void }> = [];
 
   function buildUrl(path: string): string {
-    return new URL(path, baseUrl).toString();
+    const origin = baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
+    return new URL(path, origin).toString();
   }
 
   async function doRefresh(): Promise<void> {

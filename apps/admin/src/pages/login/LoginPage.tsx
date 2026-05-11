@@ -15,7 +15,7 @@ export default function LoginPage() {
         <GoogleButton
           className="w-full cursor-pointer"
           onClick={() => {
-            window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/google`
+            window.location.href = "/api/v1/auth/google"
           }}
         />
       </footer>
