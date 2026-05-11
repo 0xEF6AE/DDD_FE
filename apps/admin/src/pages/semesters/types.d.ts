@@ -14,16 +14,23 @@ export type CurriculumWeek = {
   description: string
 }
 
-/**
- * Drawer 폼 state shape.
- * cohortNumber 는 숫자만 입력 받는 가정 (직렬화 시 "기" 접미사가 자동 부착됨).
- * status 는 CohortStatus 서버 enum 값.
- * applicationForms 는 서버 파트 enum (PM/PD/BE/FE/IOS/AND) 키 사용.
- */
+export type CohortPartQuestion = {
+  key: string
+  label: string
+  required: boolean
+}
+
+export type CohortPartFormState = {
+  isOpen: boolean
+  questions: CohortPartQuestion[]
+}
+
 export type SemesterRegisterForm = {
   cohortNumber: string
   status: CohortStatus
+  recruitStartDate: string
+  recruitEndDate: string
   process: ProcessSchedule
   curriculum: CurriculumWeek[]
-  applicationForms: Record<CohortPartName, string[]>
+  parts: Record<CohortPartName, CohortPartFormState>
 }
