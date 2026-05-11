@@ -1,6 +1,6 @@
 import { AlertDialog, Button, toast } from "@heroui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { applicationKeys, applicationMutations } from "@ddd/api"
+import { ApiError, applicationKeys, applicationMutations } from "@ddd/api"
 import type { ApplicationStatus } from "@/entities/application"
 
 type Props = {
@@ -39,8 +39,17 @@ export const StatusChangeModal = ({
       })
       toast.success(`${applicantName} 지원자를 ${label} 처리했어요`)
       onOpenChange(false)
-    } catch {
-      toast.danger("상태 변경에 실패했어요")
+    } catch (error) {
+      if (error instanceof ApiError && error.is("INTERVIEW_SLOTS_NOT_READY")) {
+        toast.danger("면접 슬롯이 준비되지 않았습니다", {
+          description:
+            "슬롯 관리 기능 준비 중입니다. 슬롯 등록 후 다시 시도해주세요.",
+        })
+        return
+      }
+      toast.danger("상태 변경에 실패했어요", {
+        description: error instanceof Error ? error.message : undefined,
+      })
     }
   }
 

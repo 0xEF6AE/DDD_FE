@@ -47,6 +47,7 @@ export interface ApplicationDto {
   answers: Record<string, unknown>;
   status: ApplicationStatus;
   privacyAgreed?: boolean;
+  privacyAgreedAt?: string;
   submittedAt?: string;
   createdAt: string;
   updatedAt: string;
