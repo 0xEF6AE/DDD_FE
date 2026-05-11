@@ -1,10 +1,14 @@
 import { useEffect } from "react"
-import { Button, Drawer } from "@heroui/react"
+import { Button, Drawer, toast } from "@heroui/react"
 import { FormProvider, useForm } from "react-hook-form"
 
 import { CreateCohortRequestDtoStatus } from "@ddd/api"
 
-import { useCreateOrUpdateCohortFlow } from "@/entities/cohort"
+import {
+  PartsSaveAfterCreateError,
+  SEMESTER_PARTS,
+  useCreateOrUpdateCohortFlow,
+} from "@/entities/cohort"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 
 import { CURRICULUM_WEEK_COUNT } from "../../constants"
@@ -23,12 +27,16 @@ interface Props {
   mode: DrawerMode
   targetId: number | null
   prefill?: SemesterRegisterForm
+  /** parts 저장 실패 시 호출 — 호출부가 mode/targetId 를 edit 으로 전환. Drawer 는 열린 채 유지. */
+  onSwitchToEdit?: (newCohortId: number) => void
 }
 
 const buildDefaults = (prefill?: SemesterRegisterForm): SemesterRegisterForm =>
   prefill ?? {
     cohortNumber: "",
     status: CreateCohortRequestDtoStatus.UPCOMING,
+    recruitStartDate: "",
+    recruitEndDate: "",
     process: {
       documentAcceptStartDate: "",
       documentAcceptEndDate: "",
@@ -41,14 +49,15 @@ const buildDefaults = (prefill?: SemesterRegisterForm): SemesterRegisterForm =>
       date: "",
       description: "",
     })),
-    applicationForms: {
-      PM: [""],
-      PD: [""],
-      BE: [""],
-      FE: [""],
-      IOS: [""],
-      AND: [""],
-    },
+    parts: Object.fromEntries(
+      SEMESTER_PARTS.map((name) => [
+        name,
+        {
+          isOpen: true,
+          questions: [{ key: "", label: "", required: true }],
+        },
+      ])
+    ) as SemesterRegisterForm["parts"],
   }
 
 const TITLE_BY_MODE: Record<DrawerMode, string> = {
@@ -71,6 +80,7 @@ export function SemesterRegisterDrawer({
   mode,
   targetId,
   prefill,
+  onSwitchToEdit,
 }: Props) {
   const isMobile = useIsMobile()
 
@@ -83,7 +93,6 @@ export function SemesterRegisterDrawer({
     reset,
   } = methods
 
-  // prefill / mode 변경 시 폼 리셋
   useEffect(() => {
     if (isOpen) reset(buildDefaults(prefill))
   }, [isOpen, mode, prefill, reset])
@@ -91,10 +100,33 @@ export function SemesterRegisterDrawer({
   const { submit, isPending: isMutating } = useCreateOrUpdateCohortFlow({
     mode,
     targetId,
-    onSuccess: () => onOpenChange(false),
   })
 
-  const onSubmit = handleSubmit((values) => submit(values))
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      const result = await submit(values)
+      toast.success(
+        result.createdInThisCall
+          ? `기수 ${result.name}을(를) 등록했습니다`
+          : "기수 정보를 저장했습니다"
+      )
+      onOpenChange(false)
+      reset(buildDefaults())
+    } catch (error) {
+      if (error instanceof PartsSaveAfterCreateError) {
+        toast.danger("파트 양식 저장에 실패했습니다", {
+          description:
+            "수정 화면에서 다시 저장해주세요. (기수는 이미 등록되었습니다)",
+        })
+        onSwitchToEdit?.(error.newCohortId)
+        return
+      }
+      toast.danger(
+        mode === "create" ? "기수 등록에 실패했습니다" : "저장에 실패했습니다",
+        { description: error instanceof Error ? error.message : undefined }
+      )
+    }
+  })
 
   const isBusy = isSubmitting || isMutating
 
