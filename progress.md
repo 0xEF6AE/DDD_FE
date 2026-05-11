@@ -58,7 +58,7 @@
 - ⚠️ **cohort** — generated(`cohortGetAdminList` 등) 미사용, 직접 HTTP 클라이언트(`cohortAPI`) 구현. 다른 도메인과 패턴 불일치
 - ⚠️ **auth** — generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 구현
 - ⚠️ **storage** — generated(`storageUploadFile`) 미사용, 직접 HTTP 클라이언트. `storageListFiles` · `storageDeleteFile` · `storageCreateSignedUrl` · `storageDownloadFile` 훅 미구현
-- ⬜ **notification-campaign** — generated 6개 함수 존재(`notificationCampaignCreateAdmin` 등), `packages/api` 도메인 폴더 자체 없음
+- 🔧 **notification-campaign** — `packages/api/src/notification-campaign/` 도메인 폴더 추가 완료 (`notificationCampaignQueries`/`notificationCampaignMutations` 노출). 어드민 UI(캠페인 목록·편집·PAUSED↔SCHEDULED 전환) 미연결
 
 **완료 (인프라)**
 
@@ -271,7 +271,7 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 | **cohort** | generated(`cohortGetAdminList` 등) 미사용, `cohortAPI` 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
 | **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
 | **storage** | generated 미사용. `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 | 파일 관리 기능 확장 불가 |
-| **notification-campaign** | `packages/api` 도메인 폴더 없음 (generated 6개 함수 존재) | 알림 캠페인 기능 전체 미구현 |
+| **notification-campaign** | 도메인 폴더 추가 완료 (`packages/api/src/notification-campaign/`). 소비처(어드민 UI: 캠페인 섹션·편집 Drawer·상태 전환) 미구현 | 백엔드 자동 발송 흐름과 어드민 연결 대기 |
 | **interview** | `cancelReservation` query 미구현 | 예약 취소 불가 |
 | **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
 

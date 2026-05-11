@@ -27,6 +27,12 @@ export * from "./early-notification/types";
 export * from "./early-notification/queryKeys";
 export * from "./early-notification/queries";
 
+// notification-campaign
+export * from "./notification-campaign/api";
+export * from "./notification-campaign/types";
+export * from "./notification-campaign/queryKeys";
+export * from "./notification-campaign/queries";
+
 // interview
 export * from "./interview/api";
 export * from "./interview/types";
