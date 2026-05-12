@@ -2,10 +2,6 @@ import { Button, Table } from "@heroui/react"
 
 import type { CohortDto, InterviewSlot } from "@ddd/api"
 
-import { PART_LABEL } from "@/entities/cohort"
-
-type CohortPartLite = { id: number; name: keyof typeof PART_LABEL }
-
 type Props = {
   slot: InterviewSlot
   cohorts: CohortDto[]
@@ -34,9 +30,9 @@ export const InterviewSlotsTableRow = ({
   onDelete,
   onOpenReservations,
 }: Props) => {
-  const allParts = cohorts.flatMap((c) => c.parts ?? []) as unknown as CohortPartLite[]
-  const partName = allParts.find((p) => p.id === slot.cohortPartId)?.name
-  const partLabel = partName ? (PART_LABEL[partName] ?? partName) : "-"
+  const allParts = cohorts.flatMap((c) => c.parts ?? [])
+  const partName = allParts.find((p) => p.id === slot.cohortPartId)?.partName
+  const partLabel = partName ? partName : "-"
 
   return (
     <Table.Row>

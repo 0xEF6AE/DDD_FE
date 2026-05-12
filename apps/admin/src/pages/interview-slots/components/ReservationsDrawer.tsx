@@ -6,14 +6,11 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { applicationQueries } from "@ddd/api"
 import type { CohortDto, InterviewSlot } from "@ddd/api"
 
-import { PART_LABEL } from "@/entities/cohort"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { ErrorFallback } from "@/shared/ui/ErrorFallback"
 
 import { CancelReservationDialog } from "./CancelReservationDialog"
-
-type CohortPartLite = { id: number; name: keyof typeof PART_LABEL }
 
 type Props = {
   isOpen: boolean
@@ -46,11 +43,9 @@ export const ReservationsDrawer = ({
 }: Props) => {
   const isMobile = useIsMobile()
 
-  const allParts = cohorts.flatMap(
-    (c) => c.parts ?? [],
-  ) as unknown as CohortPartLite[]
-  const partName = allParts.find((p) => p.id === slot.cohortPartId)?.name
-  const partLabel = partName ? (PART_LABEL[partName] ?? partName) : "-"
+  const allParts = cohorts.flatMap((c) => c.parts ?? [])
+  const partName = allParts.find((p) => p.id === slot.cohortPartId)?.partName
+  const partLabel = partName ? partName : "-"
 
   return (
     <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -102,11 +97,11 @@ const ReservationsList = ({ slot }: ReservationsListProps) => {
   const { data: applications } = useSuspenseQuery(
     applicationQueries.getAdminApplications({
       params: { cohortId: slot.cohortId },
-    }),
+    })
   )
 
   const applicantNameById = new Map(
-    applications.map((a) => [a.id, a.applicantName]),
+    applications.map((a) => [a.id, a.applicantName])
   )
 
   const [pendingCancel, setPendingCancel] = useState<{
@@ -139,9 +134,7 @@ const ReservationsList = ({ slot }: ReservationsListProps) => {
               <Button
                 size="sm"
                 variant="danger"
-                onPress={() =>
-                  setPendingCancel({ id: reservation.id, name })
-                }
+                onPress={() => setPendingCancel({ id: reservation.id, name })}
               >
                 취소
               </Button>

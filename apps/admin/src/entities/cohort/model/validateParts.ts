@@ -4,7 +4,7 @@ import { slugify } from "@/shared/lib/slug"
 
 import type { SemesterRegisterForm } from "../../../pages/semesters/types"
 
-import { PART_LABEL, SEMESTER_PARTS } from "./constants"
+import { SEMESTER_PARTS } from "./constants"
 
 export interface InvalidQuestionCell {
   part: CohortPartName
@@ -26,7 +26,7 @@ const findEmptyLabel = (
     for (let i = 0; i < questions.length; i++) {
       if (questions[i].label.trim() === "") {
         return {
-          message: `${PART_LABEL[part]} 파트 ${formatIndex(i)} 질문을 입력해주세요`,
+          message: `${part} 파트 ${formatIndex(i)} 질문을 입력해주세요`,
           invalidCells: [{ part, index: i }],
         }
       }
@@ -52,7 +52,7 @@ const findDuplicateKey = (
       if (indices.length > 1) {
         const labels = indices.map(formatIndex).join("과 ")
         return {
-          message: `${PART_LABEL[part]} 파트 ${labels} 질문이 중복됩니다`,
+          message: `${part} 파트 ${labels} 질문이 중복됩니다`,
           invalidCells: indices.map((index) => ({ part, index })),
         }
       }

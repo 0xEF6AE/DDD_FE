@@ -36,8 +36,8 @@ export function SemesterTableRow({
       <Table.Cell>
         {new Date(row.createdAt).toLocaleDateString("ko-KR")}
       </Table.Cell>
-      <Table.Cell>
-        <Button size="sm" variant="outline" className="mr-2" onPress={onEdit}>
+      <Table.Cell className="flex items-center gap-1">
+        <Button size="sm" variant="outline" onPress={onEdit}>
           수정
         </Button>
         {canTransition && transitionLabel && (

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router"
 import { useQuery } from "@tanstack/react-query"
 
 import { cohortQueries, interviewQueries } from "@ddd/api"
-import type { CohortPartName, InterviewSlot } from "@ddd/api"
+import type { InterviewSlot } from "@ddd/api"
 
 import { serializeSlotToForm } from "@/entities/interview-slot"
 import { FlexBox } from "@/shared/ui/FlexBox"
@@ -19,8 +19,6 @@ import {
 import { ALL_PARTS, type PartFilterValue } from "./constants"
 import type { InterviewSlotForm } from "./types"
 
-type CohortPartLite = { id: number; name: CohortPartName }
-
 export default function InterviewSlotsPage() {
   const [searchParams] = useSearchParams()
   const initialCohortId = Number(searchParams.get("cohortId")) || null
@@ -29,10 +27,10 @@ export default function InterviewSlotsPage() {
   const { data: cohorts = [] } = useQuery(cohortQueries.getCohorts())
 
   const [explicitCohortId, setExplicitCohortId] = useState<number | null>(
-    initialCohortId,
+    initialCohortId
   )
   const [partFilter, setPartFilter] = useState<PartFilterValue>(
-    initialCohortPartId ?? ALL_PARTS,
+    initialCohortPartId ?? ALL_PARTS
   )
   // 사용자가 명시적으로 선택했으면 그 값, 아니면 cohorts 의 첫 번째로 자동 fallback
   const cohortId = explicitCohortId ?? cohorts[0]?.id ?? null
@@ -48,6 +46,7 @@ export default function InterviewSlotsPage() {
     enabled: cohortId != null,
   })
   const slots: InterviewSlot[] = slotsQuery.data?.data ?? []
+  console.log(slots, slotsQuery.data)
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [editingSlot, setEditingSlot] = useState<InterviewSlot | null>(null)
@@ -62,8 +61,10 @@ export default function InterviewSlotsPage() {
   const drawerProps = useMemo(() => {
     if (editingSlot) {
       const cohort = cohorts.find((c) => c.id === editingSlot.cohortId)
-      const parts = (cohort?.parts ?? []) as unknown as CohortPartLite[]
-      const partName = parts.find((p) => p.id === editingSlot.cohortPartId)?.name
+      const parts = cohort?.parts ?? []
+      const partName = parts.find(
+        (p) => p.id === editingSlot.cohortPartId
+      )?.partName
       return {
         mode: "edit" as const,
         targetId: editingSlot.id,
@@ -75,7 +76,7 @@ export default function InterviewSlotsPage() {
     }
     // create 모드 — 현재 필터를 초기값으로
     const cohort = cohorts.find((c) => c.id === cohortId)
-    const parts = (cohort?.parts ?? []) as unknown as CohortPartLite[]
+    const parts = cohort?.parts ?? []
     const initialPart =
       partFilter !== ALL_PARTS
         ? parts.find((p) => p.id === partFilter)
@@ -86,7 +87,7 @@ export default function InterviewSlotsPage() {
       prefill: {
         cohortId: cohortId ?? 0,
         cohortPartId: initialPart?.id ?? 0,
-        cohortPartName: initialPart?.name,
+        cohortPartName: initialPart?.partName,
       } as Partial<InterviewSlotForm>,
     }
   }, [editingSlot, cohortId, partFilter, cohorts])

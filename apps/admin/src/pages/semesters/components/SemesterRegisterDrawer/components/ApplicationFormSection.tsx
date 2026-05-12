@@ -6,7 +6,7 @@ import { useFormContext, useWatch } from "react-hook-form"
 
 import type { CohortPartName } from "@ddd/api"
 
-import { PART_LABEL, SEMESTER_PARTS } from "@/entities/cohort"
+import { SEMESTER_PARTS } from "@/entities/cohort"
 import { cn } from "@/shared/lib/cn"
 import { Section } from "@/shared/ui/Section"
 
@@ -94,7 +94,7 @@ export function ApplicationFormSection({ invalidCells }: Props) {
           <Tabs.List aria-label="파트별 지원서">
             {SEMESTER_PARTS.map((part) => (
               <Tabs.Tab key={part} id={part}>
-                {PART_LABEL[part]}
+                {part}
                 <Tabs.Indicator />
               </Tabs.Tab>
             ))}
@@ -107,7 +107,7 @@ export function ApplicationFormSection({ invalidCells }: Props) {
               <Switch
                 isSelected={parts[part].isOpen}
                 onChange={(isSelected) => setPartIsOpen(part, isSelected)}
-                aria-label={`${PART_LABEL[part]} 모집 오픈`}
+                aria-label={`${part} 모집 오픈`}
               >
                 <Switch.Control>
                   <Switch.Thumb />
@@ -155,7 +155,7 @@ export function ApplicationFormSection({ invalidCells }: Props) {
                     placeholder="질문을 입력하세요"
                     className="w-full resize-none"
                     value={question.label}
-                    isReadOnly={isLocked}
+                    readOnly={isLocked}
                     onChange={(e) =>
                       updateQuestion(part, qIndex, { label: e.target.value })
                     }

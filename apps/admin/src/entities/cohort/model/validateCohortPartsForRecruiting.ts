@@ -1,14 +1,12 @@
 import type { CohortDto, CohortPartConfigDto, CohortPartName } from "@ddd/api"
 
-import { PART_LABEL } from "./constants"
-
 export interface PartsRecruitingViolation {
   message: string
   invalidParts: ReadonlyArray<CohortPartName>
 }
 
 const hasQuestion = (part: CohortPartConfigDto): boolean => {
-  const raw = (part.formSchema as Record<string, unknown> | undefined)
+  const raw = (part.applicationSchema as Record<string, unknown> | undefined)
     ?.questions
   return Array.isArray(raw) && raw.length > 0
 }
@@ -33,9 +31,9 @@ export const validateCohortPartsForRecruiting = (
   const empty = openParts.filter((p) => !hasQuestion(p))
   if (empty.length === 0) return null
 
-  const labels = empty.map((p) => PART_LABEL[p.name]).join(", ")
+  const labels = empty.map((p) => p.partName).join(", ")
   return {
     message: `${labels} 파트의 지원서 양식이 비어있어 모집중으로 전환할 수 없습니다`,
-    invalidParts: empty.map((p) => p.name),
+    invalidParts: empty.map((p) => p.partName),
   }
 }

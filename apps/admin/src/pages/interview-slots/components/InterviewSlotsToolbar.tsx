@@ -4,12 +4,9 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import type { CohortDto } from "@ddd/api"
 
-import { PART_LABEL } from "@/entities/cohort"
 import { FlexBox } from "@/shared/ui/FlexBox"
 
 import { ALL_PARTS, type PartFilterValue } from "../constants"
-
-type CohortPartLite = { id: number; name: keyof typeof PART_LABEL }
 
 type Props = {
   cohorts: CohortDto[]
@@ -31,21 +28,17 @@ export const InterviewSlotsToolbar = ({
   isRegisterDisabled,
 }: Props) => {
   const selectedCohort = cohorts.find((c) => c.id === cohortId)
-  const parts = (selectedCohort?.parts ?? []) as unknown as CohortPartLite[]
+  const parts = selectedCohort?.parts ?? []
 
   const partLabel =
     partFilter === ALL_PARTS
       ? "전체 파트"
-      : (PART_LABEL[parts.find((p) => p.id === partFilter)?.name ?? "PM"] ?? "전체 파트")
+      : (parts.find((p) => p.id === partFilter)?.partName ?? "전체 파트")
 
   return (
     <FlexBox className="flex-wrap justify-between gap-3">
       <FlexBox className="gap-2">
-        <Select
-          variant="secondary"
-          className="max-w-40"
-          aria-label="기수 필터"
-        >
+        <Select variant="secondary" className="max-w-40" aria-label="기수 필터">
           <Select.Trigger>
             <Select.Value>{selectedCohort?.name ?? "기수 선택"}</Select.Value>
             <Select.Indicator />
@@ -90,10 +83,10 @@ export const InterviewSlotsToolbar = ({
                 <ListBox.Item
                   key={part.id}
                   id={String(part.id)}
-                  textValue={PART_LABEL[part.name] ?? part.name}
+                  textValue={part.partName}
                   onClick={() => onPartFilterChange(part.id)}
                 >
-                  {PART_LABEL[part.name] ?? part.name}
+                  {part.partName}
                 </ListBox.Item>
               ))}
             </ListBox>
@@ -102,8 +95,7 @@ export const InterviewSlotsToolbar = ({
       </FlexBox>
 
       <Button onPress={onOpenRegister} isDisabled={isRegisterDisabled}>
-        <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
-        새 슬롯 등록
+        <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />새 슬롯 등록
       </Button>
     </FlexBox>
   )

@@ -7,6 +7,7 @@ import {
   interviewCreateReservation,
   interviewCancelReservation,
 } from "../generated/admin-interview/admin-interview";
+
 import type {
   GetInterviewSlotsParams,
   GetInterviewSlotParams,
@@ -25,15 +26,11 @@ export const interviewAPI = {
     interviewListSlots(params),
 
   /** 면접 슬롯 상세 조회 */
-  getInterviewSlot: ({ params }: { params: GetInterviewSlotParams }) =>
-    interviewGetSlot(params.id),
+  getInterviewSlot: ({ params }: { params: GetInterviewSlotParams }) => interviewGetSlot(params.id),
 
   /** 새로운 면접 슬롯을 생성합니다. */
-  createInterviewSlot: ({
-    payload,
-  }: {
-    payload: PostCreateInterviewSlotRequest;
-  }) => interviewCreateSlot(payload),
+  createInterviewSlot: ({ payload }: { payload: PostCreateInterviewSlotRequest }) =>
+    interviewCreateSlot(payload),
 
   /** 면접 슬롯 수정 */
   updateInterviewSlot: ({
@@ -58,9 +55,6 @@ export const interviewAPI = {
   }) => interviewCreateReservation(params.slotId, payload),
 
   /** 면접 예약을 취소합니다. */
-  cancelInterviewReservation: ({
-    params,
-  }: {
-    params: DeleteInterviewReservationParams;
-  }) => interviewCancelReservation(params.reservationId),
+  cancelInterviewReservation: ({ params }: { params: DeleteInterviewReservationParams }) =>
+    interviewCancelReservation(params.reservationId),
 };

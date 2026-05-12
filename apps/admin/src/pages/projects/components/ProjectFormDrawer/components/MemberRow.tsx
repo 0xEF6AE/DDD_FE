@@ -3,11 +3,7 @@ import { Delete02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Controller, useFormContext } from "react-hook-form"
 
-import {
-  PART_LABEL,
-  PART_OPTIONS,
-  type ProjectFormValues,
-} from "@/entities/project"
+import { PART_OPTIONS, type ProjectFormValues } from "@/entities/project"
 import { FormField } from "@/shared/ui/FormField"
 
 type MemberRowProps = {
@@ -42,7 +38,7 @@ export const MemberRow = ({ index, onRemove }: MemberRowProps) => {
               <Select aria-label="파트">
                 <Select.Trigger>
                   <Select.Value>
-                    {field.value ? PART_LABEL[field.value] : "선택"}
+                    {field.value ? field.value : "선택"}
                   </Select.Value>
                   <Select.Indicator />
                 </Select.Trigger>
@@ -52,10 +48,10 @@ export const MemberRow = ({ index, onRemove }: MemberRowProps) => {
                       <ListBox.Item
                         key={p}
                         id={p}
-                        textValue={PART_LABEL[p]}
+                        textValue={p}
                         onClick={() => field.onChange(p)}
                       >
-                        {PART_LABEL[p]}
+                        {p}
                       </ListBox.Item>
                     ))}
                   </ListBox>

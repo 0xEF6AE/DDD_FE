@@ -1,9 +1,5 @@
 import { Table } from "@heroui/react"
-import {
-  type ApplicationDto,
-  type CohortDto,
-} from "@ddd/api"
-import { PART_LABEL } from "../constants"
+import { type ApplicationDto, type CohortDto } from "@ddd/api"
 
 type ApplicationTableProps = {
   applications: ApplicationDto[]
@@ -49,9 +45,7 @@ export const ApplicationTable = ({
                 >
                   <Table.Cell>{app.applicantName}</Table.Cell>
                   <Table.Cell>{app.applicantPhone ?? "-"}</Table.Cell>
-                  <Table.Cell>
-                    {PART_LABEL[partName] || partName || "-"}
-                  </Table.Cell>
+                  <Table.Cell>{partName || "-"}</Table.Cell>
                   <Table.Cell>
                     {cohortNameById.get(app.cohortId) ?? "-"}
                   </Table.Cell>

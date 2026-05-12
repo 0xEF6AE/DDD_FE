@@ -9,7 +9,6 @@ import {
   type ApplicationStatus,
   type StatusBranch,
 } from "@/entities/application"
-import { PART_LABEL } from "../../constants"
 import { AnswerList } from "./components/AnswerList"
 import { StatusChangeModal } from "./components/StatusChangeModal"
 
@@ -40,29 +39,39 @@ export const ApplicationDetailDrawer = ({
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
 
   const { data: application, isLoading } = useQuery(
-    applicationQueries.getAdminApplication({ params: { id: applicationId ?? 0 } }),
+    applicationQueries.getAdminApplication({
+      params: { id: applicationId ?? 0 },
+    })
   )
   const { data: cohorts } = useQuery(cohortQueries.getCohorts())
 
-  const allParts = (cohorts ?? []).flatMap((c) => c.parts ?? []) as unknown as Array<{
+  const allParts = (cohorts ?? []).flatMap(
+    (c) => c.parts ?? []
+  ) as unknown as Array<{
     id: number
     name: string
   }>
-  const partName = allParts.find((p) => p.id === application?.cohortPartId)?.name ?? ""
-  const partLabel = PART_LABEL[partName] || partName || "-"
+  const partName =
+    allParts.find((p) => p.id === application?.cohortPartId)?.name ?? ""
+  const partLabel = partName || "-"
 
   const branch: StatusBranch | undefined = application
     ? STATUS_BRANCH[application.status as ApplicationStatus]
     : undefined
 
-  const openConfirm = (nextStatus: ApplicationStatus, label: string, isPass: boolean) =>
-    setConfirmState({ nextStatus, label, isPass })
+  const openConfirm = (
+    nextStatus: ApplicationStatus,
+    label: string,
+    isPass: boolean
+  ) => setConfirmState({ nextStatus, label, isPass })
 
   return (
     <>
       <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
         <Drawer.Content placement={isMobile ? "bottom" : "right"}>
-          <Drawer.Dialog className={!isMobile ? "w-full max-w-120 bg-background" : ""}>
+          <Drawer.Dialog
+            className={!isMobile ? "w-full max-w-120 bg-background" : ""}
+          >
             <Drawer.Header>
               <Drawer.Heading className="text-lg font-semibold">
                 {application?.applicantName ?? "지원자 상세"}
@@ -99,7 +108,7 @@ export const ApplicationDetailDrawer = ({
                       <InfoRow
                         label="제출일"
                         value={formatDate(
-                          application.submittedAt ?? application.createdAt,
+                          application.submittedAt ?? application.createdAt
                         )}
                       />
                       <InfoRow
@@ -169,7 +178,7 @@ export const ApplicationDetailDrawer = ({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <dt className="font-medium text-foreground-secondary">{label}</dt>
+      <dt className="text-foreground-secondary font-medium">{label}</dt>
       <dd className="text-foreground">{value}</dd>
     </>
   )

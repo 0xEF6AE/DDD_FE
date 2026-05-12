@@ -14,15 +14,12 @@ import {
 import { Controller, FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
-import { parseTime } from "@internationalized/date"
 
 import { cohortQueries } from "@ddd/api"
-import type { CohortDto, CohortPartName } from "@ddd/api"
+import type { CohortDto, CohortPartConfigDto } from "@ddd/api"
 
-import { PART_LABEL } from "@/entities/cohort"
 import { useCreateOrUpdateSlotFlow } from "@/entities/interview-slot"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
-import { toCalendarDate } from "@/shared/lib/toDateValue"
 import { FormField } from "@/shared/ui/FormField"
 
 import {
@@ -32,8 +29,6 @@ import {
 } from "../types"
 
 export type DrawerMode = "create" | "edit"
-
-type CohortPartLite = { id: number; name: CohortPartName }
 
 interface Props {
   isOpen: boolean
@@ -89,7 +84,8 @@ export function InterviewSlotRegisterDrawer({
   const selectedCohort: CohortDto | undefined = cohorts?.find(
     (c) => c.id === watchedCohortId
   )
-  const parts = (selectedCohort?.parts ?? []) as unknown as CohortPartLite[]
+
+  const parts = selectedCohort?.parts ?? []
   const selectedPart = parts.find((p) => p.id === watchedPartId)
 
   const { submit, isPending: isMutating } = useCreateOrUpdateSlotFlow({
@@ -112,9 +108,9 @@ export function InterviewSlotRegisterDrawer({
     setValue("cohortPartId", 0, { shouldValidate: false })
   }
 
-  const onPartPick = (part: CohortPartLite) => {
+  const onPartPick = (part: CohortPartConfigDto) => {
     setValue("cohortPartId", part.id, { shouldValidate: false })
-    setValue("cohortPartName", part.name, { shouldValidate: false })
+    setValue("cohortPartName", part.partName, { shouldValidate: false })
   }
 
   const isBusy = isSubmitting || isMutating
@@ -122,7 +118,9 @@ export function InterviewSlotRegisterDrawer({
   return (
     <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Drawer.Content placement={isMobile ? "bottom" : "right"}>
-        <Drawer.Dialog className={!isMobile ? "w-full max-w-120 bg-background" : ""}>
+        <Drawer.Dialog
+          className={!isMobile ? "w-full max-w-120 bg-background" : ""}
+        >
           <Drawer.Header>
             <Drawer.Heading className="text-lg font-semibold">
               {TITLE_BY_MODE[mode]}
@@ -175,7 +173,7 @@ export function InterviewSlotRegisterDrawer({
                     <Select.Trigger>
                       <Select.Value>
                         {selectedPart
-                          ? (PART_LABEL[selectedPart.name] ?? selectedPart.name)
+                          ? selectedPart.partName
                           : "파트를 선택하세요"}
                       </Select.Value>
                       <Select.Indicator />
@@ -186,10 +184,10 @@ export function InterviewSlotRegisterDrawer({
                           <ListBox.Item
                             key={p.id}
                             id={String(p.id)}
-                            textValue={PART_LABEL[p.name] ?? p.name}
+                            textValue={p.partName}
                             onClick={() => onPartPick(p)}
                           >
-                            {PART_LABEL[p.name] ?? p.name}
+                            {p.partName}
                           </ListBox.Item>
                         ))}
                       </ListBox>
@@ -211,7 +209,6 @@ export function InterviewSlotRegisterDrawer({
                         <DatePicker
                           aria-label="면접 날짜"
                           className="w-full"
-                          value={toCalendarDate(field.value)}
                           onChange={(d) => field.onChange(d?.toString() ?? "")}
                         >
                           <DateField.Group fullWidth>
@@ -237,7 +234,9 @@ export function InterviewSlotRegisterDrawer({
                               <Calendar.Grid>
                                 <Calendar.GridHeader>
                                   {(day) => (
-                                    <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                                    <Calendar.HeaderCell>
+                                      {day}
+                                    </Calendar.HeaderCell>
                                   )}
                                 </Calendar.GridHeader>
                                 <Calendar.GridBody>
@@ -248,7 +247,7 @@ export function InterviewSlotRegisterDrawer({
                           </DatePicker.Popover>
                         </DatePicker>
                         {fieldState.error && (
-                          <p className="text-danger mt-1 text-xs">
+                          <p className="mt-1 text-xs text-danger">
                             {fieldState.error.message}
                           </p>
                         )}
@@ -267,15 +266,20 @@ export function InterviewSlotRegisterDrawer({
                           <TimeField
                             aria-label="시작 시각"
                             className="w-full"
-                            value={field.value ? parseTime(field.value) : null}
-                            onChange={(t) => field.onChange(t?.toString() ?? "")}
+                            name="startTime"
+                            //value={field.value ? parseTime(field.value) : null}
+                            onChange={(t) =>
+                              field.onChange(t?.toString() ?? "")
+                            }
                           >
-                            <TimeField.Input>
-                              {(seg) => <TimeField.Segment segment={seg} />}
-                            </TimeField.Input>
+                            <TimeField.Group>
+                              <TimeField.Input>
+                                {(seg) => <TimeField.Segment segment={seg} />}
+                              </TimeField.Input>
+                            </TimeField.Group>
                           </TimeField>
                           {fieldState.error && (
-                            <p className="text-danger mt-1 text-xs">
+                            <p className="mt-1 text-xs text-danger">
                               {fieldState.error.message}
                             </p>
                           )}
@@ -293,15 +297,19 @@ export function InterviewSlotRegisterDrawer({
                           <TimeField
                             aria-label="종료 시각"
                             className="w-full"
-                            value={field.value ? parseTime(field.value) : null}
-                            onChange={(t) => field.onChange(t?.toString() ?? "")}
+                            //value={field.value ? parseTime(field.value) : null}
+                            onChange={(t) =>
+                              field.onChange(t?.toString() ?? "")
+                            }
                           >
-                            <TimeField.Input>
-                              {(seg) => <TimeField.Segment segment={seg} />}
-                            </TimeField.Input>
+                            <TimeField.Group>
+                              <TimeField.Input>
+                                {(seg) => <TimeField.Segment segment={seg} />}
+                              </TimeField.Input>
+                            </TimeField.Group>
                           </TimeField>
                           {fieldState.error && (
-                            <p className="text-danger mt-1 text-xs">
+                            <p className="mt-1 text-xs text-danger">
                               {fieldState.error.message}
                             </p>
                           )}
@@ -325,9 +333,10 @@ export function InterviewSlotRegisterDrawer({
                           onChange={(e) =>
                             field.onChange(Number(e.target.value) || 1)
                           }
+                          className="w-full"
                         />
                         {fieldState.error && (
-                          <p className="text-danger mt-1 text-xs">
+                          <p className="mt-1 text-xs text-danger">
                             {fieldState.error.message}
                           </p>
                         )}
@@ -346,6 +355,7 @@ export function InterviewSlotRegisterDrawer({
                         placeholder="강남구청 회의실 / Google Meet"
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
+                        className="w-full"
                       />
                     )}
                   />
@@ -361,6 +371,7 @@ export function InterviewSlotRegisterDrawer({
                         placeholder="추가 안내 사항"
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
+                        className="w-full"
                       />
                     )}
                   />
