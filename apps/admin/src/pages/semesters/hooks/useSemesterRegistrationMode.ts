@@ -54,7 +54,7 @@ export const useSemesterRegistrationMode = (): RegistrationState => {
       mode: "resume",
       targetId: latest.id,
       prefill: serializeCohortToForm(latest),
-      buttonLabel: "기수 등록 마저하기",
+      buttonLabel: "기수 정보 수정",
     }
   }, [cohorts])
 }

@@ -61,7 +61,7 @@ const buildDefaults = (prefill?: SemesterRegisterForm): SemesterRegisterForm =>
 
 const TITLE_BY_MODE: Record<DrawerMode, string> = {
   create: "신규 기수 등록",
-  resume: "기수 등록 마저하기",
+  resume: "기수 정보 수정",
   edit: "기수 수정",
 }
 
@@ -119,9 +119,7 @@ export function SemesterRegisterDrawer({
     if (validationError) {
       toast.danger(validationError.message)
       setInvalidCells(
-        new Set(
-          validationError.invalidCells.map((c) => `${c.part}:${c.index}`)
-        )
+        new Set(validationError.invalidCells.map((c) => `${c.part}:${c.index}`))
       )
       return
     }
