@@ -1,11 +1,4 @@
-import {
-  notificationCampaignCreateAdmin,
-  notificationCampaignGetAdminList,
-  notificationCampaignUpdateAdmin,
-  notificationCampaignDeleteAdmin,
-  notificationCampaignPauseAdmin,
-  notificationCampaignResumeAdmin,
-} from "../generated/admin-notification-campaign/admin-notification-campaign";
+import { api } from "../fetchClient";
 import type {
   GetAdminNotificationCampaignsParams,
   GetAdminNotificationCampaignsResponse,
@@ -18,47 +11,66 @@ import type {
 } from "./types";
 
 export const notificationCampaignAPI = {
-  /** 기수별 사전 알림 캠페인 목록을 조회합니다. */
+  /** 기수별 사전 알림 캠페인 목록 - GET /api/v1/admin/notification-campaigns */
   getAdminNotificationCampaigns: ({
     params,
   }: {
     params: GetAdminNotificationCampaignsParams;
-  }) => notificationCampaignGetAdminList(params),
+  }) =>
+    api.get("/api/v1/admin/notification-campaigns", {
+      params: { query: params },
+    }) as unknown as Promise<GetAdminNotificationCampaignsResponse>,
 
-  /** 특정 기수의 사전 알림 캠페인을 등록합니다. */
+  /** 사전 알림 캠페인 등록 - POST /api/v1/admin/notification-campaigns */
   createNotificationCampaign: ({
     payload,
   }: {
     payload: PostCreateNotificationCampaignRequest;
-  }) => notificationCampaignCreateAdmin(payload),
+  }) =>
+    api.post("/api/v1/admin/notification-campaigns", {
+      body: payload,
+    }) as unknown as Promise<void>,
 
-  /** SCHEDULED/PAUSED 상태의 캠페인 본문/예약 시각을 수정합니다. */
+  /** 캠페인 수정 - PATCH /api/v1/admin/notification-campaigns/{id} */
   updateNotificationCampaign: ({
     params,
     payload,
   }: {
     params: PatchUpdateNotificationCampaignParams;
     payload: PatchUpdateNotificationCampaignRequest;
-  }) => notificationCampaignUpdateAdmin(params.id, payload),
+  }) =>
+    api.patch("/api/v1/admin/notification-campaigns/{id}", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<void>,
 
-  /** 캠페인을 soft delete 합니다. */
+  /** 캠페인 soft delete - DELETE /api/v1/admin/notification-campaigns/{id} */
   deleteNotificationCampaign: ({
     params,
   }: {
     params: DeleteNotificationCampaignParams;
-  }) => notificationCampaignDeleteAdmin(params.id),
+  }) =>
+    api.delete("/api/v1/admin/notification-campaigns/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 
-  /** SCHEDULED → PAUSED 로 전환합니다. */
+  /** SCHEDULED → PAUSED - PATCH /api/v1/admin/notification-campaigns/{id}/pause */
   pauseNotificationCampaign: ({
     params,
   }: {
     params: PatchPauseNotificationCampaignParams;
-  }) => notificationCampaignPauseAdmin(params.id),
+  }) =>
+    api.patch("/api/v1/admin/notification-campaigns/{id}/pause", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 
-  /** PAUSED → SCHEDULED 로 복귀시킵니다. */
+  /** PAUSED → SCHEDULED - PATCH /api/v1/admin/notification-campaigns/{id}/resume */
   resumeNotificationCampaign: ({
     params,
   }: {
     params: PatchResumeNotificationCampaignParams;
-  }) => notificationCampaignResumeAdmin(params.id),
+  }) =>
+    api.patch("/api/v1/admin/notification-campaigns/{id}/resume", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 };

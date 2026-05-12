@@ -1,5 +1,4 @@
-// GET /api/v1/users/me - 내 정보 조회
-import type { MeResponseDto } from "../generated/dddApi.schemas";
+import type { components } from "../generated/api";
 
-/** 내 정보 데이터 */
-export type MeUser = MeResponseDto;
+/** 내 정보 데이터 - GET /api/v1/users/me */
+export type MeUser = components["schemas"]["MeResponseDto"];

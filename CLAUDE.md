@@ -25,7 +25,7 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 
 - `apps/admin` — 동아리 운영진용 어드민 페이지 (현재 개발 중)
 - `apps/web` — 홈/블로그/프로젝트/모집안내 랜딩페이지 (개발 중)
-- `packages/api` — 공통 API 클라이언트 SDK, 타입, Zod 스키마 (orval 코드 생성 포함)
+- `packages/api` — 공통 API 클라이언트 SDK 및 타입 (`openapi-typescript` 로 BE OpenAPI → 타입 생성, 런타임은 `openapi-fetch` 기반 `api` 싱글톤)
 
 > 기능 명세 대비 구현 체크리스트는 **[progress.md](./progress.md)** 를 참조한다.
 >
@@ -47,7 +47,7 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 │   ├── admin/        (@ddd/admin) — Vite + React, Tailwind CSS
 │   └── web/          (@ddd/web)   — Next.js App Router
 └── packages/
-    ├── api/          (@ddd/api)   — API 클라이언트, 타입, Zod 스키마, Hey API 생성 코드
+    ├── api/          (@ddd/api)   — API 클라이언트, 타입 (openapi-typescript 생성 + openapi-fetch 런타임)
     └── ui/           (@ddd/ui)    — admin/web 공통 UI 컴포넌트 (예정)
 ```
 
@@ -60,7 +60,7 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 | -------------- | ----------------------- | -------------- | ------- | --------------------------------- |
 | `apps/admin`   | Vite + React 19         | Tailwind CSS 4 | 개발 중 | HeroUI v3, React Router Data Mode |
 | `apps/web`     | Next.js 16 (App Router) | -              | 개발 중 | 홈/블로그/프로젝트/모집안내       |
-| `packages/api` | -                       | -              | 개발 중 | orval, TanStack Query, Zod        |
+| `packages/api` | -                       | -              | 개발 중 | openapi-typescript + openapi-fetch, TanStack Query |
 
 ---
 
@@ -74,7 +74,7 @@ pnpm build:admin        # 어드민 빌드
 pnpm dev:web            # 웹 개발 서버 (추후)
 pnpm build:web          # 웹 빌드 (추후)
 
-pnpm gen:api            # orval로 OpenAPI 스키마 → 타입/SDK 코드 생성
+pnpm gen:api            # openapi-typescript 로 BE OpenAPI → packages/api/src/generated/api.ts 갱신
 
 pnpm lint               # 전체 린트
 pnpm lint:fix           # 전체 린트 자동 수정

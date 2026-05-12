@@ -1,60 +1,83 @@
-import {
-  interviewListSlots,
-  interviewGetSlot,
-  interviewCreateSlot,
-  interviewUpdateSlot,
-  interviewDeleteSlot,
-  interviewCreateReservation,
-  interviewCancelReservation,
-} from "../generated/admin-interview/admin-interview";
-
+import { api } from "../fetchClient";
 import type {
   GetInterviewSlotsParams,
+  GetInterviewSlotsResponse,
   GetInterviewSlotParams,
+  GetInterviewSlotResponse,
   PostCreateInterviewSlotRequest,
+  PostCreateInterviewSlotResponse,
   PatchUpdateInterviewSlotParams,
   PatchUpdateInterviewSlotRequest,
+  PatchUpdateInterviewSlotResponse,
   DeleteInterviewSlotParams,
   PostCreateInterviewReservationParams,
   PostCreateInterviewReservationRequest,
+  PostCreateInterviewReservationResponse,
   DeleteInterviewReservationParams,
 } from "./types";
 
 export const interviewAPI = {
-  /** 기수/파트 필터로 슬롯을 조회합니다. */
+  /** 면접 슬롯 목록 조회 - GET /api/v1/admin/interview-slots */
   getInterviewSlots: ({ params }: { params: GetInterviewSlotsParams }) =>
-    interviewListSlots(params),
+    api.get("/api/v1/admin/interview-slots", {
+      params: { query: params ?? {} },
+    }) as unknown as Promise<GetInterviewSlotsResponse>,
 
-  /** 면접 슬롯 상세 조회 */
-  getInterviewSlot: ({ params }: { params: GetInterviewSlotParams }) => interviewGetSlot(params.id),
+  /** 면접 슬롯 상세 - GET /api/v1/admin/interview-slots/{id} */
+  getInterviewSlot: ({ params }: { params: GetInterviewSlotParams }) =>
+    api.get("/api/v1/admin/interview-slots/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<GetInterviewSlotResponse>,
 
-  /** 새로운 면접 슬롯을 생성합니다. */
-  createInterviewSlot: ({ payload }: { payload: PostCreateInterviewSlotRequest }) =>
-    interviewCreateSlot(payload),
+  /** 면접 슬롯 생성 - POST /api/v1/admin/interview-slots */
+  createInterviewSlot: ({
+    payload,
+  }: {
+    payload: PostCreateInterviewSlotRequest;
+  }) =>
+    api.post("/api/v1/admin/interview-slots", {
+      body: payload,
+    }) as unknown as Promise<PostCreateInterviewSlotResponse>,
 
-  /** 면접 슬롯 수정 */
+  /** 면접 슬롯 수정 - PATCH /api/v1/admin/interview-slots/{id} */
   updateInterviewSlot: ({
     params,
     payload,
   }: {
     params: PatchUpdateInterviewSlotParams;
     payload: PatchUpdateInterviewSlotRequest;
-  }) => interviewUpdateSlot(params.id, payload),
+  }) =>
+    api.patch("/api/v1/admin/interview-slots/{id}", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<PatchUpdateInterviewSlotResponse>,
 
-  /** 면접 슬롯 삭제 */
+  /** 면접 슬롯 삭제 - DELETE /api/v1/admin/interview-slots/{id} */
   deleteInterviewSlot: ({ params }: { params: DeleteInterviewSlotParams }) =>
-    interviewDeleteSlot(params.id),
+    api.delete("/api/v1/admin/interview-slots/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 
-  /** 지원자를 특정 슬롯에 배정하고 구글 캘린더 이벤트를 생성합니다. */
+  /** 면접 예약 생성 - POST /api/v1/admin/interview-slots/{slotId}/reservations */
   createInterviewReservation: ({
     params,
     payload,
   }: {
     params: PostCreateInterviewReservationParams;
     payload: PostCreateInterviewReservationRequest;
-  }) => interviewCreateReservation(params.slotId, payload),
+  }) =>
+    api.post("/api/v1/admin/interview-slots/{slotId}/reservations", {
+      params: { path: { slotId: params.slotId } },
+      body: payload,
+    }) as unknown as Promise<PostCreateInterviewReservationResponse>,
 
-  /** 면접 예약을 취소합니다. */
-  cancelInterviewReservation: ({ params }: { params: DeleteInterviewReservationParams }) =>
-    interviewCancelReservation(params.reservationId),
+  /** 면접 예약 취소 - DELETE /api/v1/admin/interview-slots/reservations/{reservationId} */
+  cancelInterviewReservation: ({
+    params,
+  }: {
+    params: DeleteInterviewReservationParams;
+  }) =>
+    api.delete("/api/v1/admin/interview-slots/reservations/{reservationId}", {
+      params: { path: { reservationId: params.reservationId } },
+    }) as unknown as Promise<void>,
 };

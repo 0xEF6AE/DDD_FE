@@ -1,13 +1,11 @@
-import { apiFetch } from "../mutator";
-import type { PostUploadFileParams, PostUploadFileResponse } from "./types";
+import { api } from "../fetchClient";
+import type { FileUploadDto, PostUploadFileParams } from "./types";
 
 /**
- * @summary 파일 업로드
- * 카테고리별 파일을 업로드하고 URL을 반환합니다.
+ * 파일 업로드 - POST /api/v1/admin/files/upload
  *
- * 주의: generated storageUploadFile 은 OpenAPI 스펙에서 FormData body 를 노출하지 않으므로
- * 직접 사용하면 실제 파일 전송이 불가능합니다. URL 은 generated 와 동일한
- * /api/v1/admin/files/upload 를 사용하고, FormData body 는 apiFetch 를 통해 직접 전달합니다.
+ * BE OpenAPI 가 multipart body 와 201 응답 schema 를 명시하지 않아 타입 캐스트가 필요.
+ * 런타임은 openapi-fetch 가 FormData 를 자동 감지해 그대로 전송. BE spec 보강 시 캐스트 제거.
  */
 export const storageApi = {
   uploadFile: ({
@@ -16,11 +14,9 @@ export const storageApi = {
   }: {
     params: PostUploadFileParams;
     payload: FormData;
-  }) =>
-    apiFetch<PostUploadFileResponse>({
-      url: `/api/v1/admin/files/upload`,
-      method: "POST",
-      params: { category: params.category },
-      data: payload,
-    }),
+  }): Promise<FileUploadDto> =>
+    api.post("/api/v1/admin/files/upload", {
+      params: { query: { category: params.category } },
+      body: payload,
+    } as never) as unknown as Promise<FileUploadDto>,
 };

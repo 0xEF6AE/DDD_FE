@@ -1,14 +1,8 @@
-import {
-  blogGetAdminList,
-  blogGetAdminById,
-  blogCreateAdmin,
-  blogUpdateAdminById,
-  blogDeleteAdminById,
-} from "../generated/admin-blog/admin-blog";
-import { blogGetPublicList as blogGetPublicListFn } from "../generated/blog/blog";
+import { api } from "../fetchClient";
 import type {
   GetBlogPostsParams,
   GetBlogPostsResponse,
+  GetAdminBlogPostsResponse,
   GetAdminBlogPostParams,
   GetAdminBlogPostResponse,
   PostCreateBlogPostRequest,
@@ -20,34 +14,44 @@ import type {
 } from "./types";
 
 export const blogAPI = {
-  /** 공개 블로그 게시글 목록 조회 (커서 기반 페이지네이션) */
-  // NOTE: BE OpenAPI 가 페이지네이션 응답 schema 를 명시하지 않아 generated 가 apiFetch<void>
-  // 로 호출됨 → 응답 타입을 캐스팅으로 보강. BE spec 보강 시 제거.
+  /** 공개 블로그 게시글 목록 (cursor 페이지네이션) - GET /api/v1/blog-posts */
   getBlogPosts: ({ params }: { params: GetBlogPostsParams }) =>
-    blogGetPublicListFn(params) as unknown as Promise<GetBlogPostsResponse>,
+    api.get("/api/v1/blog-posts", {
+      params: { query: params },
+    }) as unknown as Promise<GetBlogPostsResponse>,
 
-  /** 어드민 블로그 게시글 전체 목록 조회 */
+  /** 어드민 블로그 전체 목록 - GET /api/v1/admin/blog-posts */
   getAdminBlogPosts: () =>
-    blogGetAdminList() as unknown as Promise<GetBlogPostsResponse>,
+    api.get("/api/v1/admin/blog-posts") as unknown as Promise<GetAdminBlogPostsResponse>,
 
-  /** 어드민 블로그 게시글 단건 조회 */
+  /** 어드민 블로그 단건 - GET /api/v1/admin/blog-posts/{id} */
   getAdminBlogPost: ({ params }: { params: GetAdminBlogPostParams }) =>
-    blogGetAdminById(params.id),
+    api.get("/api/v1/admin/blog-posts/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<GetAdminBlogPostResponse>,
 
-  /** 블로그 게시글 생성 (어드민) */
+  /** 어드민 블로그 생성 - POST /api/v1/admin/blog-posts */
   createBlogPost: ({ payload }: { payload: PostCreateBlogPostRequest }) =>
-    blogCreateAdmin(payload),
+    api.post("/api/v1/admin/blog-posts", {
+      body: payload,
+    }) as unknown as Promise<PostCreateBlogPostResponse>,
 
-  /** 블로그 게시글 수정 (어드민) */
+  /** 어드민 블로그 수정 - PATCH /api/v1/admin/blog-posts/{id} */
   updateBlogPost: ({
     params,
     payload,
   }: {
     params: PatchUpdateBlogPostParams;
     payload: PatchUpdateBlogPostRequest;
-  }) => blogUpdateAdminById(params.id, payload),
+  }) =>
+    api.patch("/api/v1/admin/blog-posts/{id}", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<PatchUpdateBlogPostResponse>,
 
-  /** 블로그 게시글 삭제 (어드민) */
+  /** 어드민 블로그 삭제 - DELETE /api/v1/admin/blog-posts/{id} */
   deleteBlogPost: ({ params }: { params: DeleteBlogPostParams }) =>
-    blogDeleteAdminById(params.id),
+    api.delete("/api/v1/admin/blog-posts/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 };

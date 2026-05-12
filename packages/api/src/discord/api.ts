@@ -1,8 +1,4 @@
-import {
-  discordAuthorizeUrl,
-  discordGetLink,
-  discordOauthCallback,
-} from "../generated/public-discord/public-discord";
+import { api } from "../fetchClient";
 import type {
   GetDiscordAuthorizeUrlParams,
   GetDiscordLinkParams,
@@ -12,13 +8,13 @@ import type {
 export const discordAPI = {
   /** Discord OAuth 동의 URL 조회 — GET /api/v1/discord/oauth/authorize */
   getAuthorizeUrl: ({ params }: { params: GetDiscordAuthorizeUrlParams }) =>
-    discordAuthorizeUrl(params),
+    api.get("/api/v1/discord/oauth/authorize", { params: { query: params } }),
 
   /** Discord OAuth 콜백 — GET /api/v1/discord/oauth/callback */
   oauthCallback: ({ params }: { params: GetDiscordOauthCallbackParams }) =>
-    discordOauthCallback(params),
+    api.get("/api/v1/discord/oauth/callback", { params: { query: params } }),
 
   /** Discord 연동 상태 조회 — GET /api/v1/discord/link */
   getLink: ({ params }: { params: GetDiscordLinkParams }) =>
-    discordGetLink(params),
+    api.get("/api/v1/discord/link", { params: { query: params } }),
 };

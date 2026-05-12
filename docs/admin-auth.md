@@ -85,9 +85,9 @@ configureApi(apiUrl, {
 })
 ```
 
-- `VITE_API_URL` 이 빈 값이면 `client.ts` 의 `buildUrl()` 이 `window.location.origin` 을 자동 결합한다 (same-origin 배포 전제).
+- `VITE_API_URL` 이 빈 값이면 `fetchClient.ts` 가 `window.location.origin` 을 자동 결합한다 (same-origin 배포 전제).
 - `onUnauthorized` 리다이렉트는 항상 `paths.login` (`shared/lib/paths.ts`) 상수를 통해서 — 경로 변경 시 한 곳만 고치면 된다.
-- 새 API fetch 래퍼/axios 인스턴스를 **별도로 만들지 않는다**. 항상 `@ddd/api` 의 `getApiClient()` 또는 도메인별 hook(`useLogout` 등)을 통해 호출한다.
+- 새 API fetch 래퍼/axios 인스턴스를 **별도로 만들지 않는다**. 항상 `@ddd/api` 의 `api` 싱글톤 (`api.get/post/...`) 또는 도메인별 hook(`useLogout` 등)을 통해 호출한다.
 - **금지**: 직접 `fetch(...)` / `axios.create(...)` 를 새로 만들고 `credentials` 누락. 401 인터셉터를 우회하는 결과를 만든다.
 
 ---
@@ -222,7 +222,7 @@ VITE_API_URL=
 ## 14. 작업 시 확인 항목 (체크리스트)
 
 - [ ] 로그인 진입점이 `window.location.href`로 백엔드 `/api/v1/auth/google`을 호출하는가?
-- [ ] 모든 API 호출이 `@ddd/api` 의 `getApiClient()` / 도메인 hook 으로 통일되어 `credentials: "include"` 가 적용되고 있는가? (별도 fetch/axios 인스턴스를 만들지 않았는가?)
+- [ ] 모든 API 호출이 `@ddd/api` 의 `api` 싱글톤 / 도메인 hook 으로 통일되어 `credentials: "include"` 가 적용되고 있는가? (별도 fetch/axios 인스턴스를 만들지 않았는가?)
 - [ ] 401 응답 시 `/auth/refresh` 자동 호출 → 재시도 → 실패 시 로그인 redirect가 동작하는가? (`client.ts` 흐름을 우회하지 않았는가?)
 - [ ] 인증 상태 확인 로직이 (`/auth/me` 호출 또는 보호 API 401 처리) 정해져 있는가?
 - [ ] 로그아웃 버튼이 `useLogoutFlow()` 를 통해 호출되어 캐시 초기화 + redirect까지 수행하는가?

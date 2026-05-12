@@ -1,4 +1,4 @@
-import { getApiClient } from "../client";
+import { api } from "../fetchClient";
 import type {
   PostCreateCohortRequest,
   PostCreateCohortResponse,
@@ -15,23 +15,25 @@ import type {
   GetActiveCohortResponse,
 } from "./types";
 
-const ADMIN_COHORT_BASE_URL = "/api/v1/admin/cohorts" as const;
-const PUBLIC_COHORT_BASE_URL = "/api/v1/cohorts" as const;
-
 /** 어드민 기수 API */
 export const cohortAPI = {
-  /** 새 기수 생성 (POST /api/v1/admin/cohorts) */
+  /** 새 기수 생성 - POST /api/v1/admin/cohorts */
   createCohort: ({ payload }: { payload: PostCreateCohortRequest }) =>
-    getApiClient().post<PostCreateCohortResponse>(ADMIN_COHORT_BASE_URL, payload),
+    api.post("/api/v1/admin/cohorts", {
+      body: payload,
+    }) as unknown as Promise<PostCreateCohortResponse>,
 
-  /** 기수 전체 목록 조회 (GET /api/v1/admin/cohorts) */
-  getCohorts: () => getApiClient().get<GetCohortsResponse>(ADMIN_COHORT_BASE_URL),
+  /** 기수 전체 목록 - GET /api/v1/admin/cohorts */
+  getCohorts: () =>
+    api.get("/api/v1/admin/cohorts") as unknown as Promise<GetCohortsResponse>,
 
-  /** 기수 단건 조회 (GET /api/v1/admin/cohorts/{id}) */
+  /** 기수 단건 - GET /api/v1/admin/cohorts/{id} */
   getCohort: ({ params }: { params: GetCohortParams }) =>
-    getApiClient().get<GetCohortResponse>(`${ADMIN_COHORT_BASE_URL}/${params.id}`),
+    api.get("/api/v1/admin/cohorts/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<GetCohortResponse>,
 
-  /** 기수 정보 및 상태 수정 (PATCH /api/v1/admin/cohorts/{id}) */
+  /** 기수 정보 및 상태 수정 - PATCH /api/v1/admin/cohorts/{id} */
   updateCohort: ({
     params,
     payload,
@@ -39,16 +41,18 @@ export const cohortAPI = {
     params: PatchUpdateCohortParams;
     payload: PatchUpdateCohortRequest;
   }) =>
-    getApiClient().patch<PatchUpdateCohortResponse>(
-      `${ADMIN_COHORT_BASE_URL}/${params.id}`,
-      payload,
-    ),
+    api.patch("/api/v1/admin/cohorts/{id}", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<PatchUpdateCohortResponse>,
 
-  /** 기수 삭제 (DELETE /api/v1/admin/cohorts/{id}) */
+  /** 기수 삭제 - DELETE /api/v1/admin/cohorts/{id} */
   deleteCohort: ({ params }: { params: DeleteCohortParams }) =>
-    getApiClient().delete<void>(`${ADMIN_COHORT_BASE_URL}/${params.id}`),
+    api.delete("/api/v1/admin/cohorts/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 
-  /** 기수별 파트 모집 설정 (PUT /api/v1/admin/cohorts/{id}/parts) */
+  /** 기수 파트 모집 설정 - PUT /api/v1/admin/cohorts/{id}/parts */
   updateCohortParts: ({
     params,
     payload,
@@ -56,15 +60,15 @@ export const cohortAPI = {
     params: PutUpdateCohortPartsParams;
     payload: PutUpdateCohortPartsRequest;
   }) =>
-    getApiClient().put<PutUpdateCohortPartsResponse>(
-      `${ADMIN_COHORT_BASE_URL}/${params.id}/parts`,
-      payload,
-    ),
+    api.put("/api/v1/admin/cohorts/{id}/parts", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<PutUpdateCohortPartsResponse>,
 };
 
 /** 퍼블릭 기수 API */
 export const cohortPublicAPI = {
-  /** 현재 활성 기수 조회 (GET /api/v1/cohorts/active) */
+  /** 현재 활성 기수 조회 - GET /api/v1/cohorts/active */
   getActiveCohort: () =>
-    getApiClient().get<GetActiveCohortResponse>(`${PUBLIC_COHORT_BASE_URL}/active`),
+    api.get("/api/v1/cohorts/active") as unknown as Promise<GetActiveCohortResponse>,
 };

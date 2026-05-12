@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "generate": "orval",
+    "generate": "openapi-typescript http://localhost:3000/api-docs-json -o ./src/generated/api.ts",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
@@ -16,8 +16,11 @@
   },
   "devDependencies": {
     "@tanstack/react-query": "catalog:",
-    "orval": "^8.6.2",
+    "openapi-typescript": "^7.13.0",
     "typescript": "catalog:",
     "zod": "catalog:"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
   }
 }

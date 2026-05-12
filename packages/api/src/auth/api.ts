@@ -1,15 +1,14 @@
-import { getApiClient } from "../client";
+import { api } from "../fetchClient";
 import type { PostRefreshTokenResponse } from "./types";
 
-const AUTH_BASE_URL = "/api/v1/auth" as const;
-
 export const authAPI = {
+  /** 토큰 갱신 - POST /api/v1/auth/refresh */
   refreshToken: () =>
-    getApiClient().post<PostRefreshTokenResponse>(`${AUTH_BASE_URL}/refresh`, null),
+    api.post("/api/v1/auth/refresh") as unknown as Promise<PostRefreshTokenResponse>,
 
-  logout: () =>
-    getApiClient().post<void>(`${AUTH_BASE_URL}/logout`, null),
+  /** 로그아웃 - POST /api/v1/auth/logout */
+  logout: () => api.post("/api/v1/auth/logout") as unknown as Promise<void>,
 
-  withdrawal: () =>
-    getApiClient().delete<void>(`${AUTH_BASE_URL}/withdrawal`),
+  /** 회원 탈퇴 - DELETE /api/v1/auth/withdrawal */
+  withdrawal: () => api.delete("/api/v1/auth/withdrawal") as unknown as Promise<void>,
 };

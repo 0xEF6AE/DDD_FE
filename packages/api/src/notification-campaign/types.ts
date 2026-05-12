@@ -1,21 +1,30 @@
-import type {
-  CreateNotificationCampaignRequestDto,
-  UpdateNotificationCampaignRequestDto,
-  NotificationCampaignGetAdminListParams,
-  NotificationCampaignGetAdminListStatus,
-} from "../generated/dddApi.schemas";
+import type { components, paths } from "../generated/api";
 
-export type {
-  CreateNotificationCampaignRequestDto,
-  UpdateNotificationCampaignRequestDto,
-  NotificationCampaignGetAdminListParams,
-  NotificationCampaignGetAdminListStatus,
-};
-export { NotificationCampaignGetAdminListStatus as NotificationCampaignStatus } from "../generated/dddApi.schemas";
+// ---------- Runtime enum (consumers reference NotificationCampaignStatus.PAUSED 등) ----------
+export const NotificationCampaignStatus = {
+  SCHEDULED: "SCHEDULED",
+  RUNNING: "RUNNING",
+  DONE: "DONE",
+  PAUSED: "PAUSED",
+  FAILED: "FAILED",
+} as const;
+export type NotificationCampaignStatus =
+  (typeof NotificationCampaignStatus)[keyof typeof NotificationCampaignStatus];
+
+// 별칭 — 기존 코드 호환
+export type NotificationCampaignGetAdminListStatus = NotificationCampaignStatus;
+
+// Request DTO 재노출
+export type CreateNotificationCampaignRequestDto =
+  components["schemas"]["CreateNotificationCampaignRequestDto"];
+export type UpdateNotificationCampaignRequestDto =
+  components["schemas"]["UpdateNotificationCampaignRequestDto"];
 
 // GET /api/v1/admin/notification-campaigns - 어드민 캠페인 목록 조회
-export type GetAdminNotificationCampaignsParams = NotificationCampaignGetAdminListParams;
+export type GetAdminNotificationCampaignsParams =
+  paths["/api/v1/admin/notification-campaigns"]["get"]["parameters"]["query"];
 export type GetAdminNotificationCampaignsResponse = NotificationCampaignDto[];
+export type NotificationCampaignGetAdminListParams = GetAdminNotificationCampaignsParams;
 
 // POST /api/v1/admin/notification-campaigns - 캠페인 등록
 export type PostCreateNotificationCampaignRequest = CreateNotificationCampaignRequestDto;
@@ -30,19 +39,19 @@ export type PatchUpdateNotificationCampaignResponse = void;
 export type DeleteNotificationCampaignParams = { id: number };
 export type DeleteNotificationCampaignResponse = void;
 
-// PATCH /api/v1/admin/notification-campaigns/{id}/pause - 캠페인 일시정지
+// PATCH /api/v1/admin/notification-campaigns/{id}/pause - 일시정지
 export type PatchPauseNotificationCampaignParams = { id: number };
 export type PatchPauseNotificationCampaignResponse = void;
 
-// PATCH /api/v1/admin/notification-campaigns/{id}/resume - 캠페인 재개
+// PATCH /api/v1/admin/notification-campaigns/{id}/resume - 재개
 export type PatchResumeNotificationCampaignParams = { id: number };
 export type PatchResumeNotificationCampaignResponse = void;
 
-// 엔티티 타입 (백엔드 응답 스펙이 OpenAPI 에 명시되지 않아 수동 정의 — early-notification 패턴)
+// 엔티티 타입 (BE OpenAPI 가 응답 schema 미정의 → 수동 정의)
 export interface NotificationCampaignDto {
   id: number;
   cohortId: number;
-  status: NotificationCampaignGetAdminListStatus;
+  status: NotificationCampaignStatus;
   scheduledAt: string;
   subject: string;
   html: string;

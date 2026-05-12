@@ -1,5 +1,5 @@
-export { configureApi, getApiClient } from "./client";
-export type { ApiClient, ApiClientConfig, ApiRequestOptions } from "./client";
+export { api, configureApi } from "./fetchClient";
+export type { ApiConfig, UnwrapData } from "./fetchClient";
 export { ApiError, ErrorMessage } from "./errors";
 export type { ErrorMessageKey } from "./errors";
 
