@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/admin/**'
-      - 'packages/api/**'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-admin.yml'
+      - "apps/admin/**"
+      - "packages/api/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-admin.yml"
   workflow_dispatch:
 
 concurrency:
@@ -26,8 +26,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -35,8 +35,8 @@ jobs:
       - name: Build admin
         run: pnpm --filter @ddd/admin... build
         env:
-          VITE_API_URL: ''
-          VITE_MSW_ENABLED: 'false'
+          VITE_API_URL: ""
+          VITE_MSW_ENABLED: "false"
 
       - name: Pack dist
         run: tar -czf admin-dist.tar.gz -C apps/admin/dist .
@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.GCP_VM_USER }}
           key: ${{ secrets.GCP_VM_SSH_KEY }}
           source: admin-dist.tar.gz
-          target: /opt/ddd-be/frontend/
+          target: /opt/admin/frontend/
 
       - name: Atomic swap
         uses: appleboy/ssh-action@v1.0.3
@@ -59,7 +59,7 @@ jobs:
           envs: GITHUB_SHA
           script: |
             set -euo pipefail
-            cd /opt/ddd-be/frontend
+            cd /opt/admin/frontend
             REL="releases/$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
             mkdir -p "$REL"
             tar -xzf admin-dist.tar.gz -C "$REL"

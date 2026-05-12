@@ -41,7 +41,7 @@ OAuth 콜백은 전부 `/api/v1/*` 아래라 BE 가 처리. **프론트는 콜�
 | 항목 | 결정 |
 | --- | --- |
 | 배포 트리거 | **FE 레포 CI 단독** — BE 배포와 독립 |
-| 정적 파일 위치 | VM 호스트 `/opt/ddd-be/frontend/current/` (BE compose 가 `/srv/frontend` 로 마운트) |
+| 정적 파일 위치 | VM 호스트 `/opt/admin/frontend/current/` (BE compose 가 `/srv/frontend` 로 마운트) |
 | 배포 원자성 | **Symlink 스왑** — `releases/<sha>/` 에 풀고 `current` 심볼릭 링크 교체 |
 | SSH 사용자 | BE 배포용 user 재사용 (`GCP_VM_USER` / `GCP_VM_SSH_KEY`) |
 | 빌드 환경변수 | `VITE_API_URL=""` (코드가 `window.location.origin` 자동 결합) |
@@ -57,7 +57,7 @@ BE 가 선행해야 FE 첫 배포가 정상 동작한다. 핵심 작업:
 
 - Caddyfile 에 `/api/*` 분기 + SPA fallback 추가
 - `docker-compose.yml` 의 caddy 서비스에 `./frontend/current:/srv/frontend:ro` 볼륨 마운트
-- `deploy.yml` 또는 부트스트랩 스크립트에 `mkdir -p /opt/ddd-be/frontend/current` + placeholder `index.html`
+- `deploy.yml` 또는 부트스트랩 스크립트에 `mkdir -p /opt/admin/frontend/current` + placeholder `index.html`
 - 환경변수 `CLIENT_REDIRECT_URL=https://admin.dddstudy.kr/applications` 갱신
 - (선택) `GET /api/v1/users/me` 엔드포인트 추가 — 옵션 A 가드 도입 시 필요
 - 외부 콘솔(Google/Discord)의 OAuth redirect URI 가 이미 `admin.dddstudy.kr` 라면 변경 없음
@@ -112,13 +112,123 @@ main 브랜치 push 시 트리거. `workflow_dispatch` 로 수동 실행도 가�
 
 ## 6. GitHub Secrets
 
-프론트 레포 Settings → Secrets and variables → Actions:
+프론트 레포 Settings → Secrets and variables → Actions 에 아래 3 개 등록:
 
-- `GCP_VM_HOST` — VM IP/호스트
-- `GCP_VM_USER` — BE 와 동일 user
-- `GCP_VM_SSH_KEY` — BE 와 동일 private key
+| Secret | 값 | 출처 |
+|---|---|---|
+| `GCP_VM_HOST` | VM IPv4 또는 도메인 (예: `35.216.102.35`) | BE 담당자로부터 전달 |
+| `GCP_VM_USER` | SSH 로그인 user (예: `dddstudy1`) | BE 담당자로부터 전달 — BE 배포 user 와 동일 |
+| `GCP_VM_SSH_KEY` | FE 전용 SSH **private key 전체** (`-----BEGIN OPENSSH PRIVATE KEY-----` ~ `-----END OPENSSH PRIVATE KEY-----` 줄 포함, 중간 줄바꿈 보존) | FE 측에서 `ssh-keygen` 으로 새로 생성. public 짝은 VM `authorized_keys` 에 등록 |
 
-BE 레포의 동일 값을 그대로 복사. 추후 보안 강화가 필요하면 frontend-deploy 전용 user 로 분리하는 방안 재검토.
+> **시나리오**: user 는 BE 와 공유, 키는 FE 전용으로 분리 (시나리오 B). BE 의 private key 를 그대로 복사(시나리오 A)할 수도 있으나, 키 회전·회수 시 영향 격리를 위해 FE 전용 키를 권장.
+
+### 6.1 SSH 키 쌍 생성 — FE 로컬
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/ddd_fe_deploy -C "ddd-fe-deploy@github-actions" -N ""
+```
+
+| 플래그 | 의미 |
+|---|---|
+| `-t ed25519` | 알고리즘 (RSA 보다 짧고 빠름, 동일 보안) |
+| `-f ~/.ssh/ddd_fe_deploy` | 출력 파일 경로. 두 파일 생성: `ddd_fe_deploy` (private) + `ddd_fe_deploy.pub` (public) |
+| `-C "ddd-fe-deploy@github-actions"` | comment(라벨). `authorized_keys` 끝에 한 줄로 남아 키 식별용. 동작에는 영향 없음 |
+| `-N ""` | passphrase 비움. **필수** — `appleboy/ssh-action` 이 passphrase 입력 불가 |
+
+생성 직후 화면에 뜨는 `SHA256:...` fingerprint 와 randomart 는 식별용 표시일 뿐이라 별도 저장 불필요. 진짜 키는 위 두 파일에 들어있음.
+
+### 6.2 public key (`.pub`) 를 VM 에 등록
+
+본인이 VM SSH 접근 권한이 없는 상태에서 시작하는 게 보통. 본인 권한에 따라 경로 택일.
+
+**경로 A — 팀 Google 계정으로 GCP 콘솔 브라우저 SSH (권장)**
+
+팀 구글 계정에 GCP 프로젝트 IAM 권한 (`compute.instanceAdmin.v1` 또는 sudo 가능한 user 매핑) 이 있으면 본인 손으로 끝낼 수 있음.
+
+1. 시크릿 창에서 `console.cloud.google.com` 팀 계정 로그인
+2. Compute Engine → VM 인스턴스 → 해당 VM 행의 **"SSH"** 버튼 → 브라우저 터미널
+3. 터미널에서:
+
+```bash
+sudo -u dddstudy1 mkdir -p /home/dddstudy1/.ssh
+sudo chmod 700 /home/dddstudy1/.ssh
+
+echo '<여기에 ddd_fe_deploy.pub 한 줄 paste>' \
+  | sudo tee -a /home/dddstudy1/.ssh/authorized_keys
+
+sudo chown dddstudy1:dddstudy1 /home/dddstudy1/.ssh/authorized_keys
+sudo chmod 600 /home/dddstudy1/.ssh/authorized_keys
+
+# 확인
+sudo tail -n 1 /home/dddstudy1/.ssh/authorized_keys
+```
+
+권한 모드(`700` / `600`)는 SSH 서버가 엄격하게 검사하므로 빠뜨리면 인증 통과 안 됨.
+
+**경로 B — BE 담당자에게 의뢰**
+
+콘솔 권한이 없거나 OS Login 환경이라 user 매핑이 복잡한 경우.
+
+> 어드민 FE 배포 파이프라인용 SSH key 등록 부탁드립니다.
+> VM: `<GCP_VM_HOST>` / 대상 user: `dddstudy1`
+> 추가할 public key (한 줄):
+> ```
+> <cat ~/.ssh/ddd_fe_deploy.pub 결과>
+> ```
+> `~dddstudy1/.ssh/authorized_keys` 끝에 append 부탁드립니다.
+
+`.pub` 키는 공개 정보라 슬랙·메일에 평문으로 그대로 전달해도 보안 문제 없음. **절대 노출 금지인 건 `.pub` 안 붙은 private 쪽뿐**.
+
+**경로 C — GCP 콘솔 메타데이터 UI (함정 주의)**
+
+VM 상세 → "수정" → "SSH 키" 섹션 → "항목 추가" 도 가능. 단 GCP 가 key 끝의 comment 를 Linux user 이름으로 자동 매핑하므로, paste 전에 comment 를 `ddd-fe-deploy@github-actions` → `dddstudy1` 로 바꿔야 받은 user 와 일치. OS Login 이 켜져 있으면 이 메타데이터가 무시되므로 경로 A 또는 B 로 가야 함.
+
+### 6.3 로컬에서 SSH 인증 검증
+
+secret 등록 전에 반드시 확인. GitHub Actions 가 쓰는 라이브러리와 동일한 SSH 메커니즘이라 로컬 통과 = 파이프라인 통과 (거의 확정).
+
+```bash
+ssh -i ~/.ssh/ddd_fe_deploy -o IdentitiesOnly=yes dddstudy1@<GCP_VM_HOST>
+```
+
+- `-i` : 사용할 private key 지정
+- `-o IdentitiesOnly=yes` : agent/기본키 무시하고 `-i` 지정 키만 시도 (정확한 검증)
+
+비밀번호 안 묻고 셸 떨어지면 성공. 첫 접속이면 known_hosts confirm 한 번(`yes`).
+
+**실패 시 진단**
+
+| 증상 | 의심 |
+|---|---|
+| `Permission denied (publickey)` | `.pub` 이 `dddstudy1` 의 `authorized_keys` 에 없거나 권한 모드(700/600) 미충족 |
+| `Connection timed out` | host 오타 또는 22 포트 방화벽 차단 |
+| `Offering public key` 로그가 안 나옴 (`-vvv` 옵션으로 확인) | private key 파일 권한 문제. `chmod 600 ~/.ssh/ddd_fe_deploy` |
+
+**셸에 들어간 김에 BE 측 부트스트랩 확인**:
+
+```bash
+# 배포 디렉터리 존재 + 쓰기 권한
+test -w /opt/admin/frontend && echo "OK: writable" || echo "FAIL: not writable"
+
+# placeholder index.html
+ls -la /opt/admin/frontend/current/ 2>/dev/null
+
+# Caddy 외부 응답
+curl -fsI https://admin.dddstudy.kr/ | head -n 1
+```
+
+위 3 개 중 하나라도 실패면 §3 BE 측 작업이 미완 — BE 에 의뢰해 채워야 첫 배포가 끝까지 통과함.
+
+### 6.4 GitHub Secrets 에 paste
+
+GitHub 레포 Settings → Secrets and variables → Actions → **"New repository secret"** 으로 3 개 차례 등록.
+
+```bash
+# macOS: private key 를 클립보드로 (BEGIN/END 줄·줄바꿈 보존)
+pbcopy < ~/.ssh/ddd_fe_deploy
+```
+
+paste 후 secret 페이지에 3 개가 "Updated now" 표시되면 등록 완료. 값은 다시 못 보지만 잘못 paste 됐으면 "Update" 로 재입력.
 
 ---
 
@@ -126,11 +236,13 @@ BE 레포의 동일 값을 그대로 복사. 추후 보안 강화가 필요하�
 
 1. **BE 가 먼저** — Caddyfile / compose / 부트스트랩 스크립트 변경 + placeholder 세팅 배포
    - 이 단계까지는 Caddy 가 placeholder `index.html` 을 서빙
-2. **GitHub Secrets 등록** (§6) — 머지 전 필수
-3. **FE 가 다음** — main 머지 또는 Actions 탭 `workflow_dispatch` 실행
+2. **FE SSH 키 셋업** (§6) — 키 쌍 생성 → VM `authorized_keys` 등록 → 로컬 `ssh -i` 검증 → GitHub Secrets 3 개 paste. **로컬 SSH 검증이 통과해야 다음 단계로 진행**
+3. **첫 배포는 수동 실행 권장** — Actions 탭 → "Deploy admin to GCP VM" → **Run workflow** (`workflow_dispatch`). 자동 트리거(main 푸시) 보다 먼저 한 번 수동으로 돌려 단계별 로그를 확인
    - `current` 가 실제 빌드로 교체됨
+   - Atomic swap 또는 Health check 에서 막히면 §3 BE 측 작업이 미완인 신호
 4. **(선택) OAuth 콘솔 점검** — 이미 `admin.dddstudy.kr` 면 변경 없음
 5. **검증** — §8 시나리오 통과 확인
+6. **자동 트리거 확정** — 이후 `main` 푸시 시 자동 배포가 도는지 한 번 더 확인 (예: 의도된 작은 변경을 머지하여 워크플로 자동 실행 여부 점검)
 
 ---
 
@@ -155,7 +267,7 @@ BE 레포의 동일 값을 그대로 복사. 추후 보안 강화가 필요하�
 
 VM 에서:
 ```bash
-cd /opt/ddd-be/frontend
+cd /opt/admin/frontend
 ls releases/                    # 보관된 릴리스 확인
 ln -sfn releases/<previous-sha> current.new && mv -Tf current.new current
 ```
@@ -201,7 +313,7 @@ A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 
 ### BE 측 (담당자 회신 필요)
 - [ ] Caddyfile 에 `/api/*` 분기 + `try_files` SPA fallback 추가
 - [ ] `docker-compose.yml` 의 caddy 서비스에 frontend 볼륨 마운트
-- [ ] `/opt/ddd-be/frontend/current/` 부트스트랩 + placeholder `index.html`
+- [ ] `/opt/admin/frontend/current/` 부트스트랩 + placeholder `index.html`
 - [ ] `CLIENT_REDIRECT_URL=https://admin.dddstudy.kr/applications` 갱신
 - [ ] prod 쿠키 플래그 (`httpOnly`, `secure`, `sameSite=lax`) 점검
 
@@ -214,7 +326,13 @@ A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 
 - [x] `.github/workflows/deploy-admin.yml` 추가
 - [x] `apps/admin/index.html` `<meta robots>` (선재 존재)
 - [x] `apps/admin/public/robots.txt` `Disallow: /` (선재 존재)
-- [ ] GitHub Secrets 등록 (`GCP_VM_HOST`, `GCP_VM_USER`, `GCP_VM_SSH_KEY`)
+- [ ] BE 담당자로부터 `GCP_VM_HOST`, `GCP_VM_USER` 값 전달받기
+- [ ] FE 전용 SSH 키 쌍 생성 — `ssh-keygen -t ed25519 -f ~/.ssh/ddd_fe_deploy -C "ddd-fe-deploy@github-actions" -N ""`
+- [ ] public key (`~/.ssh/ddd_fe_deploy.pub`) 를 VM 의 `<GCP_VM_USER>` 계정 `authorized_keys` 에 등록 (§6.2 경로 A/B/C 중 택일)
+- [ ] 로컬에서 `ssh -i ~/.ssh/ddd_fe_deploy -o IdentitiesOnly=yes <GCP_VM_USER>@<GCP_VM_HOST>` 인증 통과 확인
+- [ ] VM 안에서 BE 부트스트랩 상태 확인 (`/opt/admin/frontend/` 쓰기 권한 + Caddy 응답)
+- [ ] GitHub Secrets 3 개 등록 (`GCP_VM_HOST`, `GCP_VM_USER`, `GCP_VM_SSH_KEY`)
+- [ ] Actions 탭 "Run workflow" 로 첫 배포 수동 실행 → 단계별 통과 확인
 
 ### 배포 후 (브라우저)
 - [ ] §8 검증 시나리오 1~8 전 통과
@@ -238,4 +356,4 @@ A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 
 
 ---
 
-**마지막 수정**: 2026-05-11
+**마지막 수정**: 2026-05-13

@@ -20,7 +20,7 @@ export const cohortAPI = {
   /** 새 기수 생성 - POST /api/v1/admin/cohorts */
   createCohort: ({ payload }: { payload: PostCreateCohortRequest }) =>
     api.post("/api/v1/admin/cohorts", {
-      body: payload,
+      body: payload as never,
     }) as unknown as Promise<PostCreateCohortResponse>,
 
   /** 기수 전체 목록 - GET /api/v1/admin/cohorts */
@@ -43,7 +43,7 @@ export const cohortAPI = {
   }) =>
     api.patch("/api/v1/admin/cohorts/{id}", {
       params: { path: { id: params.id } },
-      body: payload,
+      body: payload as never,
     }) as unknown as Promise<PatchUpdateCohortResponse>,
 
   /** 기수 삭제 - DELETE /api/v1/admin/cohorts/{id} */
@@ -62,7 +62,7 @@ export const cohortAPI = {
   }) =>
     api.put("/api/v1/admin/cohorts/{id}/parts", {
       params: { path: { id: params.id } },
-      body: payload,
+      body: payload as never,
     }) as unknown as Promise<PutUpdateCohortPartsResponse>,
 };
 

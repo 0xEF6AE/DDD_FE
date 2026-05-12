@@ -1,7 +1,7 @@
 # DDD 프론트엔드 진행 현황
 
 > **기준 문서**: 어드민 기능 명세 3.x, SEO 요구사항 4.x, 데이터 모델 5.x, MVP 범위 6.x
-> **코드 스냅샷**: 2026-05-11 (branch: `dev/admin`)
+> **코드 스냅샷**: 2026-05-12 (branch: `dev/admin`)
 > **범례**: ✅ 완료 / 🔧 부분 구현 (UI만 또는 목업 연결) / ⬜ 미구현
 
 ---
@@ -28,7 +28,7 @@
 | 공통 인프라 (admin) | ✅ | 모든 도메인이 openapi-fetch 기반 `api` 싱글톤으로 통일 (commit 241ae4e). storage 보조 queries(`listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile`) 는 후속 |
 | 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
 | 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
-| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자 표시. 면접일자 컬럼은 후속 (예약 join 표시) |
+| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기·면접일자 컬럼(슬롯 예약 join) 완료. 개인정보 동의 일자 표시 |
 | 3.3.5 면접 슬롯 | ✅ | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 목록·예약 취소는 `ReservationsDrawer` + `CancelReservationDialog` 로 완료 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
@@ -160,7 +160,7 @@
 - ✅ 예약자 목록 표시 — 슬롯 행 "예약/정원" 셀 클릭 → `ReservationsDrawer` 오픈 (`InterviewSlotResponseDto.reservations` nested 활용). 지원자명은 `applicationQueries.getAdminApplications({ cohortId })` `useSuspenseQuery` 로 `applicationFormId → applicantName` 매핑
 - ✅ 예약 취소 어드민 UI — `CancelReservationDialog` (AlertDialog) + `useCancelReservationFlow` (`cancelInterviewReservation` mutation → toast + `slotLists()` invalidate). Drawer 안 예약 행 [취소] 버튼에서 confirm 후 호출
 - ⬜ 슬롯 일괄 등록 (날짜 + 시간대 그리드) — 후속 PR
-- ⬜ 지원자 테이블에 면접일자 컬럼 추가 — 슬롯-지원서 join 데이터 활용
+- ✅ 지원자 테이블 면접일자 컬럼 — `useApplicationsBoard` 가 `getInterviewSlots` 응답의 `reservations[].applicationFormId → slot.startAt` 로 Map 빌드해 `ApplicationTable` 에 전달 (commit 197834b)
 
 ---
 
@@ -229,7 +229,7 @@
 | 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF) | ⬜ | `project/[id]` 라우트만 존재 |
 | 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
 | 어드민 — 기수 관리 (상태 + 수동 변경) | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패 시 edit 모드 자동 전환 |
-| 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
+| 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기·면접일자 컬럼·개인정보 동의 일자 표시 완료 |
 | 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV/캠페인(예약 발송 관리) 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |

@@ -39,6 +39,9 @@
       "esbuild",
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "@internationalized/date": "3.12.1"
+    }
   }
 }

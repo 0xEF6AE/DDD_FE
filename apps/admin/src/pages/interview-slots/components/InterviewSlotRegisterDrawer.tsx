@@ -109,7 +109,7 @@ export function InterviewSlotRegisterDrawer({
   }
 
   const onPartPick = (part: CohortPartConfigDto) => {
-    setValue("cohortPartId", part.id, { shouldValidate: false })
+    setValue("cohortPartId", part.id ?? 0, { shouldValidate: false })
     setValue("cohortPartName", part.partName, { shouldValidate: false })
   }
 

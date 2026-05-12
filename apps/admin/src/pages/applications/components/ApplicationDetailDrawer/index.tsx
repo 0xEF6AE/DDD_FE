@@ -119,7 +119,7 @@ export const ApplicationDetailDrawer = ({
                         label="동의 일자"
                         value={formatDate(application.privacyAgreedAt)}
                       />
-                      <InfoRow label="현재 상태" value={application.status} />
+                      <InfoRow label="현재 상태" value={application.status ?? "-"} />
                     </dl>
                   </Section>
 

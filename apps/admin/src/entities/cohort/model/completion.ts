@@ -46,9 +46,9 @@ export const isCurriculumComplete = (curriculum: unknown): boolean => {
 const isPartsComplete = (parts: unknown): boolean => {
   if (!Array.isArray(parts) || parts.length === 0) return false
   return PARTS.every((partName) => {
-    const part = (parts as CohortPartConfig[]).find((p) => p.name === partName)
+    const part = (parts as CohortPartConfig[]).find((p) => p.partName === partName)
     if (!part) return false
-    const questions = (part.formSchema as Record<string, unknown>)?.questions
+    const questions = (part.applicationSchema as Record<string, unknown>)?.questions
     if (!Array.isArray(questions)) return false
     return questions.some(
       (q) =>
