@@ -14,6 +14,7 @@ import {
   InterviewSlotRegisterDrawer,
   InterviewSlotsTable,
   InterviewSlotsToolbar,
+  ReservationsDrawer,
 } from "./components"
 import { ALL_PARTS, type PartFilterValue } from "./constants"
 import type { InterviewSlotForm } from "./types"
@@ -51,6 +52,12 @@ export default function InterviewSlotsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [editingSlot, setEditingSlot] = useState<InterviewSlot | null>(null)
   const [deletingSlot, setDeletingSlot] = useState<InterviewSlot | null>(null)
+  // 예약 취소 후 list 가 갱신되면 최신 slot 의 reservations 가 반영되도록 id 로만 보관
+  const [viewingSlotId, setViewingSlotId] = useState<number | null>(null)
+  const viewingSlot =
+    viewingSlotId != null
+      ? (slots.find((s) => s.id === viewingSlotId) ?? null)
+      : null
 
   const drawerProps = useMemo(() => {
     if (editingSlot) {
@@ -132,6 +139,7 @@ export default function InterviewSlotsPage() {
               setIsDrawerOpen(true)
             }}
             onDelete={(slot) => setDeletingSlot(slot)}
+            onOpenReservations={(slot) => setViewingSlotId(slot.id)}
           />
         )}
       </div>
@@ -149,6 +157,15 @@ export default function InterviewSlotsPage() {
           slot={deletingSlot}
           isOpen
           onClose={() => setDeletingSlot(null)}
+        />
+      )}
+
+      {viewingSlot && (
+        <ReservationsDrawer
+          isOpen
+          onOpenChange={(open) => !open && setViewingSlotId(null)}
+          slot={viewingSlot}
+          cohorts={cohorts}
         />
       )}
     </div>

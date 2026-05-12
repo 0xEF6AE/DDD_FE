@@ -11,6 +11,7 @@ type Props = {
   cohorts: CohortDto[]
   onEdit: () => void
   onDelete: () => void
+  onOpenReservations: () => void
 }
 
 const formatDate = (iso: string): string =>
@@ -31,6 +32,7 @@ export const InterviewSlotsTableRow = ({
   cohorts,
   onEdit,
   onDelete,
+  onOpenReservations,
 }: Props) => {
   const allParts = cohorts.flatMap((c) => c.parts ?? []) as unknown as CohortPartLite[]
   const partName = allParts.find((p) => p.id === slot.cohortPartId)?.name
@@ -42,7 +44,14 @@ export const InterviewSlotsTableRow = ({
       <Table.Cell>{formatTimeRange(slot.startAt, slot.endAt)}</Table.Cell>
       <Table.Cell>{partLabel}</Table.Cell>
       <Table.Cell>
-        {slot.reservedCount}/{slot.capacity}
+        <Button
+          size="sm"
+          variant="tertiary"
+          onPress={onOpenReservations}
+          aria-label={`예약자 ${slot.reservedCount}명 보기`}
+        >
+          {slot.reservedCount}/{slot.capacity}
+        </Button>
       </Table.Cell>
       <Table.Cell>{slot.location ?? "-"}</Table.Cell>
       <Table.Cell>

@@ -134,7 +134,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | **Google Meet 링크 생성** | 백엔드 | ⚠️ | – | Calendar 이벤트 생성 시 `conferenceData` 포함 여부 별도 확인 필요 |
 | ICS 파일 첨부 이메일 발송 | 백엔드 | ✅ | – | |
 | 예약 취소 시 Calendar 이벤트 삭제 | 백엔드 | ✅ | – | 실패 시 `OPS_ALERT_EMAIL` 알림 |
-| 예약 취소 어드민 UI | 프론트엔드 | – | ❌ | 슬롯 관리 UI 의존 |
+| 예약 취소 어드민 UI | 프론트엔드 | – | ✅ | FE: 슬롯 행 "예약/정원" 셀 → `ReservationsDrawer` 안 예약자 목록 → 행별 [취소] → `CancelReservationDialog` confirm → `useCancelReservationFlow` (`cancelInterviewReservation` mutation) |
 
 ### Discord 초대 흐름
 
@@ -196,7 +196,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | # | 도메인 | 항목 | 처리 주체 | 백엔드 | 프론트엔드 | 필요한 작업 |
 |---|--------|------|-----------|--------|-----------|------------|
 | 1 | 기수 | 모집중 전환 조건: 지원서 양식 필수 검증 | 양쪽 | ❌ | ✅ | BE: `updateCohort()` 에서 `RECRUITING` 전환 시 파트 양식 검증 미구현. FE: `validateCohortPartsForRecruiting` + `TransitionBlockedDialog` 로 사전 차단·수정 Drawer 자동 오픈 완료. 위반 파트 자동 스크롤·강조는 후속 PR |
-| 2 | 기수 | 파트별 면접 슬롯 관리 UI | 프론트엔드 | ✅ | ✅ | FE: `apps/admin/src/pages/interview-slots/` 신설 — 페이지 + Drawer + Dialog 완성. 예약자 표시/취소는 Phase C (후속 PR, BE `reservations` nested 필드 활용) |
+| 2 | 기수 | 파트별 면접 슬롯 관리 UI | 프론트엔드 | ✅ | ✅ | FE: `apps/admin/src/pages/interview-slots/` 신설 — 페이지 + Drawer + Dialog 완성. 예약자 목록·예약 취소는 `ReservationsDrawer` + `CancelReservationDialog` 로 완료 (BE `reservations` nested + `cancelInterviewReservation` 활용) |
 | 3 | 사전 알림 | 모집중 변경 시 **즉시** 이메일 발송 | 양쪽 | ⚠️ | ✅ | BE: 상태 변경 트리거 부재 — 캠페인 + scheduledAt 우회. FE: 캠페인 어드민 UI 연결 완료(`NotificationCampaignSection`). 명세상 "상태 변경 즉시" 발송은 BE 가 트리거를 도입해야 100% 충족 |
 | 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ✅ | FE: `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → `/interview-slots?cohortId&cohortPartId` 로 navigate. BE 측은 여전히 trigger 만 정상 |
 | 5 | 지원 | 최종합격 이메일 내 Discord OAuth 버튼 | 백엔드 | ⚠️ | – | BE: `EmailEventHandler` 최종합격 템플릿 Discord OAuth URL 포함 확인 |

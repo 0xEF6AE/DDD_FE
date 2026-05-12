@@ -29,7 +29,7 @@
 | 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
 | 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
 | 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자 표시. 면접일자 컬럼은 후속 (예약 join 표시) |
-| 3.3.5 면접 슬롯 | ✅ | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 표시·취소는 후속 PR |
+| 3.3.5 면접 슬롯 | ✅ | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 목록·예약 취소는 `ReservationsDrawer` + `CancelReservationDialog` 로 완료 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
 | 3.6 FAQ | ✅ | MVP 제외 결정 (FE 하드코딩) |
@@ -157,8 +157,8 @@
 - ✅ 슬롯 삭제 Dialog (`DeleteInterviewSlotDialog`) — `DeleteCohortDialog` 패턴 미러링
 - ✅ 흐름 훅 — `entities/interview-slot/model/useCreateOrUpdateSlotFlow` + `useDeleteSlotFlow` + `serialize`
 - ✅ Phase B — `StatusChangeModal` 의 `INTERVIEW_SLOTS_NOT_READY` 분기에서 `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → "슬롯 등록하러 가기" 시 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill)
-- ⬜ 예약자 목록 표시 (`InterviewSlotResponseDto.reservations` nested 활용) — 후속 PR
-- ⬜ 예약 취소 어드민 UI (`cancelInterviewReservation` 사용) — 후속 PR
+- ✅ 예약자 목록 표시 — 슬롯 행 "예약/정원" 셀 클릭 → `ReservationsDrawer` 오픈 (`InterviewSlotResponseDto.reservations` nested 활용). 지원자명은 `applicationQueries.getAdminApplications({ cohortId })` `useSuspenseQuery` 로 `applicationFormId → applicantName` 매핑
+- ✅ 예약 취소 어드민 UI — `CancelReservationDialog` (AlertDialog) + `useCancelReservationFlow` (`cancelInterviewReservation` mutation → toast + `slotLists()` invalidate). Drawer 안 예약 행 [취소] 버튼에서 confirm 후 호출
 - ⬜ 슬롯 일괄 등록 (날짜 + 시간대 그리드) — 후속 PR
 - ⬜ 지원자 테이블에 면접일자 컬럼 추가 — 슬롯-지원서 join 데이터 활용
 
@@ -254,7 +254,7 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 | **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
 | **storage** | generated 미사용. `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 | 파일 관리 기능 확장 불가 |
 | ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료 | 갭 해소 |
-| **interview** | `cancelReservation` query 미구현 | 예약 취소 불가 |
+| ~~**interview**~~ | ✅ `cancelInterviewReservation` mutation + 어드민 UI(`ReservationsDrawer` / `CancelReservationDialog`) 연결 완료 | 갭 해소 |
 | **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
 
 

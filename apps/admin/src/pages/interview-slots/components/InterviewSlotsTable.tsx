@@ -9,6 +9,7 @@ type Props = {
   cohorts: CohortDto[]
   onEdit: (slot: InterviewSlot) => void
   onDelete: (slot: InterviewSlot) => void
+  onOpenReservations: (slot: InterviewSlot) => void
 }
 
 export const InterviewSlotsTable = ({
@@ -16,6 +17,7 @@ export const InterviewSlotsTable = ({
   cohorts,
   onEdit,
   onDelete,
+  onOpenReservations,
 }: Props) => {
   return (
     <Table>
@@ -37,6 +39,7 @@ export const InterviewSlotsTable = ({
                 cohorts={cohorts}
                 onEdit={() => onEdit(slot)}
                 onDelete={() => onDelete(slot)}
+                onOpenReservations={() => onOpenReservations(slot)}
               />
             ))}
           </Table.Body>
