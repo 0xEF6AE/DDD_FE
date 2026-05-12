@@ -25,7 +25,7 @@
 
 | 영역 | 상태 | 핵심 갭 |
 | --- | --- | --- |
-| 공통 인프라 (admin) | 🔧 | 대부분 도메인 연동 완료. cohort·auth·storage 3개 도메인이 generated 미사용 (직접 HTTP 클라이언트) |
+| 공통 인프라 (admin) | ✅ | 모든 도메인이 openapi-fetch 기반 `api` 싱글톤으로 통일 (commit 241ae4e). storage 보조 queries(`listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile`) 는 후속 |
 | 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
 | 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
 | 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자 표시. 면접일자 컬럼은 후속 (예약 join 표시) |
@@ -54,11 +54,11 @@
 
 **API 레이어 연동 현황**
 
-- ✅ 대부분 도메인: application · blog · project · early-notification · discord · interview → generated 함수 사용
-- ⚠️ **cohort** — generated(`cohortGetAdminList` 등) 미사용, 직접 HTTP 클라이언트(`cohortAPI`) 구현. 다른 도메인과 패턴 불일치
-- ⚠️ **auth** — generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 구현
-- ⚠️ **storage** — generated(`storageUploadFile`) 미사용, 직접 HTTP 클라이언트. `storageListFiles` · `storageDeleteFile` · `storageCreateSignedUrl` · `storageDownloadFile` 훅 미구현
+> commit 241ae4e (`orval → openapi-typescript + openapi-fetch` 마이그레이션) 이후 orval 시절의 generated 함수(`cohortGetAdminList` 등)는 제거됨. 현재 `packages/api/src/generated/api.ts` 는 `paths` 타입 정의 한 파일만 보관하며, 모든 도메인은 `import { api } from "../fetchClient"` → `api.get/post/patch/put/delete(...)` 호출 패턴으로 통일되어 있다.
+
+- ✅ 전 도메인 (`application` · `blog` · `project` · `early-notification` · `discord` · `interview` · `cohort` · `auth` · `storage` · `notification-campaign` · `users`) — `fetchClient` `api` 싱글톤 사용, 패턴 일관
 - ✅ **notification-campaign** — `packages/api/src/notification-campaign/` SDK + 어드민 UI(`/early-notification` 페이지 안 캠페인 섹션: 목록·편집 Drawer·PAUSED↔SCHEDULED 토글) 연결 완료
+- ⬜ **storage 보조 queries** — `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` 미구현 (BE 엔드포인트 추가 후 진행)
 
 **완료 (인프라)**
 
@@ -248,11 +248,13 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 
 ### packages/api 레이어 갭
 
+> 241ae4e 이전에 남아있던 "generated 미사용 / 패턴 불일치" 갭(cohort·auth·storage)은 openapi-fetch 마이그레이션으로 일괄 해소됨. 모든 도메인이 `api.get/post/...` 패턴으로 통일.
+
 | 도메인 | 문제 | 영향 |
 |---|---|---|
-| **cohort** | generated(`cohortGetAdminList` 등) 미사용, `cohortAPI` 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
-| **auth** | generated(`authLogout` 등) 미사용, 직접 HTTP 클라이언트 사용 | 다른 도메인과 패턴 불일치 |
-| **storage** | generated 미사용. `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 | 파일 관리 기능 확장 불가 |
+| **storage** | `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 (BE 엔드포인트 추가 후 진행) | 파일 관리 기능 확장 불가 |
+| ~~**cohort**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
+| ~~**auth**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
 | ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료 | 갭 해소 |
 | ~~**interview**~~ | ✅ `cancelInterviewReservation` mutation + 어드민 UI(`ReservationsDrawer` / `CancelReservationDialog`) 연결 완료 | 갭 해소 |
 | **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
