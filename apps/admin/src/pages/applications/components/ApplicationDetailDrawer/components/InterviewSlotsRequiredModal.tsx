@@ -30,7 +30,7 @@ export const InterviewSlotsRequiredModal = ({
         <Modal.Container>
           <Modal.Dialog>
             <Modal.Header>
-              <Modal.Icon status="warning" />
+              <Modal.Icon />
               <Modal.Heading>면접 슬롯이 준비되지 않았습니다</Modal.Heading>
             </Modal.Header>
             <Modal.Body>

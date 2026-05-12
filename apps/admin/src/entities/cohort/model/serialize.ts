@@ -84,11 +84,11 @@ export const serializeFormToUpdatePayload = (
 export const serializeFormToPartsPayload = (
   form: SemesterRegisterForm
 ): PutUpdateCohortPartsRequest => ({
-  parts: PARTS.map((name) => ({
-    name,
-    isOpen: form.parts[name].isOpen,
-    formSchema: {
-      questions: form.parts[name].questions.map(({ key, label, required }) => ({
+  parts: PARTS.map((partName) => ({
+    partName,
+    isOpen: form.parts[partName].isOpen,
+    applicationSchema: {
+      questions: form.parts[partName].questions.map(({ key, label, required }) => ({
         key: key.trim() || slugify(label),
         label,
         required,
@@ -166,12 +166,12 @@ const extractParts = (
   if (!Array.isArray(raw) || raw.length === 0) return null
   const result = {} as SemesterRegisterForm["parts"]
   for (const part of PARTS) {
-    const found = (raw as CohortPartConfig[]).find((p) => p.name === part)
+    const found = (raw as CohortPartConfig[]).find((p) => p.partName === part)
     if (!found) {
       result[part] = defaultPartState()
       continue
     }
-    const rawQuestions = (found.formSchema as Record<string, unknown>)
+    const rawQuestions = (found.applicationSchema as Record<string, unknown>)
       ?.questions
     const questions: CohortPartQuestion[] = Array.isArray(rawQuestions)
       ? rawQuestions

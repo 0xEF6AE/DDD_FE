@@ -41,7 +41,7 @@ export const StatusChangeModal = ({
     try {
       await mutateAsync({
         params: { id: applicationId },
-        payload: { status: nextStatus as string },
+        payload: { status: nextStatus },
       })
       await queryClient.invalidateQueries({ queryKey: applicationKeys.adminLists() })
       await queryClient.invalidateQueries({

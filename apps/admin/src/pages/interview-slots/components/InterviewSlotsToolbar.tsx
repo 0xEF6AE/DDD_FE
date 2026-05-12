@@ -84,7 +84,7 @@ export const InterviewSlotsToolbar = ({
                   key={part.id}
                   id={String(part.id)}
                   textValue={part.partName}
-                  onClick={() => onPartFilterChange(part.id)}
+                  onClick={() => part.id !== undefined && onPartFilterChange(part.id)}
                 >
                   {part.partName}
                 </ListBox.Item>

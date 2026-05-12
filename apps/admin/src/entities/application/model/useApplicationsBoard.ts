@@ -75,7 +75,7 @@ export const useApplicationsBoard = ({
       params: {
         ...(effectiveCohortId !== undefined && { cohortId: effectiveCohortId }),
         ...(cohortPartId !== undefined && { cohortPartId }),
-        ...(status !== undefined && { status: status as string }),
+        ...(status !== undefined && { status }),
       },
     }),
   )

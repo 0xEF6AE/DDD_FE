@@ -6,7 +6,6 @@ import type {
   PatchUpdateCohortParams,
   PatchUpdateCohortRequest,
   DeleteCohortParams,
-  PostCreateCohortRequest,
   PutUpdateCohortPartsParams,
   PutUpdateCohortPartsRequest,
 } from "./types";

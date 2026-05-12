@@ -11,11 +11,10 @@ import {
 
 export class PartsSaveAfterCreateError extends Error {
   readonly name = "PartsSaveAfterCreateError"
-  constructor(
-    public readonly newCohortId: number,
-    public readonly cause: unknown
-  ) {
-    super("Cohort created but parts save failed")
+  readonly newCohortId: number
+  constructor(newCohortId: number, cause: unknown) {
+    super("Cohort created but parts save failed", { cause })
+    this.newCohortId = newCohortId
   }
 }
 

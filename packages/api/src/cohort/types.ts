@@ -24,11 +24,52 @@ export type CreateCohortRequestDtoStatus =
 // UpdateCohortRequestDtoStatus 는 Create 와 동일 값이지만 별도 타입 노출 (기존 호환)
 export type UpdateCohortRequestDtoStatus = CreateCohortRequestDtoStatus;
 
-// ---------- Request DTO 재노출 ----------
-export type CreateCohortRequestDto = components["schemas"]["CreateCohortRequestDto"];
-export type UpdateCohortRequestDto = components["schemas"]["UpdateCohortRequestDto"];
-export type UpdateCohortPartsRequestDto =
-  components["schemas"]["UpdateCohortPartsRequestDto"];
+// ---------- 엔티티 타입 ----------
+//
+// BE 실제 응답은 `{ id, partName, isOpen, applicationSchema }` 형태이나
+// OpenAPI 스키마는 `{ name, isOpen, formSchema: Record<string, never> }` 로
+// 아직 정합되지 않았다 (commit 06b4264 「BE 스키마 필드명 정합화 (partName /
+// applicationSchema)」 이후 BE 측 schema 보강 대기 중).
+// FE 는 BE 실제 응답을 기준으로 타입을 정의하고, generated payload 타입과
+// 충돌하는 부분은 cohort/api.ts 안에서 `as never` cast 로 우회한다.
+//
+export type CohortStatus = CreateCohortRequestDtoStatus;
+export type CohortPartName = CohortPartConfigDtoName;
+export type UpdateCohortStatus = UpdateCohortRequestDtoStatus;
+
+export interface CohortPartConfigDto {
+  id?: number;
+  partName: CohortPartName;
+  isOpen: boolean;
+  applicationSchema: Record<string, unknown>;
+}
+
+/** 기존 호환 alias (FE 내부에서 이 이름으로 참조 중) */
+export type CohortPartConfig = CohortPartConfigDto;
+
+// ---------- Request DTO (process/curriculum/parts 형태를 실제 사용에 맞게 완화) ----------
+export type CreateCohortRequestDto = Omit<
+  components["schemas"]["CreateCohortRequestDto"],
+  "process" | "curriculum" | "applicationForm" | "parts"
+> & {
+  process?: Record<string, unknown>;
+  curriculum?: Record<string, unknown>[];
+  applicationForm?: Record<string, unknown>;
+  parts?: CohortPartConfigDto[];
+};
+
+export type UpdateCohortRequestDto = Omit<
+  components["schemas"]["UpdateCohortRequestDto"],
+  "process" | "curriculum" | "applicationForm"
+> & {
+  process?: Record<string, unknown>;
+  curriculum?: Record<string, unknown>[];
+  applicationForm?: Record<string, unknown>;
+};
+
+export type UpdateCohortPartsRequestDto = {
+  parts: CohortPartConfigDto[];
+};
 
 // ---------- 엔드포인트 시그니처 ----------
 
@@ -60,19 +101,7 @@ export type PutUpdateCohortPartsResponse = CohortDto;
 // GET /api/v1/cohorts/active - 현재 활성 기수 조회 (public)
 export type GetActiveCohortResponse = CohortDto;
 
-// ---------- 엔티티 타입 (BE 응답 schema 미정의 → 수동 정의) ----------
-export type CohortStatus = CreateCohortRequestDtoStatus;
-export type CohortPartName = CohortPartConfigDtoName;
-export type UpdateCohortStatus = UpdateCohortRequestDtoStatus;
-
-export interface CohortPartConfig {
-  id: number;
-  partName: CohortPartName;
-  isOpen: boolean;
-  applicationSchema: Record<string, unknown>;
-}
-export type CohortPartConfigDto = CohortPartConfig;
-
+// ---------- CohortDto 엔티티 (BE 응답 schema 미정의 → 수동 정의) ----------
 export interface CohortDto {
   id: number;
   name: string;
@@ -82,7 +111,7 @@ export interface CohortDto {
   process?: Record<string, unknown>;
   curriculum?: Record<string, unknown>[];
   applicationForm?: Record<string, unknown>;
-  parts?: CohortPartConfig[];
+  parts?: CohortPartConfigDto[];
   createdAt: string;
   updatedAt: string;
 }
