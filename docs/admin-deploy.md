@@ -41,7 +41,7 @@ OAuth 콜백은 전부 `/api/v1/*` 아래라 BE 가 처리. **프론트는 콜�
 | 항목 | 결정 |
 | --- | --- |
 | 배포 트리거 | **FE 레포 CI 단독** — BE 배포와 독립 |
-| 정적 파일 위치 | VM 호스트 `/opt/ddd-be/frontend/current/` (BE compose 가 `/srv/frontend` 로 마운트) |
+| 정적 파일 위치 | VM 호스트 `/opt/admin/frontend/current/` (BE compose 가 `/srv/frontend` 로 마운트) |
 | 배포 원자성 | **Symlink 스왑** — `releases/<sha>/` 에 풀고 `current` 심볼릭 링크 교체 |
 | SSH 사용자 | BE 배포용 user 재사용 (`GCP_VM_USER` / `GCP_VM_SSH_KEY`) |
 | 빌드 환경변수 | `VITE_API_URL=""` (코드가 `window.location.origin` 자동 결합) |
@@ -57,7 +57,7 @@ BE 가 선행해야 FE 첫 배포가 정상 동작한다. 핵심 작업:
 
 - Caddyfile 에 `/api/*` 분기 + SPA fallback 추가
 - `docker-compose.yml` 의 caddy 서비스에 `./frontend/current:/srv/frontend:ro` 볼륨 마운트
-- `deploy.yml` 또는 부트스트랩 스크립트에 `mkdir -p /opt/ddd-be/frontend/current` + placeholder `index.html`
+- `deploy.yml` 또는 부트스트랩 스크립트에 `mkdir -p /opt/admin/frontend/current` + placeholder `index.html`
 - 환경변수 `CLIENT_REDIRECT_URL=https://admin.dddstudy.kr/applications` 갱신
 - (선택) `GET /api/v1/users/me` 엔드포인트 추가 — 옵션 A 가드 도입 시 필요
 - 외부 콘솔(Google/Discord)의 OAuth redirect URI 가 이미 `admin.dddstudy.kr` 라면 변경 없음
@@ -208,10 +208,10 @@ ssh -i ~/.ssh/ddd_fe_deploy -o IdentitiesOnly=yes dddstudy1@<GCP_VM_HOST>
 
 ```bash
 # 배포 디렉터리 존재 + 쓰기 권한
-test -w /opt/ddd-be/frontend && echo "OK: writable" || echo "FAIL: not writable"
+test -w /opt/admin/frontend && echo "OK: writable" || echo "FAIL: not writable"
 
 # placeholder index.html
-ls -la /opt/ddd-be/frontend/current/ 2>/dev/null
+ls -la /opt/admin/frontend/current/ 2>/dev/null
 
 # Caddy 외부 응답
 curl -fsI https://admin.dddstudy.kr/ | head -n 1
@@ -267,7 +267,7 @@ paste 후 secret 페이지에 3 개가 "Updated now" 표시되면 등록 완료.
 
 VM 에서:
 ```bash
-cd /opt/ddd-be/frontend
+cd /opt/admin/frontend
 ls releases/                    # 보관된 릴리스 확인
 ln -sfn releases/<previous-sha> current.new && mv -Tf current.new current
 ```
@@ -313,7 +313,7 @@ A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 
 ### BE 측 (담당자 회신 필요)
 - [ ] Caddyfile 에 `/api/*` 분기 + `try_files` SPA fallback 추가
 - [ ] `docker-compose.yml` 의 caddy 서비스에 frontend 볼륨 마운트
-- [ ] `/opt/ddd-be/frontend/current/` 부트스트랩 + placeholder `index.html`
+- [ ] `/opt/admin/frontend/current/` 부트스트랩 + placeholder `index.html`
 - [ ] `CLIENT_REDIRECT_URL=https://admin.dddstudy.kr/applications` 갱신
 - [ ] prod 쿠키 플래그 (`httpOnly`, `secure`, `sameSite=lax`) 점검
 
@@ -330,7 +330,7 @@ A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 
 - [ ] FE 전용 SSH 키 쌍 생성 — `ssh-keygen -t ed25519 -f ~/.ssh/ddd_fe_deploy -C "ddd-fe-deploy@github-actions" -N ""`
 - [ ] public key (`~/.ssh/ddd_fe_deploy.pub`) 를 VM 의 `<GCP_VM_USER>` 계정 `authorized_keys` 에 등록 (§6.2 경로 A/B/C 중 택일)
 - [ ] 로컬에서 `ssh -i ~/.ssh/ddd_fe_deploy -o IdentitiesOnly=yes <GCP_VM_USER>@<GCP_VM_HOST>` 인증 통과 확인
-- [ ] VM 안에서 BE 부트스트랩 상태 확인 (`/opt/ddd-be/frontend/` 쓰기 권한 + Caddy 응답)
+- [ ] VM 안에서 BE 부트스트랩 상태 확인 (`/opt/admin/frontend/` 쓰기 권한 + Caddy 응답)
 - [ ] GitHub Secrets 3 개 등록 (`GCP_VM_HOST`, `GCP_VM_USER`, `GCP_VM_SSH_KEY`)
 - [ ] Actions 탭 "Run workflow" 로 첫 배포 수동 실행 → 단계별 통과 확인
 
