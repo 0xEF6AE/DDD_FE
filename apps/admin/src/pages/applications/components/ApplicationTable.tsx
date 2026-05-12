@@ -4,15 +4,24 @@ import { type ApplicationDto, type CohortDto } from "@ddd/api"
 type ApplicationTableProps = {
   applications: ApplicationDto[]
   cohorts: CohortDto[]
+  interviewScheduledByApplicationId: Map<number, string>
   onRowPress: (id: number) => void
 }
 
 const formatDate = (iso?: string): string =>
   iso ? new Date(iso).toLocaleDateString("ko-KR") : "-"
 
+const formatDateTime = (iso?: string): string => {
+  if (!iso) return "-"
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export const ApplicationTable = ({
   applications,
   cohorts,
+  interviewScheduledByApplicationId,
   onRowPress,
 }: ApplicationTableProps) => {
   const cohortNameById = new Map(cohorts.map((c) => [c.id, c.name]))
@@ -31,6 +40,7 @@ export const ApplicationTable = ({
             <Table.Column>파트</Table.Column>
             <Table.Column>기수</Table.Column>
             <Table.Column>지원일</Table.Column>
+            <Table.Column>면접일자</Table.Column>
             <Table.Column>상태</Table.Column>
           </Table.Header>
           <Table.Body>
@@ -51,6 +61,9 @@ export const ApplicationTable = ({
                   </Table.Cell>
                   <Table.Cell>
                     {formatDate(app.submittedAt ?? app.createdAt)}
+                  </Table.Cell>
+                  <Table.Cell>
+                    {formatDateTime(interviewScheduledByApplicationId.get(app.id))}
                   </Table.Cell>
                   <Table.Cell>{app.status}</Table.Cell>
                 </Table.Row>

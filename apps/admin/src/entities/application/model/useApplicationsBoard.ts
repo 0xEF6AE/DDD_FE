@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query"
 import {
   applicationQueries,
   cohortQueries,
+  interviewQueries,
   type ApplicationDto,
   type CohortDto,
+  type InterviewSlot,
 } from "@ddd/api"
 
 import type { ApplicationStatus } from "./constants"
@@ -78,6 +80,23 @@ export const useApplicationsBoard = ({
     }),
   )
 
+  const { data: slotData } = useQuery(
+    interviewQueries.getInterviewSlots({
+      params: effectiveCohortId !== undefined ? { cohortId: effectiveCohortId } : {},
+    }),
+  )
+
+  const interviewScheduledByApplicationId = useMemo(() => {
+    const map = new Map<number, string>()
+    const slots: InterviewSlot[] = slotData ?? []
+    for (const slot of slots) {
+      for (const reservation of slot.reservations ?? []) {
+        map.set(reservation.applicationFormId, slot.startAt)
+      }
+    }
+    return map
+  }, [slotData])
+
   const cards: ApplicationDto[] = useMemo(() => cardData ?? [], [cardData])
   const tableRowsRaw: ApplicationDto[] = useMemo(() => tableData ?? [], [tableData])
 
@@ -105,5 +124,6 @@ export const useApplicationsBoard = ({
     cards,
     counts,
     tableRows,
+    interviewScheduledByApplicationId,
   }
 }

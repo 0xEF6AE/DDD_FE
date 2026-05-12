@@ -20,13 +20,20 @@ export default function ApplicationsPage() {
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | undefined>(undefined)
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null)
 
-  const { cohorts, effectiveCohortId, contextLabel, cards, counts, tableRows } =
-    useApplicationsBoard({
-      cohortIdInput: selectedCohortId,
-      cohortPartId: selectedCohortPartId,
-      status: selectedStatus,
-      searchText,
-    })
+  const {
+    cohorts,
+    effectiveCohortId,
+    contextLabel,
+    cards,
+    counts,
+    tableRows,
+    interviewScheduledByApplicationId,
+  } = useApplicationsBoard({
+    cohortIdInput: selectedCohortId,
+    cohortPartId: selectedCohortPartId,
+    status: selectedStatus,
+    searchText,
+  })
 
   const handleCohortChange = (id: number | undefined) => {
     setSelectedCohortId(id ?? null)
@@ -61,6 +68,7 @@ export default function ApplicationsPage() {
         <ApplicationTable
           applications={tableRows}
           cohorts={cohorts}
+          interviewScheduledByApplicationId={interviewScheduledByApplicationId}
           onRowPress={(id) => setSelectedApplicationId(id)}
         />
       </div>
