@@ -8,6 +8,7 @@ import type {
   PatchUpdateInterviewSlotParams,
   PatchUpdateInterviewSlotRequest,
   DeleteInterviewSlotParams,
+  PostCreateInterviewReservationParams,
   PostCreateInterviewReservationRequest,
   DeleteInterviewReservationParams,
 } from "./types";
@@ -102,21 +103,23 @@ export const interviewMutations = {
     }),
 
   /**
-   * 면접 예약 mutation
+   * 면접 예약 생성 mutation
    *
    * @returns {MutationOptions} TanStack Query Mutation 옵션 객체
    *
    * @example
    * const mutation = useMutation(interviewMutations.createInterviewReservation())
-   * mutation.mutate({ payload: { applicationFormId: 1 } })
+   * mutation.mutate({ params: { slotId: 1 }, payload: { applicationFormId: 1 } })
    */
   createInterviewReservation: () =>
     mutationOptions({
       mutationFn: ({
+        params,
         payload,
       }: {
+        params: PostCreateInterviewReservationParams;
         payload: PostCreateInterviewReservationRequest;
-      }) => interviewAPI.createInterviewReservation({ payload }),
+      }) => interviewAPI.createInterviewReservation({ params, payload }),
     }),
 
   /**
@@ -125,12 +128,12 @@ export const interviewMutations = {
    * @returns {MutationOptions} TanStack Query Mutation 옵션 객체
    *
    * @example
-   * const mutation = useMutation(interviewMutations.deleteInterviewReservation())
-   * mutation.mutate({ params: { id: 1 } })
+   * const mutation = useMutation(interviewMutations.cancelInterviewReservation())
+   * mutation.mutate({ params: { reservationId: 1 } })
    */
-  deleteInterviewReservation: () =>
+  cancelInterviewReservation: () =>
     mutationOptions({
       mutationFn: ({ params }: { params: DeleteInterviewReservationParams }) =>
-        interviewAPI.deleteInterviewReservation({ params }),
+        interviewAPI.cancelInterviewReservation({ params }),
     }),
 };

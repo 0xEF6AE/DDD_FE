@@ -21,9 +21,6 @@
 **/build/
 **/dist/
 
-# Orval generated code (백엔드 스펙 동기화 전까지 gitignore)
-packages/api/src/generated/
-
 # misc
 .DS_Store
 *.pem
@@ -36,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!**/.env.example
 
 # vercel
 **/.vercel/
@@ -58,6 +56,9 @@ yarn-error.log*
 .agent/
 .agents/
 # .claude/
+
+# git worktrees
+.worktrees/
 
 # playwright-mcp screenshots / snapshots
 .playwright-mcp/

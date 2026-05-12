@@ -1,42 +1,27 @@
-import type { SemesterPart, SemesterStatus } from "./types"
+import { CreateCohortRequestDtoStatus } from "@ddd/api"
 
-export const STATUS_LABEL: Record<SemesterStatus, string> = {
-  active: "활동중",
-  inactive: "활동종료",
-  upcoming: "모집 예정",
-  recruiting: "모집중",
-}
+import type { CohortStatus } from "@ddd/api"
 
-export const STATUS_FILTER_OPTIONS = [
-  "전체",
-  "활동중",
-  "활동종료",
-  "모집 예정",
-  "모집중",
+/** status 필터 값 — "ALL" 은 전체 표시 */
+export type StatusFilterValue = CohortStatus | "ALL"
+
+export const STATUS_FILTER_OPTIONS: Array<{
+  value: StatusFilterValue
+  label: string
+}> = [
+  { value: "ALL", label: "전체" },
+  { value: CreateCohortRequestDtoStatus.UPCOMING, label: "모집 예정" },
+  { value: CreateCohortRequestDtoStatus.RECRUITING, label: "모집중" },
+  { value: CreateCohortRequestDtoStatus.ACTIVE, label: "활동중" },
+  { value: CreateCohortRequestDtoStatus.CLOSED, label: "활동 종료" },
 ]
 
-export const STATUS_FILTER_MAP: Record<string, SemesterStatus | null> = {
-  전체: null,
-  "모집 예정": "upcoming",
-  모집중: "recruiting",
-  활동중: "active",
-  활동종료: "inactive",
-}
-
-export const STATUS_OPTIONS: Array<{ label: string; value: SemesterStatus }> = [
-  { label: "모집 예정", value: "upcoming" },
-  { label: "모집 중", value: "recruiting" },
-  { label: "활동 중", value: "active" },
-  { label: "활동 종료", value: "inactive" },
-]
-
-export const SEMESTER_PARTS: SemesterPart[] = [
-  "PM",
-  "PD",
-  "Server",
-  "Web",
-  "iOS",
-  "Android",
+/** Drawer 의 status 셀렉트 옵션 (필터 옵션과 달리 "ALL" 미포함) */
+export const STATUS_OPTIONS: Array<{ label: string; value: CohortStatus }> = [
+  { label: "모집 예정", value: CreateCohortRequestDtoStatus.UPCOMING },
+  { label: "모집 중", value: CreateCohortRequestDtoStatus.RECRUITING },
+  { label: "활동 중", value: CreateCohortRequestDtoStatus.ACTIVE },
+  { label: "활동 종료", value: CreateCohortRequestDtoStatus.CLOSED },
 ]
 
 export const CURRICULUM_WEEK_COUNT = 9

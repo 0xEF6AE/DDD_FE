@@ -1,7 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router"
 import LoginPage from "./login/LoginPage"
 import SemestersPage from "./semesters/SemestersPage"
-import RemindersPage from "./reminders/RemindersPage"
+import EarlyNotificationPage from "./early-notification/EarlyNotificationPage"
+import InterviewSlotsPage from "./interview-slots/InterviewSlotsPage"
 import ProjectsPage from "./projects/ProjectsPage"
 import BlogPostsPage from "./blog-posts/BlogPostsPage"
 import { ErrorPage } from "./error/ErrorPage"
@@ -31,8 +32,13 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
       },
       {
-        path: "/reminders",
-        element: <RemindersPage />,
+        path: "/early-notification",
+        element: <EarlyNotificationPage />,
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: "/interview-slots",
+        element: <InterviewSlotsPage />,
         errorElement: <ErrorPage />,
       },
       {
@@ -53,11 +59,6 @@ const router = createBrowserRouter([
     element: <LoginPage />,
     // element 내부적으로 Errorboundary가 잡지 않는,
     // 이벤트 핸들러의 의한 에러를 제외하고 라우터에서 잡히는 에러에 대한 UI
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: "/register",
-    element: <></>,
     errorElement: <ErrorPage />,
   },
 ])

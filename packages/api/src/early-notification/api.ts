@@ -1,64 +1,50 @@
-import { getApiClient } from "../client";
+import { api } from "../fetchClient";
 import type {
   GetAdminEarlyNotificationsParams,
   GetAdminEarlyNotificationsResponse,
   GetAdminEarlyNotificationsCsvParams,
+  GetAdminEarlyNotificationsCsvResponse,
   PostSendBulkEarlyNotificationRequest,
   PostSubscribeEarlyNotificationRequest,
-  PostSubscribeEarlyNotificationResponse,
 } from "./types";
 
-const EARLY_NOTIFICATION_BASE_URL = "/api/v1/early-notifications" as const;
-
 export const earlyNotificationAPI = {
+  /** 기수별 사전 알림 신청 목록 조회 - GET /api/v1/admin/early-notifications */
   getAdminEarlyNotifications: ({
     params,
   }: {
     params: GetAdminEarlyNotificationsParams;
-  }) => {
-    const searchParams = new URLSearchParams({
-      cohortId: String(params.cohortId),
-    });
-    if (params.onlyUnnotified !== undefined)
-      searchParams.set("onlyUnnotified", String(params.onlyUnnotified));
+  }) =>
+    api.get("/api/v1/admin/early-notifications", {
+      params: { query: params },
+    }) as unknown as Promise<GetAdminEarlyNotificationsResponse>,
 
-    return getApiClient().get<GetAdminEarlyNotificationsResponse>(
-      `${EARLY_NOTIFICATION_BASE_URL}/admin?${searchParams}`,
-    );
-  },
-
+  /** 사전 알림 목록 CSV 내보내기 - GET /api/v1/admin/early-notifications/export */
   exportAdminCsv: ({
     params,
   }: {
     params: GetAdminEarlyNotificationsCsvParams;
-  }) => {
-    const searchParams = new URLSearchParams({
-      cohortId: String(params.cohortId),
-    });
+  }): Promise<GetAdminEarlyNotificationsCsvResponse> =>
+    api.get("/api/v1/admin/early-notifications/export", {
+      params: { query: params },
+      parseAs: "text",
+    }) as unknown as Promise<string>,
 
-    return getApiClient().get<Blob>(
-      `${EARLY_NOTIFICATION_BASE_URL}/admin/export/csv?${searchParams}`,
-      { responseType: "blob" },
-    );
-  },
-
+  /** 사전 알림 일괄 발송 - POST /api/v1/admin/early-notifications/send */
   sendBulkEarlyNotification: ({
     payload,
   }: {
     payload: PostSendBulkEarlyNotificationRequest;
   }) =>
-    getApiClient().post<void>(
-      `${EARLY_NOTIFICATION_BASE_URL}/admin/send`,
-      payload,
-    ),
+    api.post("/api/v1/admin/early-notifications/send", {
+      body: payload,
+    }) as unknown as Promise<void>,
 
+  /** 사전 알림 이메일 구독 - POST /api/v1/early-notifications */
   subscribeEarlyNotification: ({
     payload,
   }: {
     payload: PostSubscribeEarlyNotificationRequest;
   }) =>
-    getApiClient().post<PostSubscribeEarlyNotificationResponse>(
-      `${EARLY_NOTIFICATION_BASE_URL}/subscribe`,
-      payload,
-    ),
+    api.post("/api/v1/early-notifications", { body: payload }) as unknown as Promise<void>,
 };

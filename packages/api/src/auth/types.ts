@@ -1,13 +1,10 @@
-import type {
-  GoogleAuthCallbackResponseDto,
-  GoogleRefreshResponseDto,
-} from "../generated/dddApi.schemas";
+import type { components } from "../generated/api";
 
-// POST /api/v1/auth/google - Google 로그인 콜백
-export type PostGoogleLoginResponse = GoogleAuthCallbackResponseDto;
+// GET /api/v1/auth/google/callback - Google OAuth 콜백
+export type GoogleAuthCallbackResponse = components["schemas"]["GoogleAuthCallbackResponseDto"];
 
 // POST /api/v1/auth/refresh - 토큰 갱신
-export type PostRefreshTokenResponse = GoogleRefreshResponseDto;
+export type PostRefreshTokenResponse = components["schemas"]["GoogleRefreshResponseDto"];
 
 // POST /api/v1/auth/logout - 로그아웃
 export type PostLogoutResponse = void;

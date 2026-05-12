@@ -1,4 +1,4 @@
-import { getApiClient } from "../client";
+import { api } from "../fetchClient";
 import type {
   GetInterviewSlotsParams,
   GetInterviewSlotsResponse,
@@ -10,42 +10,36 @@ import type {
   PatchUpdateInterviewSlotRequest,
   PatchUpdateInterviewSlotResponse,
   DeleteInterviewSlotParams,
+  PostCreateInterviewReservationParams,
   PostCreateInterviewReservationRequest,
   PostCreateInterviewReservationResponse,
   DeleteInterviewReservationParams,
 } from "./types";
 
-const INTERVIEW_BASE_URL = "/api/v1/interview" as const;
-
 export const interviewAPI = {
-  getInterviewSlots: ({ params }: { params: GetInterviewSlotsParams }) => {
-    const searchParams = new URLSearchParams();
-    if (params.cohortId !== undefined)
-      searchParams.set("cohortId", String(params.cohortId));
-    if (params.cohortPartId !== undefined)
-      searchParams.set("cohortPartId", String(params.cohortPartId));
+  /** 면접 슬롯 목록 조회 - GET /api/v1/admin/interview-slots */
+  getInterviewSlots: ({ params }: { params: GetInterviewSlotsParams }) =>
+    api.get("/api/v1/admin/interview-slots", {
+      params: { query: params ?? {} },
+    }) as unknown as Promise<GetInterviewSlotsResponse>,
 
-    const query = searchParams.toString();
-    return getApiClient().get<GetInterviewSlotsResponse>(
-      `${INTERVIEW_BASE_URL}/slots${query ? `?${query}` : ""}`,
-    );
-  },
-
+  /** 면접 슬롯 상세 - GET /api/v1/admin/interview-slots/{id} */
   getInterviewSlot: ({ params }: { params: GetInterviewSlotParams }) =>
-    getApiClient().get<GetInterviewSlotResponse>(
-      `${INTERVIEW_BASE_URL}/slots/${params.id}`,
-    ),
+    api.get("/api/v1/admin/interview-slots/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<GetInterviewSlotResponse>,
 
+  /** 면접 슬롯 생성 - POST /api/v1/admin/interview-slots */
   createInterviewSlot: ({
     payload,
   }: {
     payload: PostCreateInterviewSlotRequest;
   }) =>
-    getApiClient().post<PostCreateInterviewSlotResponse>(
-      `${INTERVIEW_BASE_URL}/slots`,
-      payload,
-    ),
+    api.post("/api/v1/admin/interview-slots", {
+      body: payload,
+    }) as unknown as Promise<PostCreateInterviewSlotResponse>,
 
+  /** 면접 슬롯 수정 - PATCH /api/v1/admin/interview-slots/{id} */
   updateInterviewSlot: ({
     params,
     payload,
@@ -53,30 +47,37 @@ export const interviewAPI = {
     params: PatchUpdateInterviewSlotParams;
     payload: PatchUpdateInterviewSlotRequest;
   }) =>
-    getApiClient().patch<PatchUpdateInterviewSlotResponse>(
-      `${INTERVIEW_BASE_URL}/slots/${params.id}`,
-      payload,
-    ),
+    api.patch("/api/v1/admin/interview-slots/{id}", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<PatchUpdateInterviewSlotResponse>,
 
+  /** 면접 슬롯 삭제 - DELETE /api/v1/admin/interview-slots/{id} */
   deleteInterviewSlot: ({ params }: { params: DeleteInterviewSlotParams }) =>
-    getApiClient().delete<void>(`${INTERVIEW_BASE_URL}/slots/${params.id}`),
+    api.delete("/api/v1/admin/interview-slots/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<void>,
 
+  /** 면접 예약 생성 - POST /api/v1/admin/interview-slots/{slotId}/reservations */
   createInterviewReservation: ({
+    params,
     payload,
   }: {
+    params: PostCreateInterviewReservationParams;
     payload: PostCreateInterviewReservationRequest;
   }) =>
-    getApiClient().post<PostCreateInterviewReservationResponse>(
-      `${INTERVIEW_BASE_URL}/reservations`,
-      payload,
-    ),
+    api.post("/api/v1/admin/interview-slots/{slotId}/reservations", {
+      params: { path: { slotId: params.slotId } },
+      body: payload,
+    }) as unknown as Promise<PostCreateInterviewReservationResponse>,
 
-  deleteInterviewReservation: ({
+  /** 면접 예약 취소 - DELETE /api/v1/admin/interview-slots/reservations/{reservationId} */
+  cancelInterviewReservation: ({
     params,
   }: {
     params: DeleteInterviewReservationParams;
   }) =>
-    getApiClient().delete<void>(
-      `${INTERVIEW_BASE_URL}/reservations/${params.id}`,
-    ),
+    api.delete("/api/v1/admin/interview-slots/reservations/{reservationId}", {
+      params: { path: { reservationId: params.reservationId } },
+    }) as unknown as Promise<void>,
 };

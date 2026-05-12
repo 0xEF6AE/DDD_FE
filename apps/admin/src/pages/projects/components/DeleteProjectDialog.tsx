@@ -1,7 +1,7 @@
 import { AlertDialog, Button, toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { projectKeys, useDeleteProject } from "@ddd/api"
+import { projectKeys, projectMutations } from "@ddd/api"
 import type { ProjectDto } from "@ddd/api"
 
 type DeleteProjectDialogProps = {
@@ -16,7 +16,7 @@ export const DeleteProjectDialog = ({
   project,
 }: DeleteProjectDialogProps) => {
   const queryClient = useQueryClient()
-  const deleteProject = useDeleteProject()
+  const deleteProject = useMutation(projectMutations.deleteProject())
 
   const handleConfirm = async () => {
     if (!project) return
@@ -28,7 +28,7 @@ export const DeleteProjectDialog = ({
       })
       onOpenChange(false)
     } catch (error) {
-      toast.error("삭제에 실패했습니다", {
+      toast.danger("삭제에 실패했습니다", {
         description: (error as Error).message,
       })
     }
@@ -37,16 +37,18 @@ export const DeleteProjectDialog = ({
   return (
     <AlertDialog.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <AlertDialog.Container>
-        <AlertDialog.Dialog className="sm:max-w-[400px]">
+        <AlertDialog.Dialog className="sm:max-w-100">
           <AlertDialog.CloseTrigger />
           <AlertDialog.Header>
             <AlertDialog.Icon status="danger" />
-            <AlertDialog.Heading>프로젝트를 삭제하시겠습니까?</AlertDialog.Heading>
+            <AlertDialog.Heading>
+              프로젝트를 삭제하시겠습니까?
+            </AlertDialog.Heading>
           </AlertDialog.Header>
           <AlertDialog.Body>
             <p>
-              <strong>{project?.name ?? ""}</strong>이(가) 영구적으로 삭제됩니다.
-              이 작업은 되돌릴 수 없습니다.
+              <strong>{project?.name ?? ""}</strong>이(가) 영구적으로
+              삭제됩니다. 이 작업은 되돌릴 수 없습니다.
             </p>
           </AlertDialog.Body>
           <AlertDialog.Footer>

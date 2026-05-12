@@ -1,6 +1,7 @@
 import { GridBox } from "@/shared/ui/GridBox"
-import { Card } from "@heroui/react"
-import type { ApplicationStatus } from "../constants"
+import { StatCard } from "@/shared/ui/StatCard"
+
+import type { ApplicationStatus } from "@/entities/application"
 
 type CardSectionProps = {
   total: number
@@ -8,7 +9,11 @@ type CardSectionProps = {
   contextLabel: string
 }
 
-export const CardSection = ({ total, counts, contextLabel }: CardSectionProps) => {
+export const CardSection = ({
+  total,
+  counts,
+  contextLabel,
+}: CardSectionProps) => {
   const cards: { title: string; key: ApplicationStatus | "total" }[] = [
     { title: "전체 지원", key: "total" },
     { title: "서류심사대기", key: "서류심사대기" },
@@ -20,19 +25,14 @@ export const CardSection = ({ total, counts, contextLabel }: CardSectionProps) =
   return (
     <GridBox className="grid-cols-5 gap-5">
       {cards.map(({ title, key }) => (
-        <Card key={title}>
-          <Card.Header>
-            <Card.Title className="text-xs font-bold">{title}</Card.Title>
-          </Card.Header>
-          <Card.Content>
-            <p className="text-xl font-semibold">
-              {key === "total" ? total : (counts[key as ApplicationStatus] ?? 0)}명
-            </p>
-          </Card.Content>
-          <Card.Footer>
-            <span className="text-muted-foreground text-xs">{contextLabel}</span>
-          </Card.Footer>
-        </Card>
+        <StatCard
+          key={title}
+          title={title}
+          value={`${
+            key === "total" ? total : (counts[key as ApplicationStatus] ?? 0)
+          }명`}
+          footer={contextLabel}
+        />
       ))}
     </GridBox>
   )

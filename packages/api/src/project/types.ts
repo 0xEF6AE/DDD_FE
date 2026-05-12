@@ -1,47 +1,66 @@
-import type {
-  CreateProjectRequestDto,
-  UpdateProjectRequestDto,
-  UpdateProjectMembersRequestDto,
-  ProjectMemberRequestDto,
-  ProjectGetPublicListParams,
-  ProjectGetPublicListPlatform,
-  CreateProjectRequestDtoPlatformsItem,
-  UpdateProjectRequestDtoPlatformsItem,
-} from "../generated/dddApi.schemas";
+import type { components, paths } from "../generated/api";
 
-// GET /api/v1/project - 프로젝트 공개 목록 조회
-export type GetProjectsParams = ProjectGetPublicListParams;
+// Request DTO
+export type CreateProjectRequestDto = components["schemas"]["CreateProjectRequestDto"];
+export type UpdateProjectRequestDto = components["schemas"]["UpdateProjectRequestDto"];
+export type UpdateProjectMembersRequestDto =
+  components["schemas"]["UpdateProjectMembersRequestDto"];
+export type ProjectMemberRequestDto = components["schemas"]["ProjectMemberRequestDto"];
+
+// GET /api/v1/projects - 공개 목록 조회
+export type GetProjectsParams =
+  paths["/api/v1/projects"]["get"]["parameters"]["query"];
 export type GetProjectsResponse = ProjectListDto;
+export type GetInfiniteProjectsParams = Omit<NonNullable<GetProjectsParams>, "cursor">;
 
-// 무한 스크롤용 파라미터 (cursor는 useInfiniteQuery의 pageParam이 관리)
-export type GetInfiniteProjectsParams = Omit<GetProjectsParams, "cursor">;
-
-// GET /api/v1/project/{id} - 프로젝트 단일 조회
+// GET /api/v1/projects/{id} - 공개 단건
 export type GetProjectParams = { id: number };
 export type GetProjectResponse = ProjectDto;
 
-// POST /api/v1/project/admin - 프로젝트 생성 (어드민)
+// GET /api/v1/admin/projects - 어드민 전체 목록
+export type GetAdminProjectsResponse = ProjectListDto;
+
+// GET /api/v1/admin/projects/{id} - 어드민 단건
+export type GetAdminProjectParams = { id: number };
+export type GetAdminProjectResponse = ProjectDto;
+
+// POST /api/v1/admin/projects - 어드민 생성
 export type PostCreateProjectRequest = CreateProjectRequestDto;
 export type PostCreateProjectResponse = ProjectDto;
 
-// PUT /api/v1/project/admin/{id} - 프로젝트 수정 (어드민)
-export type PutUpdateProjectParams = { id: number };
-export type PutUpdateProjectRequest = UpdateProjectRequestDto;
-export type PutUpdateProjectResponse = ProjectDto;
+// PATCH /api/v1/admin/projects/{id} - 어드민 수정
+export type PatchUpdateProjectParams = { id: number };
+export type PatchUpdateProjectRequest = UpdateProjectRequestDto;
+export type PatchUpdateProjectResponse = ProjectDto;
 
-// DELETE /api/v1/project/admin/{id} - 프로젝트 삭제 (어드민)
+// 하위 호환: 기존 PutUpdateProject* alias
+/** @deprecated PatchUpdateProjectParams 을 사용하세요 */
+export type PutUpdateProjectParams = PatchUpdateProjectParams;
+/** @deprecated PatchUpdateProjectRequest 을 사용하세요 */
+export type PutUpdateProjectRequest = PatchUpdateProjectRequest;
+/** @deprecated PatchUpdateProjectResponse 을 사용하세요 */
+export type PutUpdateProjectResponse = PatchUpdateProjectResponse;
+
+// DELETE /api/v1/admin/projects/{id} - 어드민 삭제
 export type DeleteProjectParams = { id: number };
 export type DeleteProjectResponse = void;
 
-// PUT /api/v1/project/admin/{id}/members - 프로젝트 참여자 수정 (어드민)
+// PUT /api/v1/admin/projects/{id}/members - 어드민 멤버 수정
 export type PutUpdateProjectMembersParams = { id: number };
 export type PutUpdateProjectMembersRequest = UpdateProjectMembersRequestDto;
 export type PutUpdateProjectMembersResponse = ProjectDto;
 
-// 엔티티 타입
-export type ProjectPlatform = ProjectGetPublicListPlatform;
-export type ProjectCreatePlatform = CreateProjectRequestDtoPlatformsItem;
-export type ProjectUpdatePlatform = UpdateProjectRequestDtoPlatformsItem;
+// 엔티티 타입 (BE 응답 schema 미정의 → 수동 정의)
+export type ProjectPlatform =
+  NonNullable<GetProjectsParams>["platform"] extends infer P
+    ? P extends string
+      ? P
+      : never
+    : never;
+export type ProjectCreatePlatform = CreateProjectRequestDto["platforms"][number];
+export type ProjectUpdatePlatform = NonNullable<
+  UpdateProjectRequestDto["platforms"]
+>[number];
 export type ProjectMember = ProjectMemberRequestDto;
 
 export interface ProjectDto {

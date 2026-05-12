@@ -1,7 +1,7 @@
 # DDD 프론트엔드 진행 현황
 
 > **기준 문서**: 어드민 기능 명세 3.x, SEO 요구사항 4.x, 데이터 모델 5.x, MVP 범위 6.x
-> **코드 스냅샷**: 2026-04-26 (branch: `dev/admin`)
+> **코드 스냅샷**: 2026-05-11 (branch: `dev/admin`)
 > **범례**: ✅ 완료 / 🔧 부분 구현 (UI만 또는 목업 연결) / ⬜ 미구현
 
 ---
@@ -25,15 +25,15 @@
 
 | 영역 | 상태 | 핵심 갭 |
 | --- | --- | --- |
-| 공통 인프라 (admin) | 🔧 | OAuth · 인증 가드 · 실 API 연동 |
-| 3.1 기수 관리 | 🔧 | 등록/수정 폼 API 미연결 |
-| 3.2 사전 알림 | 🔧 | 발송 API · 엑셀 · 일괄 발송 |
-| 3.3 지원자 관리 | 🔧 | 상세 페이지 전체 미구현 |
+| 공통 인프라 (admin) | ✅ | 모든 도메인이 openapi-fetch 기반 `api` 싱글톤으로 통일 (commit 241ae4e). storage 보조 queries(`listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile`) 는 후속 |
+| 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
+| 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
+| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자 표시. 면접일자 컬럼은 후속 (예약 join 표시) |
+| 3.3.5 면접 슬롯 | ✅ | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 목록·예약 취소는 `ReservationsDrawer` + `CancelReservationDialog` 로 완료 |
 | 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
 | 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
 | 3.6 FAQ | ✅ | MVP 제외 결정 (FE 하드코딩) |
-| 4. SEO (web) | ⬜ | 스켈레톤만, 거의 전부 미구현 |
-| 5. 데이터 모델 타입 반영 | ⬜ | `@ddd/api` 생성 코드로 대체 예정 |
+| 5. 데이터 모델 타입 반영 | 🔧 | `@ddd/api` 생성 타입 도입 진행 중 — `pages/semesters/types.d.ts` 임시 타입 잔존 |
 
 ---
 
@@ -52,11 +52,27 @@
 - `AdminLayout` (SideBar + MobileHeader + Outlet)
 - `ThemeProvider` (localStorage, `d` 키 토글, 다크/라이트/시스템)
 
-**미구현**
+**API 레이어 연동 현황**
 
-- ⬜ Google OAuth 실제 연결 (`pages/login/LoginPage.tsx` UI만 존재)
-- ⬜ 인증 보호 라우트 (`shared/lib/auth.ts` TODO 상태)
-- ⬜ 실제 백엔드 API 연동 (orval 생성 코드 → `@ddd/api`)
+> commit 241ae4e (`orval → openapi-typescript + openapi-fetch` 마이그레이션) 이후 orval 시절의 generated 함수(`cohortGetAdminList` 등)는 제거됨. 현재 `packages/api/src/generated/api.ts` 는 `paths` 타입 정의 한 파일만 보관하며, 모든 도메인은 `import { api } from "../fetchClient"` → `api.get/post/patch/put/delete(...)` 호출 패턴으로 통일되어 있다.
+
+- ✅ 전 도메인 (`application` · `blog` · `project` · `early-notification` · `discord` · `interview` · `cohort` · `auth` · `storage` · `notification-campaign` · `users`) — `fetchClient` `api` 싱글톤 사용, 패턴 일관
+- ✅ **notification-campaign** — `packages/api/src/notification-campaign/` SDK + 어드민 UI(`/early-notification` 페이지 안 캠페인 섹션: 목록·편집 Drawer·PAUSED↔SCHEDULED 토글) 연결 완료
+- ⬜ **storage 보조 queries** — `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` 미구현 (BE 엔드포인트 추가 후 진행)
+
+**완료 (인프라)**
+
+- ✅ Google OAuth 실제 연결 — `LoginPage` 가 `/api/v1/auth/google` 로 top-level navigation (same-origin), 백엔드가 `CLIENT_REDIRECT_URL` 로 되돌림 (httpOnly 쿠키)
+- ✅ 인증 보호 라우트 (Minimal) — 별도 loader 가드 없이 `client.ts` 401 인터셉터 + `main.tsx` `onUnauthorized` 콜백에 위임. 401 발생 시 `paths.login` 으로 자동 redirect
+- ✅ 사이드바 사용자 메뉴 드롭다운 + 로그아웃 흐름 — `widgets/navigation/UserMenuDropdown.tsx` + `entities/auth/model/useLogoutFlow.ts` (`@ddd/api` `useLogout` mutation → 토스트 → `paths.login` redirect)
+- ✅ same-origin 배포 환경 코드 준비 — `client.ts` `buildUrl()` 이 `window.location.origin` 자동 결합, Vite dev proxy (`/api → localhost:3000`), `.github/workflows/deploy-admin.yml` (SCP + atomic swap). 머지 전 GitHub Secrets 등록 + BE 측 Caddy/compose 부트스트랩 필요 — 단일 출처: [docs/admin-deploy.md](./docs/admin-deploy.md)
+
+**비-목표 (별도 라운드)**
+
+- 회원가입 — 별도 흐름 없음 (Google OAuth 첫 로그인이 곧 가입)
+- 로그인 사용자 컨텍스트 (me 표시) — 백엔드 `GET /api/v1/users/me` 추가 합의됨 (별도 PR 에서 옵션 A 가드 도입 예정)
+- 회원 탈퇴 UI — 별도 라운드
+- 권한(roles) 기반 접근 제어 — 별도 라운드
 
 ---
 
@@ -69,31 +85,34 @@
 
 ### 3.1.2 기수 등록/수정
 
-- ✅ 기수 목록 조회 (기수 / 상태 / 모집기간 / 지원자수 / 멤버수 / 등록일)
-- ✅ 상태별 필터 / 기수 검색
-- ✅ 통계 카드 (전체 기수 / 현재 상태 / 누적 지원자 / 누적 활동 멤버)
-- 🔧 새 기수 등록 폼 — `SemesterRegisterDrawer.tsx` (Drawer + DatePicker + Select), API 미연결
-- 🔧 프로세스 일정 등록/수정 (서류발표일 · 온라인 인터뷰일 · 최종발표일) — DatePicker UI만
-- 🔧 커리큘럼 등록/수정 (9주차 JSON 배열) — DatePicker + Input UI만
-- 🔧 파트별 지원서 양식 관리 (질문 추가/수정/삭제) — Tabs + TextArea UI만
-- 🔧 수동 상태 변경 버튼 ("모집중 전환") — API 미연결
-- 🔧 기수 수정 버튼 — 수정 폼/모달 미구현
+- ✅ 기수 목록 조회 — `useSemestersTableData` (`useCohorts` + 기수별 지원자/멤버 집계) 연동
+- ✅ 상태별 필터 / 기수 검색 (클라이언트)
+- ✅ 통계 카드 — `useSemestersTableData.summary`로 동적 집계 (전체 기수 / 현재 상태 / 누적 지원자 / 누적 멤버)
+- ✅ 새 기수 등록 폼 — `SemesterRegisterDrawer` RHF + `useCreateOrUpdateCohortFlow` (`useCreateCohort`/`useUpdateCohort`) 연동
+- ✅ 새 기수 등록 버튼 — `SemestersPage.tsx:77-85` `onPress` 연결, Drawer 정상 오픈
+- 🔧 프로세스 일정 등록/수정 — ProcessSection DateRangePicker/DatePicker RHF 연결, API 직렬화 브라우저 검증 미실시
+- 🔧 커리큘럼 등록/수정 — CurriculumSection (9주차 고정) RHF 연결, 브라우저 검증 미실시
+- ✅ 파트별 지원서 양식 관리 (PM/PD/Server/Web/iOS/Android Tabs) — `ApplicationFormSection` 에 label TextArea + required Switch + isOpen Switch (key Input 제거). 저장 직전 `serializeFormToPartsPayload` 가 빈 key 를 `slugify(label)` 결과로 자동 생성(한글 그대로 허용, 예: `지원_동기`). 저장된 question 은 label 이 `isReadOnly`, 카드에 `저장됨: <key>` caption 노출. Drawer `onSubmit` 게이트가 `validateFormParts` 로 빈 label·part 내부 중복 key 를 클라에서 차단 + `toast.danger` + 위반 카드 `border-danger` 강조. `useCreateOrUpdateCohortFlow` 가 create/update 후 `updateCohortParts` 호출, 부분 실패 시 `PartsSaveAfterCreateError` throw → 호출부가 edit 모드로 전환. `cohort.applicationForm` 은 dead 필드로 제거 — 단일 source 는 `PUT /admin/cohorts/{id}/parts` ([정책](./docs/admin-cohort-parts-policy.md))
+- ✅ 수동 상태 변경 버튼 ("모집중 전환") — `useTransitionCohortStatusFlow` 연동. RECRUITING 전환 시 `validateCohortPartsForRecruiting` 가드(isOpen 파트 0개 또는 양식 비어있는 파트가 있으면 mutation 호출 없이 `TransitionBlockedDialog` 노출 → "수정 화면 열기" 시 해당 cohort edit Drawer 자동 오픈). 위반 파트 자동 스크롤·강조는 후속 PR
+- ✅ 기수 수정 버튼 — `editTarget` state + `isDrawerOpen`, Drawer `mode="edit"` 분기 완성
+- ✅ `SemesterRegisterDrawer` react-hook-form + FormProvider 도입
 - ⬜ 모집 종료일 경과 시 자동 "활동중" 전환 (백엔드/스케줄러 책임)
 
 ---
 
 ## 3.2 사전 알림 신청 관리 (`/reminders`)
 
-- ✅ 신청자 목록 조회 (이름 / 이메일 / 직군 / 관심기수 / 신청일 / 상태)
-- ✅ 상태별 필터 (대기 / 발송완료)
-- ✅ 이름·이메일 검색
-- ✅ 통계 카드 (전체 / 대기 / 발송완료 / 취소)
-- 🔧 이메일 개별 발송 버튼 UI — API 미연결
-- 🔧 저장 필드 (기수 / 이메일 / 신청 일시) — 목업 데이터에만 반영, 실 스키마 미연동
-- ⬜ 기수별 필터
-- ⬜ 이메일 목록 엑셀 다운로드
-- ⬜ 전체 일괄 발송 (MVP: 어드민 수동 트리거)
-- ⬜ 기수 상태 "모집중" 전환 시 자동 발송 (Phase 2)
+- ✅ 신청자 목록 조회 (이메일 / 기수 / 신청일 / 상태 / 발송 일시) — `useAdminEarlyNotifications` 연동
+- ✅ 상태별 필터 (전체 / 대기 / 발송완료) — 클라이언트 predicate
+- ✅ 이메일 검색 (클라이언트, 부분 일치)
+- ✅ 통계 카드 — 동적 집계 (`EarlyNotificationStatsSection.tsx:22` `stats` useMemo)
+- ✅ 기수별 필터 — `useCohorts()` 매핑 + 최신 모집기수 자동 선택 (`pickActiveCohortId`)
+- ✅ 전체 일괄 발송 — `RemindersBulkSendDrawer.tsx:62` `useSendBulkEarlyNotification` mutation 연동
+- ⬜ 개별 발송 버튼 — `RemindersTable.tsx:28-34` 헤더에 액션 컬럼 자체가 없음 (HTML 목업에는 있음)
+- ✅ 이메일 목록 CSV 다운로드 — `useDownloadEarlyNotificationsCsv` 훅 + `earlyNotificationQueries` 팩토리 경유. `EarlyNotificationToolbar` 버튼 연동
+- ⬜ 개별 발송 — **백엔드 generated에 단건 발송 엔드포인트 없음**. 백엔드 추가 후 구현 가능
+- ✅ 캠페인(예약 발송) 관리 — `NotificationCampaignSection` (목록·상태 배지·편집 Drawer·PAUSED↔SCHEDULED 토글). 기수 생성 시 자동 생성된 캠페인을 운영자가 본문·시각 수정 후 SCHEDULED 로 풀면 백엔드 스케줄러가 자동 발송
+- ⬜ 기수 상태 "모집중" 전환 시 **즉시** 자동 발송 (Phase 2 — 현재는 캠페인 scheduledAt 기반)
 
 ---
 
@@ -105,28 +124,43 @@
 
 ### 3.3.2 지원자 목록
 
-- ✅ 목록 조회 (이름 / 이메일 / 직군 / 지원기수 / 지원일 / 상태)
-- ✅ 상태별 필터
-- ✅ 이름 / 이메일 검색
-- ✅ 통계 카드 (전체 지원 / 대기 / 면접 대기 / 면접 합격 / 활동중)
-- 🔧 지원자 상태 변경 버튼 ("합격처리", "수정") — API 미연결
-- ⬜ 파트별 필터 (PM / PD / BE / FE / IOS / AOS)
-- ⬜ 기수별 필터
-- ⬜ 지원자 이름 클릭 → 상세 페이지 이동
+- ✅ 목록 조회 (이름 / 연락처 / 파트 / 기수 / 지원일 / 상태) — `useAdminApplications` 연동
+- ✅ 상태별 필터, 이름·연락처 검색 (클라이언트), 파트별/기수별 필터
+- ✅ 통계 카드 — `ApplicationsPage.tsx:76-83` 에서 cardList 기반 동적 집계
+- ✅ 지원자 행 클릭 → `ApplicationDetailDrawer` 오픈 — `ApplicationsPage` `onRowPress` + `selectedApplicationId` state 연결
+- ⬜ 지원자 이름 행 hover 하이라이트 스타일 없음 (`cursor-pointer` 만 적용)
 
-### 3.3.3 지원자 상세 (`/applications/:id`)
+### 3.3.3 지원자 상세 (Drawer 방식, 별도 라우트 없음)
 
-- ⬜ 상세 라우트 자체가 미구현
-- ⬜ 지원 파트 / 이름 / 휴대폰번호(가운데번호 마스킹) / 생년월일 / 거주지역 표시
-- ⬜ 파트별 질문+답변 + 제출 일시
-- ⬜ 개인정보 동의 여부 + 동의 일시
-- ⬜ 상세에서 상태 변경 기능
+- ✅ `ApplicationDetailDrawer` — `/applications` 내에서 슬라이드 패널로 진입 (별도 라우트 불필요)
+- ✅ 지원 파트 / 이름 / 휴대폰번호(가운데번호 마스킹) / 생년월일 / 거주지역 / 제출일 표시
+- ✅ 파트별 질문+답변 — `AnswerList.tsx` (answers Record 렌더링)
+- ✅ 개인정보 동의 여부 — `privacyAgreed` boolean 표시
+- ✅ 개인정보 동의 일시 — `ApplicationDetailDrawer/index.tsx` `InfoRow` 로 `privacyAgreedAt` 렌더링 (BE 미응답 시 `formatDate` 폴백 `"-"`)
+- ✅ 상세에서 합격/불합격 분기 상태 변경 — `STATUS_BRANCH` + `StatusChangeModal`
 
 ### 3.3.4 개인정보 처리
 
 - ⬜ 합격 발표 후 6개월 자동 파기 스케줄러 (Cron)
 - ⬜ 개인정보 필드 null 처리 또는 레코드 삭제 로직
 - ⬜ 감사 로그 / 관리자 알림 (필요 시)
+
+### 3.3.5 면접 슬롯 관리 (`/interview-slots`)
+
+- ✅ 별도 사이드바 라우트 `/interview-slots` — `apps/admin/src/pages/interview-slots/`
+- ✅ 기수 + 파트 필터 (`InterviewSlotsToolbar`) — 파트는 "전체" 또는 단일 선택
+- ✅ 슬롯 테이블 (`InterviewSlotsTable`) — 날짜/시간/파트/예약-정원/장소/액션
+- ✅ 슬롯 등록·수정 통합 Drawer (`InterviewSlotRegisterDrawer`) — RHF + Zod
+  - DatePicker 1개 + 시작/종료 TimeField 2개 (같은 날짜 시작·종료)
+  - capacity / location / description
+  - 수정 모드 시 cohortId/cohortPartId Select 는 isReadOnly + 안내 caption (BE PATCH DTO 가 두 필드를 미지원)
+- ✅ 슬롯 삭제 Dialog (`DeleteInterviewSlotDialog`) — `DeleteCohortDialog` 패턴 미러링
+- ✅ 흐름 훅 — `entities/interview-slot/model/useCreateOrUpdateSlotFlow` + `useDeleteSlotFlow` + `serialize`
+- ✅ Phase B — `StatusChangeModal` 의 `INTERVIEW_SLOTS_NOT_READY` 분기에서 `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → "슬롯 등록하러 가기" 시 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill)
+- ✅ 예약자 목록 표시 — 슬롯 행 "예약/정원" 셀 클릭 → `ReservationsDrawer` 오픈 (`InterviewSlotResponseDto.reservations` nested 활용). 지원자명은 `applicationQueries.getAdminApplications({ cohortId })` `useSuspenseQuery` 로 `applicationFormId → applicantName` 매핑
+- ✅ 예약 취소 어드민 UI — `CancelReservationDialog` (AlertDialog) + `useCancelReservationFlow` (`cancelInterviewReservation` mutation → toast + `slotLists()` invalidate). Drawer 안 예약 행 [취소] 버튼에서 confirm 후 호출
+- ⬜ 슬롯 일괄 등록 (날짜 + 시간대 그리드) — 후속 PR
+- ⬜ 지원자 테이블에 면접일자 컬럼 추가 — 슬롯-지원서 join 데이터 활용
 
 ---
 
@@ -171,50 +205,15 @@
 
 ---
 
-## 4. SEO 요구사항 (apps/web)
-
-> 현재 `apps/web` 은 App Router 스켈레톤(`layout.tsx`, `page.tsx`, 빈 섹션 페이지들)만 존재. 대부분 미구현.
-
-### 4.1 페이지 구조
-
-- ⬜ 프로젝트 상세 `/projects/[id]` SSG 빌드 + 텍스트 콘텐츠
-- ⬜ 페이지별 고유 `<title>` ("페이지명 | DDD" 형식)
-- ⬜ 페이지별 `<meta name="description">` (120자 이내)
-- ⬜ `sitemap.xml` 자동 생성 (프로젝트 상세 포함)
-- ⬜ `robots.txt` (`/admin/*` Disallow)
-- ⬜ Canonical URL 설정 (중복 콘텐츠 방지)
-- ⬜ 이미지 alt 텍스트 (프로젝트 썸네일 포함)
-- ⬜ Phase 2: `/blog/[slug]` 내부 아티클 페이지화
-
-### 4.2 Open Graph (SNS 공유)
-
-- ⬜ `og:title` / `og:description` (페이지별 개별 설정)
-- ⬜ `og:image` (프로젝트 상세: 썸네일 / 나머지: DDD 기본)
-- ⬜ `og:url` (canonical과 동일)
-- ⬜ `twitter:card = summary_large_image`
-
-### 4.3 구조화 데이터 (Schema.org)
-
-- ⬜ 홈 FAQ 섹션 — `FAQPage`
-- ⬜ 홈 — `Organization`
-- ⬜ 프로젝트 상세 — `SoftwareApplication`
-
-### 4.4 성능 (Core Web Vitals)
-
-- ⬜ LCP < 2.5s — Next.js `<Image>` 우선 로딩 적용
-- ⬜ CLS < 0.1 — 이미지 width/height 명시, 폰트 preload
-- ⬜ INP < 200ms — 불필요 JS 번들 제거, 코드 스플리팅
-
----
-
 ## 5. 데이터 모델 (참조)
 
-백엔드 스키마이지만 프론트 타입 반영 여부 추적 목적. 현재 각 페이지의 `types.d.ts` 는 임시 타입이며, `@ddd/api` 생성 코드로 대체 예정.
+백엔드 스키마이지만 프론트 타입 반영 여부 추적 목적.
 
-- ⬜ `cohort` ENUM(UPCOMING / RECRUITING / ACTIVE / CLOSED) 타입 반영
-- ⬜ `applicant` 전체 컬럼 (part ENUM, 개인정보 필드, privacy_agreed_at, delete_scheduled_at 등)
-- ⬜ `project.platform` ENUM[] 복수 타입 반영
-- ⬜ `early_notification` 스키마 (cohort_id, email, notified_at)
+- ✅ `cohort` ENUM — `CreateCohortRequestDtoStatus`, `CohortStatus`, `CohortPartConfigDtoName` 사용 중
+- ✅ `project.platform` ENUM[] — `ProjectPlatform` 타입 사용 중
+- ✅ `early_notification` — `EarlyNotificationDto` 사용 중
+- 🔧 `applicant` — `ApplicationDto` 사용 중. 개인정보 필드(privacy_agreed_at, delete_scheduled_at 등) 상세 페이지 미구현으로 미검증
+- ✅ `pages/semesters/types.d.ts` 의 `SemesterRegisterForm` / `CohortPartFormState` 는 폼 입력 전용 (UI state). `serialize.ts` 가 DTO(`CohortPartConfigDto` 등) 와 매핑 — 의도된 분리, 중복 아님
 
 ---
 
@@ -229,15 +228,49 @@
 | 홈페이지 — 지원 (사전 알림 / 지원서 + 개인정보 동의) | ⬜ | |
 | 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF) | ⬜ | `project/[id]` 라우트만 존재 |
 | 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
-| 어드민 — 기수 관리 (상태 + 수동 변경) | 🔧 | 목록/필터 완료, 등록·수정 폼 API 미연결 |
-| 어드민 — 지원자 목록/상세/상태 변경 | 🔧 | 목록만 구현, 상세 페이지 미구현 |
-| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계 UI, 발송 API 미연결 |
+| 어드민 — 기수 관리 (상태 + 수동 변경) | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패 시 edit 모드 자동 전환 |
+| 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기 완료. 개인정보 동의 일자·면접일자 컬럼 미표시 |
+| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV/캠페인(예약 발송 관리) 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
 | 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
 | 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
-| SEO — sitemap/robots/OG/Schema.org/상세 URL | ⬜ | |
 
 ### 6.2 Phase 2
 
 - ⬜ 프로젝트 참여자 후기
 - ⬜ 블로그 아티클 내부 페이지화
 - ⬜ 어드민 FAQ 관리
+
+---
+
+## 정밀 갭 (코드 라인 참조, 2026-05-04 추가)
+
+HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 인터랙션** 을 file:line 단위로 정리. 작업 우선순위는 ▲ 표시.
+
+### packages/api 레이어 갭
+
+> 241ae4e 이전에 남아있던 "generated 미사용 / 패턴 불일치" 갭(cohort·auth·storage)은 openapi-fetch 마이그레이션으로 일괄 해소됨. 모든 도메인이 `api.get/post/...` 패턴으로 통일.
+
+| 도메인 | 문제 | 영향 |
+|---|---|---|
+| **storage** | `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 (BE 엔드포인트 추가 후 진행) | 파일 관리 기능 확장 불가 |
+| ~~**cohort**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
+| ~~**auth**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
+| ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료 | 갭 해소 |
+| ~~**interview**~~ | ✅ `cancelInterviewReservation` mutation + 어드민 UI(`ReservationsDrawer` / `CancelReservationDialog`) 연결 완료 | 갭 해소 |
+| **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
+
+
+### HTML 목업에는 있는데 미구현인 UI
+
+- `apps/admin/src/pages/early-notification/components/EarlyNotificationTable.tsx` — 개별 발송 액션 컬럼 자체 부재. 단건 발송 엔드포인트가 BE generated에 없어 구현 대기
+
+### 회귀 테스트
+
+- ⬜ `/projects` — 실제 백엔드 또는 MSW 연동 후 등록·수정·삭제·필터·"더 보기" 시나리오 브라우저 검증
+- ⬜ `/blog-posts` — 동일
+
+### 우선순위 Top 3 (가장 빠르게 가치 회수)
+
+1. ~~`useUpdateCohortParts` 연결~~ — ✅ 처리됨 (`useCreateOrUpdateCohortFlow` 안에 `updateCohortParts` mutation 추가, 부분 실패는 `PartsSaveAfterCreateError` throw → 호출부 instanceof 분기. 흐름 훅에서 토스트/콜백 제거하고 호출부 onSubmit 으로 이관)
+2. ~~`StatusChangeModal` `INTERVIEW_SLOTS_NOT_READY` 에러 분기~~ — ✅ 처리됨 (`ApiError.is("INTERVIEW_SLOTS_NOT_READY")` 분기 + 강조 토스트, 모달 유지)
+3. ~~`개인정보 동의 일자` 표시~~ — ✅ 처리됨 (`ApplicationDetailDrawer` 에 `동의 일자` `InfoRow` 추가, BE 미응답 시 `"-"` 폴백)

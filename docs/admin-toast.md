@@ -105,7 +105,7 @@ const handleSubmit = async (payload) => {
 }
 ```
 
-### 4.2 일괄 액션 알림 (`RemindersPage` 패턴)
+### 4.2 일괄 액션 알림 (`EarlyNotificationContent` 패턴)
 
 ```tsx
 const handleBulkSend = () => {
@@ -147,4 +147,4 @@ const handleConfirmDelete = async () => {
 
 ## 6. 변경 이력
 
-- 2026-04-26: 초안 작성. 레퍼런스: `apps/admin/src/pages/reminders/RemindersPage.tsx`
+- 2026-04-26: 초안 작성. 레퍼런스: `apps/admin/src/pages/early-notification/EarlyNotificationContent.tsx`

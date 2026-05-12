@@ -1,170 +1,177 @@
 import { useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { getApiClient } from "@ddd/api"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { Button, Input, Table, Select, ListBox, Drawer } from "@heroui/react"
+import { Button } from "@heroui/react"
 
-import { GridBox } from "@/shared/ui/GridBox"
-import { FlexBox } from "@/shared/ui/FlexBox"
-import { Title, Description } from "@/widgets/heading"
+import type { CohortDto } from "@ddd/api"
 
-import type { SemesterInfo } from "./types"
 import {
-  STATUS_LABEL,
-  STATUS_FILTER_OPTIONS,
-  STATUS_FILTER_MAP,
-} from "./constants"
-import { SemesterRegisterDrawer } from "./SemesterRegisterDrawer"
+  serializeCohortToForm,
+  useTransitionCohortStatusFlow,
+  type PartsRecruitingViolation,
+} from "@/entities/cohort"
+import { FlexBox } from "@/shared/ui/FlexBox"
+import { GridBox } from "@/shared/ui/GridBox"
+import { StatCard } from "@/shared/ui/StatCard"
+import { TitleSection } from "@/widgets/heading"
 
-const getSemesterData = async () => {
-  try {
-    return await getApiClient().get<SemesterInfo[]>("/semester")
-  } catch (error) {
-    console.error("Failed to fetch semester data:", error)
-  }
-}
+import {
+  SemesterRegisterDrawer,
+  SemesterTableSection,
+  TransitionBlockedDialog,
+} from "./components"
+import {
+  useSemesterRegistrationMode,
+  useSemestersTableData,
+  type SemestersSummary,
+} from "./hooks"
 
 /** 기수 관리 페이지 */
 export default function SemestersPage() {
-  const [searchText, setSearchText] = useState("")
-  const [statusFilter, setStatusFilter] = useState("전체")
+  const { tableRows, summary, isError, refetch } = useSemestersTableData()
+  const registration = useSemesterRegistrationMode()
+  const { transition } = useTransitionCohortStatusFlow()
+
+  // 행 "수정" 클릭 시 채워지는 edit 타겟. registration 모드를 오버라이드.
+  const [editTarget, setEditTarget] = useState<CohortDto | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [pendingBlocked, setPendingBlocked] = useState<{
+    cohort: CohortDto
+    violation: PartsRecruitingViolation
+  } | null>(null)
 
-  const { data: semesters } = useQuery({
-    queryKey: ["semesters"],
-    queryFn: getSemesterData,
-  })
+  const drawerProps = useMemo(() => {
+    if (editTarget) {
+      return {
+        mode: "edit" as const,
+        targetId: editTarget.id,
+        prefill: serializeCohortToForm(editTarget),
+      }
+    }
+    return {
+      mode: registration.mode,
+      targetId: registration.targetId,
+      prefill: registration.prefill,
+    }
+  }, [editTarget, registration])
 
-  const filteredSemesters = useMemo(() => {
-    const source = semesters ?? []
-    const targetStatus = STATUS_FILTER_MAP[statusFilter]
-    return source
-      .filter((item) => searchText === "" || item.semester.includes(searchText))
-      .filter((item) => targetStatus === null || item.status === targetStatus)
-  }, [semesters, searchText, statusFilter])
+  const handleDrawerOpenChange = (open: boolean) => {
+    setIsDrawerOpen(open)
+    if (!open) setEditTarget(null)
+  }
+
+  if (isError) {
+    return (
+      <div className="w-full p-5">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-semibold text-red-800">
+            기수 목록을 불러오지 못했습니다
+          </p>
+          <Button className="mt-3" onPress={refetch}>
+            다시 시도
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full space-y-5 p-5">
-      <Drawer>
-        <TitleSection />
-        <CardSection />
-        <SemesterRegisterDrawer />
-      </Drawer>
+      <FlexBox className="justify-between">
+        <TitleSection
+          title="기수 관리"
+          description="DDD 활동 기수를 등록하고 상태를 관리합니다."
+        />
+        <Button
+          onPress={() => {
+            setEditTarget(null)
+            setIsDrawerOpen(true)
+          }}
+        >
+          <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
+          {registration.buttonLabel}
+        </Button>
+      </FlexBox>
 
-      <div className="space-y-5 rounded-lg bg-white p-5 shadow">
-        <FlexBox className="justify-between">
-          <Input
-            variant="secondary"
-            placeholder="검색..."
-            className="max-w-xs"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <Select
-            variant="secondary"
-            className="max-w-36"
-            aria-label="상태 필터"
-          >
-            <Select.Trigger>
-              <Select.Value>{statusFilter}</Select.Value>
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                {STATUS_FILTER_OPTIONS.map((option) => (
-                  <ListBox.Item
-                    key={option}
-                    id={option}
-                    textValue={option}
-                    onClick={() => setStatusFilter(option)}
-                  >
-                    {option}
-                  </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
-        </FlexBox>
+      <CardSection summary={summary} />
 
-        <Table>
-          <Table.ScrollContainer>
-            <Table.Content aria-label="기수 목록">
-              <Table.Header>
-                <Table.Column isRowHeader>기수</Table.Column>
-                <Table.Column>상태</Table.Column>
-                <Table.Column>모집 기간</Table.Column>
-                <Table.Column>지원자 수</Table.Column>
-                <Table.Column>멤버 수</Table.Column>
-                <Table.Column>등록일</Table.Column>
-                <Table.Column>액션</Table.Column>
-              </Table.Header>
-              <Table.Body>
-                {filteredSemesters.map((semester) => (
-                  <Table.Row key={semester.semester}>
-                    <Table.Cell>{semester.semester}</Table.Cell>
-                    <Table.Cell>{STATUS_LABEL[semester.status]}</Table.Cell>
-                    <Table.Cell>{semester.recruitmentPeriod}</Table.Cell>
-                    <Table.Cell>{semester.applicants}</Table.Cell>
-                    <Table.Cell>{semester.members}</Table.Cell>
-                    <Table.Cell>
-                      {new Date(semester.createdAt).toLocaleDateString("ko-KR")}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Button size="sm" variant="outline" className="mr-2">
-                        수정
-                      </Button>
-                      <Button size="sm">모집중 전환</Button>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Content>
-          </Table.ScrollContainer>
-        </Table>
+      <SemesterRegisterDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={handleDrawerOpenChange}
+        mode={drawerProps.mode}
+        targetId={drawerProps.targetId}
+        prefill={drawerProps.prefill}
+        onSwitchToEdit={(newCohortId) => {
+          setEditTarget({ id: newCohortId } as CohortDto)
+        }}
+      />
+
+      <div className="rounded-lg bg-white p-5 shadow">
+        <SemesterTableSection
+          rows={tableRows}
+          onEditRow={(row) => {
+            setEditTarget(row)
+            setIsDrawerOpen(true)
+          }}
+          onTransitionRow={async (row) => {
+            const result = await transition(row)
+            if (result.status === "blocked") {
+              setPendingBlocked({
+                cohort: result.cohort,
+                violation: result.violation,
+              })
+            }
+          }}
+        />
       </div>
+
+      {pendingBlocked && (
+        <TransitionBlockedDialog
+          isOpen
+          onClose={() => setPendingBlocked(null)}
+          cohortName={pendingBlocked.cohort.name}
+          violation={pendingBlocked.violation}
+          onOpenEditDrawer={() => {
+            setEditTarget(pendingBlocked.cohort)
+            setIsDrawerOpen(true)
+            setPendingBlocked(null)
+          }}
+        />
+      )}
     </div>
   )
 }
 
-const TitleSection = () => {
-  return (
-    <FlexBox className="justify-between">
-      <header className="space-y-2">
-        <Title title="기수 관리" />
-        <Description title="DDD 활동 기수를 등록하고 상태를 관리합니다." />
-      </header>
-      <Button>
-        <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />새 기수 등록
-      </Button>
-    </FlexBox>
-  )
+// ─── 서브컴포넌트 ────────────────────────────────────────────────────────────
+
+type CardSectionProps = {
+  summary: SemestersSummary
 }
 
-const CardSection = () => {
+const CardSection = ({ summary }: CardSectionProps) => {
   return (
     <GridBox className="grid-cols-4 gap-5">
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow">
-        <h3 className="font-semibold text-gray-700">전체 기수</h3>
-        <p className="text-2xl font-bold">14</p>
-        <p className="text-sm text-gray-500">추가 정보 1</p>
-      </div>
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow">
-        <h3 className="font-semibold text-gray-700">현재 상태</h3>
-        <p className="text-2xl font-bold">활동 중</p>
-        <p className="text-sm text-gray-500">13기</p>
-      </div>
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow">
-        <h3 className="font-semibold text-gray-700">누적 지원자</h3>
-        <p className="text-2xl font-bold">1204명</p>
-        <p className="text-sm text-gray-500">전체 기수 합산</p>
-      </div>
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow">
-        <h3 className="font-semibold text-gray-700">누적 활동 멤버</h3>
-        <p className="text-2xl font-bold">520명</p>
-        <p className="text-sm text-gray-500">전체 기수 합산</p>
-      </div>
+      <StatCard
+        title="전체 기수"
+        value={`${summary.totalCohorts}`}
+        footer="등록된 기수 수"
+      />
+      <StatCard
+        title="현재 상태"
+        value={summary.currentStatusLabel}
+        footer="가장 최신 기수"
+      />
+      <StatCard
+        title="누적 지원자"
+        value={`${summary.totalApplicants}명`}
+        footer="전체 기수 합산"
+      />
+      <StatCard
+        title="누적 활동 멤버"
+        value={`${summary.totalMembers}명`}
+        footer="전체 기수 합산"
+      />
     </GridBox>
   )
 }

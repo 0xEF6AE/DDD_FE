@@ -1,7 +1,7 @@
 import { AlertDialog, Button, toast } from "@heroui/react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { blogKeys, useDeleteBlogPost } from "@ddd/api"
+import { blogKeys, blogMutations } from "@ddd/api"
 import type { BlogPostDto } from "@ddd/api"
 
 type DeleteBlogPostDialogProps = {
@@ -16,7 +16,7 @@ export const DeleteBlogPostDialog = ({
   post,
 }: DeleteBlogPostDialogProps) => {
   const queryClient = useQueryClient()
-  const deleteBlogPost = useDeleteBlogPost()
+  const deleteBlogPost = useMutation(blogMutations.deleteBlogPost())
 
   const handleConfirm = async () => {
     if (!post) return
@@ -28,7 +28,7 @@ export const DeleteBlogPostDialog = ({
       })
       onOpenChange(false)
     } catch (error) {
-      toast.error("삭제에 실패했습니다", {
+      toast.danger("삭제에 실패했습니다", {
         description: (error as Error).message,
       })
     }
@@ -37,11 +37,13 @@ export const DeleteBlogPostDialog = ({
   return (
     <AlertDialog.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <AlertDialog.Container>
-        <AlertDialog.Dialog className="sm:max-w-[400px]">
+        <AlertDialog.Dialog className="sm:max-w-100">
           <AlertDialog.CloseTrigger />
           <AlertDialog.Header>
             <AlertDialog.Icon status="danger" />
-            <AlertDialog.Heading>블로그를 삭제하시겠습니까?</AlertDialog.Heading>
+            <AlertDialog.Heading>
+              블로그를 삭제하시겠습니까?
+            </AlertDialog.Heading>
           </AlertDialog.Header>
           <AlertDialog.Body>
             <p>

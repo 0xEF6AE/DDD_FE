@@ -1,30 +1,21 @@
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useQueryClient } from "@tanstack/react-query"
-import {
-  Button,
-  Drawer,
-  Input,
-  TextArea,
-  toast,
-} from "@heroui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Button, Drawer, Input, TextArea, toast } from "@heroui/react"
 
-import {
-  blogKeys,
-  useCreateBlogPost,
-  useUpdateBlogPost,
-  useUploadFile,
-} from "@ddd/api"
+import { blogKeys, blogMutations, storageMutations } from "@ddd/api"
 import type {
   BlogPostDto,
   PostCreateBlogPostRequest,
-  PutUpdateBlogPostRequest,
+  PatchUpdateBlogPostRequest,
 } from "@ddd/api"
 
 import { cn } from "@/shared/lib/cn"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
+import { FormField } from "@/shared/ui/FormField"
+import { Section } from "@/shared/ui/Section"
 
 // ───── Form schema ───────────────────────────────────────────────────────────
 
@@ -75,12 +66,12 @@ export const BlogPostFormDrawer = ({
   const queryClient = useQueryClient()
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
     setValue,
-    watch,
   } = useForm<BlogPostFormValues>({
     resolver: zodResolver(blogPostFormSchema),
     defaultValues: buildDefaults(post),
@@ -90,9 +81,9 @@ export const BlogPostFormDrawer = ({
     if (isOpen) reset(buildDefaults(post))
   }, [isOpen, mode, post, reset])
 
-  const createBlogPost = useCreateBlogPost()
-  const updateBlogPost = useUpdateBlogPost()
-  const uploadFile = useUploadFile()
+  const createBlogPost = useMutation(blogMutations.createBlogPost())
+  const updateBlogPost = useMutation(blogMutations.updateBlogPost())
+  const uploadFile = useMutation(storageMutations.uploadFile())
 
   const handleThumbnailUpload = async (file: File) => {
     try {
@@ -104,7 +95,7 @@ export const BlogPostFormDrawer = ({
       })
       setValue("thumbnail", result.url, { shouldValidate: true })
     } catch (error) {
-      toast.error("썸네일 업로드에 실패했습니다", {
+      toast.danger("썸네일 업로드에 실패했습니다", {
         description: (error as Error).message,
       })
     }
@@ -124,7 +115,7 @@ export const BlogPostFormDrawer = ({
           description: "홈페이지 블로그 섹션에 노출됩니다.",
         })
       } else if (post) {
-        const payload: PutUpdateBlogPostRequest = {
+        const payload: PatchUpdateBlogPostRequest = {
           title: values.title,
           excerpt: values.excerpt,
           externalUrl: values.externalUrl,
@@ -140,112 +131,82 @@ export const BlogPostFormDrawer = ({
       queryClient.invalidateQueries({ queryKey: blogKeys.all })
       onOpenChange(false)
     } catch (error) {
-      toast.error("저장에 실패했습니다", {
+      toast.danger("저장에 실패했습니다", {
         description: (error as Error).message,
       })
     }
   })
 
-  const thumbnailUrl = watch("thumbnail")
+  const thumbnailUrl = useWatch({ control, name: "thumbnail" })
+  console.log("thumbnailUrl", thumbnailUrl)
 
   return (
-    <Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Drawer.Backdrop>
-        <Drawer.Content placement={isMobile ? "bottom" : "right"}>
-          <Drawer.Dialog
-            className={!isMobile ? "w-full max-w-1/2 bg-gray-50" : ""}
-          >
-            <Drawer.Header>
-              <Drawer.Heading className="text-lg font-semibold">
-                {mode === "create" ? "블로그 등록" : "블로그 수정"}
-              </Drawer.Heading>
-            </Drawer.Header>
+    <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Drawer.Content placement={isMobile ? "bottom" : "right"}>
+        <Drawer.Dialog
+          className={!isMobile ? "w-full max-w-1/2 bg-gray-50" : ""}
+        >
+          <Drawer.Header>
+            <Drawer.Heading className="text-lg font-semibold">
+              {mode === "create" ? "블로그 등록" : "블로그 수정"}
+            </Drawer.Heading>
+          </Drawer.Header>
 
-            <Drawer.Body className="flex-1 space-y-6 overflow-y-auto">
-              <Section title="블로그 정보">
-                <FormField label="썸네일 이미지">
-                  <ThumbnailUploader
-                    url={thumbnailUrl}
-                    isUploading={uploadFile.isPending}
-                    onSelect={handleThumbnailUpload}
-                    onClear={() =>
-                      setValue("thumbnail", "", { shouldValidate: true })
-                    }
-                  />
-                </FormField>
+          <Drawer.Body className="flex-1 space-y-6 overflow-y-auto">
+            <Section title="블로그 정보">
+              <FormField label="썸네일 이미지">
+                <ThumbnailUploader
+                  url={thumbnailUrl}
+                  isUploading={uploadFile.isPending}
+                  onSelect={handleThumbnailUpload}
+                  onClear={() =>
+                    setValue("thumbnail", "", { shouldValidate: true })
+                  }
+                />
+              </FormField>
 
-                <FormField label="제목" error={errors.title?.message}>
-                  <Input
-                    {...register("title")}
-                    placeholder="블로그 포스트 제목"
-                  />
-                </FormField>
+              <FormField label="제목" error={errors.title?.message}>
+                <Input
+                  {...register("title")}
+                  placeholder="블로그 포스트 제목"
+                  className="w-full"
+                />
+              </FormField>
 
-                <FormField label="본문 일부" error={errors.excerpt?.message}>
-                  <TextArea
-                    {...register("excerpt")}
-                    placeholder="목록에 노출될 본문 요약 (2~3문장)"
-                    className="min-h-24"
-                  />
-                </FormField>
+              <FormField label="본문 일부" error={errors.excerpt?.message}>
+                <TextArea
+                  {...register("excerpt")}
+                  placeholder="목록에 노출될 본문 요약 (2~3문장)"
+                  className="min-h-24 w-full resize-none"
+                />
+              </FormField>
 
-                <FormField
-                  label="외부 링크 URL"
-                  error={errors.externalUrl?.message}
-                >
-                  <Input
-                    {...register("externalUrl")}
-                    placeholder="https://brunch.co.kr/..."
-                  />
-                </FormField>
-              </Section>
-            </Drawer.Body>
+              <FormField
+                label="외부 링크 URL"
+                error={errors.externalUrl?.message}
+              >
+                <Input
+                  {...register("externalUrl")}
+                  placeholder="https://brunch.co.kr/..."
+                  className="w-full"
+                />
+              </FormField>
+            </Section>
+          </Drawer.Body>
 
-            <Drawer.Footer className="gap-2">
-              <Drawer.CloseTrigger />
-              <Button onPress={() => onSubmit()} isDisabled={isSubmitting}>
-                {isSubmitting ? "저장 중..." : "저장"}
-              </Button>
-            </Drawer.Footer>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer.Backdrop>
-    </Drawer>
+          <Drawer.Footer className="gap-2">
+            <Drawer.CloseTrigger />
+            <Button onPress={() => onSubmit()} isDisabled={isSubmitting}>
+              {isSubmitting ? "저장 중..." : "저장"}
+            </Button>
+          </Drawer.Footer>
+        </Drawer.Dialog>
+      </Drawer.Content>
+    </Drawer.Backdrop>
   )
 }
 
 // ───── Subcomponents ─────────────────────────────────────────────────────────
-
-const Section = ({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) => (
-  <section className="space-y-4">
-    <h3 className="text-muted-foreground border-b border-gray-200 pb-2 text-xs font-semibold tracking-wider uppercase">
-      {title}
-    </h3>
-    {children}
-  </section>
-)
-
-const FormField = ({
-  label,
-  error,
-  children,
-}: {
-  label: string
-  error?: string
-  children: React.ReactNode
-}) => (
-  <div className="space-y-1.5">
-    <label className="text-xs font-medium text-gray-700">{label}</label>
-    {children}
-    {error && <p className="text-xs text-red-500">{error}</p>}
-  </div>
-)
 
 type ThumbnailUploaderProps = {
   url?: string

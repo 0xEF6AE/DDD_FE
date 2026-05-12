@@ -1,4 +1,4 @@
-import { getApiClient } from "../client";
+import { api } from "../fetchClient";
 import type {
   GetAdminApplicationsParams,
   GetAdminApplicationsResponse,
@@ -6,36 +6,25 @@ import type {
   GetAdminApplicationResponse,
   PatchApplicationStatusParams,
   PatchApplicationStatusRequest,
-  PatchApplicationStatusResponse,
   PostSaveApplicationDraftRequest,
-  PostSaveApplicationDraftResponse,
+  GetApplicationDraftParams,
   PostSubmitApplicationRequest,
-  PostSubmitApplicationResponse,
-  GetMyApplicationResponse,
 } from "./types";
 
-const APPLICATION_BASE_URL = "/api/v1/application" as const;
-
 export const applicationAPI = {
-  getAdminApplications: ({ params }: { params: GetAdminApplicationsParams }) => {
-    const searchParams = new URLSearchParams();
-    if (params.cohortId !== undefined)
-      searchParams.set("cohortId", String(params.cohortId));
-    if (params.cohortPartId !== undefined)
-      searchParams.set("cohortPartId", String(params.cohortPartId));
-    if (params.status !== undefined) searchParams.set("status", params.status);
+  /** 어드민 지원서 목록 - GET /api/v1/admin/applications */
+  getAdminApplications: ({ params }: { params: GetAdminApplicationsParams }) =>
+    api.get("/api/v1/admin/applications", {
+      params: { query: params },
+    }) as unknown as Promise<GetAdminApplicationsResponse>,
 
-    const query = searchParams.toString();
-    return getApiClient().get<GetAdminApplicationsResponse>(
-      `${APPLICATION_BASE_URL}/admin${query ? `?${query}` : ""}`,
-    );
-  },
-
+  /** 어드민 지원서 단건 - GET /api/v1/admin/applications/{id} */
   getAdminApplication: ({ params }: { params: GetAdminApplicationParams }) =>
-    getApiClient().get<GetAdminApplicationResponse>(
-      `${APPLICATION_BASE_URL}/admin/${params.id}`,
-    ),
+    api.get("/api/v1/admin/applications/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<GetAdminApplicationResponse>,
 
+  /** 지원서 상태 변경 - PATCH /api/v1/admin/applications/{id}/status */
   patchApplicationStatus: ({
     params,
     payload,
@@ -43,31 +32,32 @@ export const applicationAPI = {
     params: PatchApplicationStatusParams;
     payload: PatchApplicationStatusRequest;
   }) =>
-    getApiClient().patch<PatchApplicationStatusResponse>(
-      `${APPLICATION_BASE_URL}/admin/${params.id}/status`,
-      payload,
-    ),
+    api.patch("/api/v1/admin/applications/{id}/status", {
+      params: { path: { id: params.id } },
+      body: payload,
+    }) as unknown as Promise<void>,
 
+  /** 지원서 임시저장 - POST /api/v1/applications/draft */
   saveApplicationDraft: ({
     payload,
   }: {
     payload: PostSaveApplicationDraftRequest;
   }) =>
-    getApiClient().post<PostSaveApplicationDraftResponse>(
-      `${APPLICATION_BASE_URL}/draft`,
-      payload,
-    ),
+    api.post("/api/v1/applications/draft", {
+      body: payload,
+    }) as unknown as Promise<void>,
 
+  /** 임시저장 단건 조회 - GET /api/v1/applications/draft/{cohortPartId} */
+  getApplicationDraft: ({ params }: { params: GetApplicationDraftParams }) =>
+    api.get("/api/v1/applications/draft/{cohortPartId}", {
+      params: { path: { cohortPartId: params.cohortPartId } },
+    }) as unknown as Promise<void>,
+
+  /** 지원서 최종 제출 - POST /api/v1/applications */
   submitApplication: ({
     payload,
   }: {
     payload: PostSubmitApplicationRequest;
   }) =>
-    getApiClient().post<PostSubmitApplicationResponse>(
-      `${APPLICATION_BASE_URL}/submit`,
-      payload,
-    ),
-
-  getMyApplication: () =>
-    getApiClient().get<GetMyApplicationResponse>(`${APPLICATION_BASE_URL}/my`),
+    api.post("/api/v1/applications", { body: payload }) as unknown as Promise<void>,
 };

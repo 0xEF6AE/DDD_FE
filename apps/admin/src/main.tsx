@@ -7,12 +7,12 @@ import "./index.css"
 import Router from "./pages/index.tsx"
 import { QueryProvider } from "@/app/providers/QueryProvider.tsx"
 import { ThemeProvider } from "@/app/providers/ThemeProvider.tsx"
+import { paths } from "@/shared/lib/paths"
 
-const apiUrl = import.meta.env.VITE_API_URL
-if (!apiUrl) throw new Error("VITE_API_URL is not set")
+const apiUrl = import.meta.env.VITE_API_URL ?? ""
 configureApi(apiUrl, {
   onUnauthorized: () => {
-    window.location.replace("/");
+    window.location.replace(paths.login)
   },
 })
 
