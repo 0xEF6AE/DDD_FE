@@ -1,6 +1,6 @@
 # 어드민 기능 구현 현황
 
-> 기준일: 2026-05-08
+> 기준일: 2026-05-12
 > 기준 문서: 어드민 기능 명세서 v1 (3.1 ~ 3.5)
 > 백엔드: 별도 레포 (스키마·엔드포인트는 백엔드 구현 상태를 우선으로 따른다)
 > 프론트엔드: `apps/admin` (이 레포)
@@ -105,7 +105,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 
 | 명세 항목 | 처리 주체 | 백엔드 | 프론트엔드 | 비고 |
 |-----------|-----------|--------|-----------|------|
-| 지원자 목록 (기수·파트·이름·상태·면접일자) | 양쪽 | ✅ | ⚠️ | BE: `GET /admin/applications`. FE: `ApplicationsPage` + `ApplicationTable`. **면접일자 컬럼 미노출** (slot UI 미구현 영향) |
+| 지원자 목록 (기수·파트·이름·상태·면접일자) | 양쪽 | ✅ | ✅ | BE: `GET /admin/applications`. FE: `ApplicationsPage` + `ApplicationTable`. 면접일자 컬럼은 `useApplicationsBoard` 가 `interviewQueries.getInterviewSlots` 응답의 `reservations[].applicationFormId → slot.startAt` 로 Map 을 만들어 테이블에 전달 (commit 197834b) |
 | 파트별 / 기수별 / 상태별 필터 | 프론트엔드 | – | ✅ | FE: `ApplicationFilters.tsx` (검색·기수·파트·상태) |
 | 상태별 카운트 카드 | 프론트엔드 | – | ✅ | FE: `useApplicationsBoard` + `Sections.tsx` `CardSection` |
 | 행 클릭 → 상세 진입 | 프론트엔드 | – | ✅ | FE: `Drawer` 형태로 진입 (페이지 전환 X) |
@@ -201,7 +201,7 @@ FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합�
 | 4 | 지원 | 서류합격 시 슬롯 없을 때 팝업 안내 | 양쪽 | ⚠️ | ✅ | FE: `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → `/interview-slots?cohortId&cohortPartId` 로 navigate. BE 측은 여전히 trigger 만 정상 |
 | 5 | 지원 | 최종합격 이메일 내 Discord OAuth 버튼 | 백엔드 | ⚠️ | – | BE: `EmailEventHandler` 최종합격 템플릿 Discord OAuth URL 포함 확인 |
 | 6 | 지원 | Google Meet 링크 생성 | 백엔드 | ⚠️ | – | BE: `GoogleCalendarClient` 이벤트 `conferenceData` 포함 확인 |
-| 7 | 지원 | 면접일자 컬럼 / 슬롯 중복 안내 | 양쪽 | ✅ | ❌ | FE: 지원자 테이블에 면접 슬롯 일정 컬럼 추가, 슬롯 관리 UI 도입 후 연계 |
+| 7 | 지원 | 슬롯 중복 시 "이미 선택된 시간" 안내 | 양쪽 | ✅ | – | BE: `400 INTERVIEW_SLOT_ALREADY_RESERVED` 반환. FE: 지원자용 일정 선택 페이지는 `apps/web` 영역으로 admin 범위 밖. (면접일자 컬럼은 197834b 에서 완료) |
 | 8 | 지원 | 개인정보 동의 일자 표시 | 양쪽 | ⚠️ | ✅ | FE: `ApplicationDetailDrawer` 에 동의 일자 `InfoRow` 추가 완료. BE: 상세 응답 `privacyAgreedAt` 포함 여부 확인 남음 |
 | 9 | 프로젝트 | 참여자 후기(review) 필드 | 양쪽 | ❌ | ⚠️ | BE: `ProjectMember` 에 `review` 필드 추가 + 마이그레이션 + DTO 노출. FE: `buildProjectFormDefaults` 와 `useCreateOrUpdateProjectFlow` payload 에 `review` 반영 |
 | 10 | 프로젝트 | PDF 업로드 (Phase 2) | 양쪽 | ❌ | ❌ | Phase 2 — 미착수 |
