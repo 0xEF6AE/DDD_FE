@@ -23,10 +23,7 @@ export const notificationCampaignAPI = {
     params,
   }: {
     params: GetAdminNotificationCampaignsParams;
-  }) =>
-    notificationCampaignGetAdminList(
-      params,
-    ) as unknown as Promise<GetAdminNotificationCampaignsResponse>,
+  }) => notificationCampaignGetAdminList(params),
 
   /** 특정 기수의 사전 알림 캠페인을 등록합니다. */
   createNotificationCampaign: ({

@@ -45,8 +45,7 @@ export default function InterviewSlotsPage() {
     }),
     enabled: cohortId != null,
   })
-  const slots: InterviewSlot[] = slotsQuery.data?.data ?? []
-  console.log(slots, slotsQuery.data)
+  const slots: InterviewSlot[] = slotsQuery.data ?? []
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [editingSlot, setEditingSlot] = useState<InterviewSlot | null>(null)

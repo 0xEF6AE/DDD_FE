@@ -23,11 +23,11 @@ import type {
 export const applicationAPI = {
   /** 어드민 지원서 목록 조회 */
   getAdminApplications: ({ params }: { params: GetAdminApplicationsParams }) =>
-    applicationGetAdminList(params) as unknown as Promise<GetAdminApplicationsResponse>,
+    applicationGetAdminList(params),
 
   /** 어드민 지원서 단건 상세 조회 */
   getAdminApplication: ({ params }: { params: GetAdminApplicationParams }) =>
-    applicationGetAdminById(params.id) as unknown as Promise<GetAdminApplicationResponse>,
+    applicationGetAdminById(params.id),
 
   /** 어드민 지원서 상태 업데이트 */
   patchApplicationStatus: ({

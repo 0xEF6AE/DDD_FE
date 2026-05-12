@@ -21,6 +21,8 @@ import type {
 
 export const blogAPI = {
   /** 공개 블로그 게시글 목록 조회 (커서 기반 페이지네이션) */
+  // NOTE: BE OpenAPI 가 페이지네이션 응답 schema 를 명시하지 않아 generated 가 apiFetch<void>
+  // 로 호출됨 → 응답 타입을 캐스팅으로 보강. BE spec 보강 시 제거.
   getBlogPosts: ({ params }: { params: GetBlogPostsParams }) =>
     blogGetPublicListFn(params) as unknown as Promise<GetBlogPostsResponse>,
 
@@ -30,11 +32,11 @@ export const blogAPI = {
 
   /** 어드민 블로그 게시글 단건 조회 */
   getAdminBlogPost: ({ params }: { params: GetAdminBlogPostParams }) =>
-    blogGetAdminById(params.id) as unknown as Promise<GetAdminBlogPostResponse>,
+    blogGetAdminById(params.id),
 
   /** 블로그 게시글 생성 (어드민) */
   createBlogPost: ({ payload }: { payload: PostCreateBlogPostRequest }) =>
-    blogCreateAdmin(payload) as unknown as Promise<PostCreateBlogPostResponse>,
+    blogCreateAdmin(payload),
 
   /** 블로그 게시글 수정 (어드민) */
   updateBlogPost: ({
@@ -43,8 +45,7 @@ export const blogAPI = {
   }: {
     params: PatchUpdateBlogPostParams;
     payload: PatchUpdateBlogPostRequest;
-  }) =>
-    blogUpdateAdminById(params.id, payload) as unknown as Promise<PatchUpdateBlogPostResponse>,
+  }) => blogUpdateAdminById(params.id, payload),
 
   /** 블로그 게시글 삭제 (어드민) */
   deleteBlogPost: ({ params }: { params: DeleteBlogPostParams }) =>

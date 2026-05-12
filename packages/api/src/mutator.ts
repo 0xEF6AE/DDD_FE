@@ -37,7 +37,14 @@ function buildPath(url: string, params?: Record<string, unknown>): string {
   return query ? `${url}?${query}` : url;
 }
 
-export const apiFetch = <T>(config: OrvalRequestConfig): Promise<T> => {
+// 런타임은 client.ts/parseResponse 가 BE wrapper `{ code, message, data, meta }` 의 data 만 풀어 반환.
+// 타입도 그에 맞춰 generated 응답 wrapper(`{ data?: T | null }`) 의 data 를 추출해 좁힘.
+// wrapper 가 아닌 응답(void / Blob 등)은 그대로 흘려보냄.
+type Unwrap<T> = T extends { data?: infer U | null } ? U : T;
+
+export const apiFetch = <T>(
+  config: OrvalRequestConfig
+): Promise<Unwrap<T>> => {
   const client = getApiClient();
   const path = buildPath(config.url, config.params);
   const options: ApiRequestOptions = {
@@ -48,14 +55,14 @@ export const apiFetch = <T>(config: OrvalRequestConfig): Promise<T> => {
 
   switch (config.method.toLowerCase() as Lowercase<HttpMethod>) {
     case "get":
-      return client.get<T>(path, options);
+      return client.get<Unwrap<T>>(path, options);
     case "delete":
-      return client.delete<T>(path, options);
+      return client.delete<Unwrap<T>>(path, options);
     case "post":
-      return client.post<T>(path, config.data, options);
+      return client.post<Unwrap<T>>(path, config.data, options);
     case "put":
-      return client.put<T>(path, config.data, options);
+      return client.put<Unwrap<T>>(path, config.data, options);
     case "patch":
-      return client.patch<T>(path, config.data, options);
+      return client.patch<Unwrap<T>>(path, config.data, options);
   }
 };

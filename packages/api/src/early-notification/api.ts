@@ -20,8 +20,7 @@ export const earlyNotificationAPI = {
     params,
   }: {
     params: GetAdminEarlyNotificationsParams;
-  }) =>
-    earlyNotificationGetAdminList(params) as unknown as Promise<GetAdminEarlyNotificationsResponse>,
+  }) => earlyNotificationGetAdminList(params),
 
   /**
    * 기수별 사전 알림 신청 목록을 CSV 텍스트로 내보냅니다.
