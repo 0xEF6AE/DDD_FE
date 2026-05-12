@@ -1,8 +1,6 @@
 import type { CohortPartName, CohortStatus } from "@ddd/api"
 
 export type ProcessSchedule = {
-  documentAcceptStartDate: string
-  documentAcceptEndDate: string
   documentResultDate: string
   interviewStartDate: string
   interviewEndDate: string

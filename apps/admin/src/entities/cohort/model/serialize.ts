@@ -42,8 +42,6 @@ const emptyForm = (): SemesterRegisterForm => ({
   recruitStartDate: "",
   recruitEndDate: "",
   process: {
-    documentAcceptStartDate: "",
-    documentAcceptEndDate: "",
     documentResultDate: "",
     interviewStartDate: "",
     interviewEndDate: "",
@@ -125,12 +123,6 @@ const extractProcess = (
   if (typeof raw !== "object" || raw === null) return null
   const o = raw as Record<string, unknown>
   return {
-    documentAcceptStartDate: isNonEmptyString(o.documentAcceptStartDate)
-      ? o.documentAcceptStartDate
-      : "",
-    documentAcceptEndDate: isNonEmptyString(o.documentAcceptEndDate)
-      ? o.documentAcceptEndDate
-      : "",
     documentResultDate: isNonEmptyString(o.documentResultDate)
       ? o.documentResultDate
       : "",

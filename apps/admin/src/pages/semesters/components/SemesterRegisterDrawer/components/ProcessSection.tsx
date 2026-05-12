@@ -17,14 +17,8 @@ import type { SemesterRegisterForm } from "../../../types"
 export function ProcessSection() {
   const { control, setValue } = useFormContext<SemesterRegisterForm>()
 
-  const documentAcceptStart = useWatch({
-    control,
-    name: "process.documentAcceptStartDate",
-  })
-  const documentAcceptEnd = useWatch({
-    control,
-    name: "process.documentAcceptEndDate",
-  })
+  const recruitStart = useWatch({ control, name: "recruitStartDate" })
+  const recruitEnd = useWatch({ control, name: "recruitEndDate" })
   const interviewStart = useWatch({
     control,
     name: "process.interviewStartDate",
@@ -37,21 +31,17 @@ export function ProcessSection() {
   return (
     <Section title="프로세스 일정">
       <GridBox className="grid-cols-2 gap-5">
-        <FormField label="서류 접수">
+        <FormField label="모집 기간">
           <DateRangePicker
             className="w-full"
-            value={toDateRangeValue(documentAcceptStart, documentAcceptEnd)}
+            value={toDateRangeValue(recruitStart, recruitEnd)}
             onChange={(value) => {
-              setValue(
-                "process.documentAcceptStartDate",
-                value?.start.toString() ?? "",
-                { shouldDirty: true }
-              )
-              setValue(
-                "process.documentAcceptEndDate",
-                value?.end.toString() ?? "",
-                { shouldDirty: true }
-              )
+              setValue("recruitStartDate", value?.start.toString() ?? "", {
+                shouldDirty: true,
+              })
+              setValue("recruitEndDate", value?.end.toString() ?? "", {
+                shouldDirty: true,
+              })
             }}
           >
             <DateField.Group fullWidth>
@@ -69,7 +59,7 @@ export function ProcessSection() {
               </DateField.Suffix>
             </DateField.Group>
             <DateRangePicker.Popover placement="bottom start">
-              <RangeCalendar aria-label="서류 접수 기간">
+              <RangeCalendar aria-label="모집 기간">
                 <RangeCalendar.Header>
                   <RangeCalendar.YearPickerTrigger>
                     <RangeCalendar.YearPickerTriggerHeading />

@@ -39,8 +39,6 @@ const buildDefaults = (prefill?: SemesterRegisterForm): SemesterRegisterForm =>
     recruitStartDate: "",
     recruitEndDate: "",
     process: {
-      documentAcceptStartDate: "",
-      documentAcceptEndDate: "",
       documentResultDate: "",
       interviewStartDate: "",
       interviewEndDate: "",
