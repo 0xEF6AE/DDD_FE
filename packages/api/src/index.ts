@@ -14,4 +14,5 @@ export type {
   SaveApplicationDraftRequest,
   SubmitApplicationRequest,
   SubscribeEarlyNotificationRequest,
+  SubscribeGeneralEarlyNotificationRequest,
 } from "./web";

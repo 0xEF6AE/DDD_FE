@@ -1,5 +1,4 @@
 import { configureApi, webApi } from "@ddd/api";
-import { ApiError } from "@ddd/api";
 import type { SubmitApplicationRequest } from "@ddd/api";
 import type { ArticleItem } from "@/constants/articles";
 import type { ProjectItem } from "@/constants/projects";
@@ -170,9 +169,14 @@ export async function fetchPublicArticlesPage(
   return { items: mapped, nextCursor };
 }
 
-export async function subscribeEarlyNotification(email: string, cohortId = 1): Promise<void> {
+export async function subscribeEarlyNotification(email: string, cohortId: number): Promise<void> {
   ensureApiConfigured();
   await webApi.subscribeEarlyNotification({ email, cohortId });
+}
+
+export async function subscribeGeneralEarlyNotification(email: string): Promise<void> {
+  ensureApiConfigured();
+  await webApi.subscribeGeneralEarlyNotification({ email });
 }
 
 function parseRecruitStatusFromActiveCohort(payload: unknown): RecruitStatus {
@@ -189,12 +193,47 @@ function parseRecruitStatusFromActiveCohort(payload: unknown): RecruitStatus {
   return "closed";
 }
 
+function extractActiveCohortParts(active: unknown): unknown[] {
+  const roots: unknown[] = [];
+  if (isObject(active)) {
+    roots.push(active);
+    if (isObject(active.data)) roots.push(active.data);
+    if (isObject(active.cohort)) roots.push(active.cohort);
+    const inner = active.result;
+    if (isObject(inner)) roots.push(inner);
+  }
+  for (const node of roots) {
+    if (!isObject(node)) continue;
+    if (Array.isArray(node.parts)) return node.parts;
+    if (Array.isArray(node.cohortParts)) return node.cohortParts;
+    if (Array.isArray(node.recruitmentParts)) return node.recruitmentParts;
+  }
+  return [];
+}
+
+/** 백엔드가 id를 문자열로 주는 경우 등을 흡수합니다. */
+function parseCohortPartRowId(raw: JsonObject): number | null {
+  const candidates: unknown[] = [raw.id, raw.cohortPartId, raw.partId];
+  for (const value of candidates) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() !== "") {
+      const n = Number(value);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
 function parseActiveCohortId(payload: unknown): number | null {
   if (!isObject(payload)) return null;
-  const id = payload.id;
-  if (typeof id === "number" && Number.isFinite(id)) return id;
-  const cohortId = payload.cohortId;
-  if (typeof cohortId === "number" && Number.isFinite(cohortId)) return cohortId;
+  for (const key of ["id", "cohortId"] as const) {
+    const v = payload[key];
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim() !== "") {
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+  }
   return null;
 }
 
@@ -202,21 +241,26 @@ function parseActiveCohortPartId(payload: unknown): number | null {
   if (!isObject(payload)) return null;
 
   const directPartIdCandidates = [payload.cohortPartId, payload.partId, payload.activePartId];
-  const directPartId = directPartIdCandidates.find(
-    (candidate) => typeof candidate === "number" && Number.isFinite(candidate),
-  );
-  if (typeof directPartId === "number") return directPartId;
-
-  const parts = Array.isArray(payload.parts) ? payload.parts : [];
-  const openedPart = parts.find((part) => isObject(part) && part.isOpen === true);
-  if (isObject(openedPart) && typeof openedPart.id === "number" && Number.isFinite(openedPart.id)) {
-    return openedPart.id;
+  for (const candidate of directPartIdCandidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) return candidate;
+    if (typeof candidate === "string" && candidate.trim() !== "") {
+      const n = Number(candidate);
+      if (Number.isFinite(n)) return n;
+    }
   }
 
-  const firstPart = parts.find(
-    (part) => isObject(part) && typeof part.id === "number" && Number.isFinite(part.id),
-  );
-  if (isObject(firstPart) && typeof firstPart.id === "number") return firstPart.id;
+  const parts = extractActiveCohortParts(payload);
+  const openedPart = parts.find((part) => isObject(part) && part.isOpen === true);
+  if (isObject(openedPart)) {
+    const id = parseCohortPartRowId(openedPart);
+    if (id !== null) return id;
+  }
+
+  const firstPart = parts.find((part) => isObject(part) && parseCohortPartRowId(part) !== null);
+  if (isObject(firstPart)) {
+    const id = parseCohortPartRowId(firstPart);
+    if (id !== null) return id;
+  }
 
   return null;
 }
@@ -257,13 +301,11 @@ export async function fetchCohortPartByActiveCohortId(): Promise<JsonObject | nu
 
 export async function subscribeEarlyNotificationWithActiveCohort(email: string): Promise<void> {
   const activeCohortId = await fetchActiveCohortId();
-  if (!activeCohortId) {
-    throw new ApiError(
-      "BAD_REQUEST",
-      "활성 기수 정보를 찾지 못했습니다. 잠시 후 다시 시도해주세요.",
-    );
+  if (activeCohortId) {
+    await subscribeEarlyNotification(email, activeCohortId);
+    return;
   }
-  await subscribeEarlyNotification(email, activeCohortId);
+  await subscribeGeneralEarlyNotification(email);
 }
 
 export const APPLY_PART_OPTIONS = ["iOS", "AOS", "FE", "BE", "PM", "PD"] as const;
@@ -278,19 +320,35 @@ function labelToApplyPartOption(raw: string): ApplyPartOption | null {
   if (!token) return null;
 
   const groups: Array<{ option: ApplyPartOption; aliases: string[] }> = [
-    { option: "iOS", aliases: ["IOS", "IPHONE", "SWIFT"] },
-    { option: "AOS", aliases: ["AOS", "ANDROID", "KOTLIN", "AND"] },
-    { option: "FE", aliases: ["FE", "FRONTEND", "FRONT"] },
-    { option: "BE", aliases: ["BE", "BACKEND", "SERVER"] },
-    { option: "PM", aliases: ["PM", "PRODUCTMANAGER"] },
-    { option: "PD", aliases: ["PD", "PRODUCTDESIGNER", "DESIGNER", "UX", "UI"] },
+    { option: "iOS", aliases: ["IOS", "IPHONE", "SWIFT", "아이폰", "아이오에스"] },
+    {
+      option: "AOS",
+      aliases: ["AOS", "ANDROID", "KOTLIN", "AND", "안드로이드", "안드", "코틀린"],
+    },
+    {
+      option: "FE",
+      aliases: ["FE", "FRONTEND", "FRONT", "프론트", "프론트엔드", "웹프론트", "웹", "리액트"],
+    },
+    { option: "BE", aliases: ["BE", "BACKEND", "SERVER", "백엔드", "서버", "API"] },
+    { option: "PM", aliases: ["PM", "PRODUCTMANAGER", "기획", "기획자", "프로덕트매니저", "서비스기획"] },
+    {
+      option: "PD",
+      aliases: ["PD", "PRODUCTDESIGNER", "DESIGNER", "UX", "UI", "디자인", "디자이너", "UXUI"],
+    },
   ];
 
   for (const { option, aliases } of groups) {
-    if (aliases.some((alias) => token === alias)) return option;
+    if (aliases.some((alias) => token === normalizePartToken(alias))) return option;
   }
   for (const { option, aliases } of groups) {
-    if (aliases.some((alias) => alias.length >= 4 && token.includes(alias))) return option;
+    if (
+      aliases.some((alias) => {
+        const a = normalizePartToken(alias);
+        return a.length >= 3 && token.includes(a);
+      })
+    ) {
+      return option;
+    }
   }
 
   const direct: Record<string, ApplyPartOption> = {
@@ -308,20 +366,24 @@ function labelToApplyPartOption(raw: string): ApplyPartOption | null {
 export async function fetchApplyPartIdMap(): Promise<Partial<Record<ApplyPartOption, number>>> {
   ensureApiConfigured();
   const active = await webApi.getActiveCohort();
-  const parts = Array.isArray(active.parts) ? active.parts : [];
+  const parts = extractActiveCohortParts(active);
   const map: Partial<Record<ApplyPartOption, number>> = {};
 
   for (const raw of parts) {
     if (!isObject(raw)) continue;
-    const id = raw.id;
-    if (typeof id !== "number" || !Number.isFinite(id)) continue;
+    const id = parseCohortPartRowId(raw);
+    if (id === null) continue;
     if (raw.isOpen === false) continue;
 
     const candidates = [
+      toStringValue(raw.name),
+      toStringValue(raw.code),
+      toStringValue(raw.key),
+      toStringValue(raw.slug),
+      toStringValue(raw.type),
+      toStringValue(raw.part),
       toStringValue(raw.track),
       toStringValue(raw.role),
-      toStringValue(raw.part),
-      toStringValue(raw.name),
       toStringValue(raw.partName),
       toStringValue(raw.title),
       toStringValue(raw.label),

@@ -46,6 +46,10 @@ export interface SubscribeEarlyNotificationRequest {
   email: string;
 }
 
+export interface SubscribeGeneralEarlyNotificationRequest {
+  email: string;
+}
+
 export interface PublicListQuery {
   cursor?: string;
   limit?: number;
@@ -89,6 +93,8 @@ export const webApi = {
 
   subscribeEarlyNotification: (payload: SubscribeEarlyNotificationRequest) =>
     api.post<JsonObject>("/api/v1/early-notifications", JSON.stringify(payload)),
+  subscribeGeneralEarlyNotification: (payload: SubscribeGeneralEarlyNotificationRequest) =>
+    api.post<JsonObject>("/api/v1/early-notifications/general", JSON.stringify(payload)),
 
   getBlogPosts: (query?: PublicListQuery) =>
     api.get<JsonObject>(withQuery("/api/v1/blog-posts", query)),

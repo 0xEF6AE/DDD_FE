@@ -1,5 +1,5 @@
 import { ApiError } from "./errors";
-import type { ApiResponse } from "./types";
+import type { ErrorMessageKey } from "./errors";
 
 let _baseUrl: string | null = null;
 
@@ -61,25 +61,36 @@ export async function apiFetch<T>(
     return null as T;
   }
 
-  let body: ApiResponse<T>;
-
-  if (isJsonResponse) {
-    try {
-      body = (await res.json()) as ApiResponse<T>;
-    } catch (error) {
-      throw new ApiError("UNKNOWN_ERROR", error instanceof Error ? error.message : String(error));
-    }
-  } else {
+  if (!isJsonResponse) {
     const text = await res.text().catch(() => "");
     const message = text || "Unexpected response format from the server.";
     throw new ApiError("UNKNOWN_ERROR", message);
   }
 
-  if (body.code !== "SUCCESS") {
-    throw new ApiError(body.code || "UNKNOWN_ERROR", body.message);
+  let json: Record<string, unknown>;
+  try {
+    json = (await res.json()) as Record<string, unknown>;
+  } catch (error) {
+    throw new ApiError("UNKNOWN_ERROR", error instanceof Error ? error.message : String(error));
   }
 
-  return body.data as T;
+  if (!res.ok) {
+    const code = typeof json.code === "string" ? json.code : "UNKNOWN_ERROR";
+    const message = typeof json.message === "string" ? json.message : res.statusText;
+    throw new ApiError(code as ErrorMessageKey, message);
+  }
+
+  if ("code" in json && typeof json.code === "string") {
+    if (json.code !== "SUCCESS") {
+      throw new ApiError(
+        (json.code as ErrorMessageKey) || "UNKNOWN_ERROR",
+        typeof json.message === "string" ? json.message : "Request failed.",
+      );
+    }
+    return json.data as T;
+  }
+
+  return json as T;
 }
 
 // JSON일 때만 stringify하고, 나머지는 그대로 보내도록 구현

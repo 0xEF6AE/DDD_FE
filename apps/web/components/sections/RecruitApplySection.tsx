@@ -43,6 +43,7 @@ const CHANNEL_OPTIONS = [
   "이전 기수 활동",
   "기타",
 ] as const;
+
 const PART_DESCRIPTIONS: Record<ApplyPartOption, string> = {
   iOS: "Apple 생태계에 맞춰 안정적인 앱을 만들어요. 섬세한 디테일로 완성도 높은 경험을 설계해요.",
   AOS: "다양한 환경에서 안정적으로 동작하는 앱을 만들어요. 지속 성장 가능한 서비스를 함께 개발해요.",

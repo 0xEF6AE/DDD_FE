@@ -162,6 +162,10 @@ const Pdf = styled.img({
 
 type Props = { project: ProjectItem };
 
+function hasNonEmptySrc(src: string): boolean {
+  return src.trim().length > 0;
+}
+
 export const ProjectDetailSection = ({ project }: Props) => {
   return (
     <Section>
@@ -190,7 +194,9 @@ export const ProjectDetailSection = ({ project }: Props) => {
             ))}
           </MemberGrid>
 
-          <Pdf src={project.pdf} alt={`${project.title} 상세 소개`} />
+          {hasNonEmptySrc(project.pdf) ? (
+            <Pdf src={project.pdf} alt={`${project.title} 상세 소개`} />
+          ) : null}
         </Container>
       </ContentSection>
     </Section>
