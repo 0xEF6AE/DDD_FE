@@ -4,78 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import styled from "@emotion/styled";
 import { ProjectCard } from "@/components/ui/ProjectCard";
-import { assets } from "@/constants/assets";
-import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
+import type { ProjectItem } from "@/constants/projects";
+import { colors, fontSizes, fontWeights } from "@/constants/tokens";
 
 type ProjectCategory = "전체" | "iOS" | "AOS" | "WEB";
-type HomeProjectCategory = Exclude<ProjectCategory, "전체">;
-type HomeProject = {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  category: HomeProjectCategory;
-  generation: string;
-};
 
 const TABS: ProjectCategory[] = ["전체", "iOS", "AOS", "WEB"];
-
-const PROJECTS = [
-  {
-    id: "1",
-    title: "Moyorak (모여락)",
-    description:
-      "점심 맛집을 기록·추천하고 팀별로 공유할 수 있는 사내 맛집 관리 서비스 Moyorak을 발표했어요.",
-    thumbnail: assets.projectThumbnails[0],
-    category: "WEB" as HomeProjectCategory,
-    generation: "13기",
-  },
-  {
-    id: "2",
-    title: "Growit (그로잇)",
-    description:
-      "IT 직장인을 위한 자기 회고 및 성장 시각화 기반의 web 기록 서비스 GROWIT을 발표했어요.",
-    thumbnail: assets.projectThumbnails[1],
-    category: "WEB" as HomeProjectCategory,
-    generation: "13기",
-  },
-  {
-    id: "3",
-    title: "FESTIBEE (페스티비)",
-    description:
-      "페스티벌 정보를 확인하고 소통할 수 있는 캘린더 기반 알림 서비스 FESTIBEE를 발표했어요.",
-    thumbnail: assets.projectThumbnails[2],
-    category: "WEB" as HomeProjectCategory,
-    generation: "13기",
-  },
-  {
-    id: "4",
-    title: "FESTIBEE (페스티비)",
-    description:
-      "페스티벌 정보를 확인하고 소통할 수 있는 캘린더 기반 알림 서비스 FESTIBEE를 발표했어요.",
-    thumbnail: assets.projectThumbnails[2],
-    category: "WEB" as HomeProjectCategory,
-    generation: "13기",
-  },
-  {
-    id: "5",
-    title: "Growit (그로잇)",
-    description:
-      "IT 직장인을 위한 자기 회고 및 성장 시각화 기반의 web 기록 서비스 GROWIT을 발표했어요.",
-    thumbnail: assets.projectThumbnails[1],
-    category: "WEB" as HomeProjectCategory,
-    generation: "13기",
-  },
-  {
-    id: "6",
-    title: "Moyorak (모여락)",
-    description:
-      "점심 맛집을 기록·추천하고 팀별로 공유할 수 있는 사내 맛집 관리 서비스 Moyorak을 발표했어요.",
-    thumbnail: assets.projectThumbnails[0],
-    category: "WEB" as HomeProjectCategory,
-    generation: "13기",
-  },
-] as const;
 
 const Section = styled.section({
   background: colors.background,
@@ -290,14 +224,14 @@ const MoreButton = styled(Link)({
 });
 
 type Props = {
-  items?: HomeProject[];
+  items: ProjectItem[];
 };
 
 export const ProjectsSection = ({ items }: Props) => {
   const [activeTab, setActiveTab] = useState<ProjectCategory>("전체");
   const [activeSlide, setActiveSlide] = useState(0);
   const cardGridRef = useRef<HTMLDivElement | null>(null);
-  const sourceProjects: readonly HomeProject[] = items?.length ? items : PROJECTS;
+  const sourceProjects: readonly ProjectItem[] = items;
 
   const filteredProjects =
     activeTab === "전체"

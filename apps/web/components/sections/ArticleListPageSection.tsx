@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import styled from "@emotion/styled";
-import { articles } from "@/constants/articles";
 import { fontWeights } from "@/constants/tokens";
 import type { ArticleItem } from "@/constants/articles";
 import { fetchPublicArticlesPage } from "@/lib/web-api";
@@ -187,7 +186,7 @@ const PaginationButton = styled.button<{ disabled?: boolean }>(({ disabled }) =>
 }));
 
 export const ArticleListPageSection = ({
-  initialItems = articles,
+  initialItems = [],
   initialNextCursor = null,
 }: Props) => {
   const [articleItems, setArticleItems] = useState<ArticleItem[]>(initialItems);

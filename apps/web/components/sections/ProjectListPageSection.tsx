@@ -3,8 +3,7 @@
 import { useState } from "react";
 import styled from "@emotion/styled";
 import { colors, fontWeights } from "@/constants/tokens";
-import { projects, type ProjectCategory } from "@/constants/projects";
-import type { ProjectItem } from "@/constants/projects";
+import type { ProjectCategory, ProjectItem } from "@/constants/projects";
 import { fetchPublicProjectsPage } from "@/lib/web-api";
 
 const tabs: ProjectCategory[] = ["전체", "iOS", "AOS", "WEB"];
@@ -252,7 +251,7 @@ const toApiPlatform = (tab: ProjectCategory): "IOS" | "AOS" | "WEB" | undefined 
 };
 
 export const ProjectListPageSection = ({
-  initialItems = projects,
+  initialItems = [],
   initialNextCursor = null,
 }: Props) => {
   const [activeTab, setActiveTab] = useState<ProjectCategory>("전체");

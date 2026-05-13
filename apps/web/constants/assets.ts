@@ -12,15 +12,6 @@ export const assets = {
   arrowRight: "https://www.figma.com/api/mcp/asset/962d703d-9e8e-47c9-b2a4-3e9d1bf0edf2",
   arrowLeft: "https://www.figma.com/api/mcp/asset/475824fe-4859-46e5-8228-9e4a34252ce5",
   chevronDown: "https://www.figma.com/api/mcp/asset/d136abfc-f9a0-4ac5-91f3-f513323f26cf",
-  projectThumbnails: [
-    "https://www.figma.com/api/mcp/asset/7a4cfa61-9b90-41e4-89c6-6eeef287d354",
-    "https://www.figma.com/api/mcp/asset/dea400f0-fc63-4944-a9dd-46c71c4b0f58",
-    "https://www.figma.com/api/mcp/asset/084a53bc-2427-40d1-b953-3ddb17fa3458",
-  ],
-  blogThumbnails: [
-    "https://www.figma.com/api/mcp/asset/8e5b0fec-f419-4ffc-b189-629e2b3b93d6",
-    "https://www.figma.com/api/mcp/asset/9ddc3915-9f67-4398-b6c9-b2557b3f73a9",
-  ],
   sponsors: {
     elice: "/images/imag_elice.png",
     ictcoc: "/images/image_ictcoc.png",

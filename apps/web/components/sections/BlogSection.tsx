@@ -3,26 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import styled from "@emotion/styled";
-import { assets } from "@/constants/assets";
 import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
 import type { ArticleItem } from "@/constants/articles";
-
-const ARTICLES = [
-  {
-    id: "1",
-    title: "픽셀을 넘어 공간으로: AI 시대, 디자이너가 XR에 주목해야 하는 이유",
-    description:
-      "오늘은 요즘 디자이너들 사이에서 가장 뜨거운 화두인 'AI', 그리고 그 너머의 'Next Generation'에 대해 이야기해 보려 합니다. 오늘은 요즘 디자이너들 사이에서 가장 뜨거운 화두인 'AI', 그리고 그 너머의 'Next Generation'에 대해 이야기해 보려 합니다.",
-    thumbnail: assets.blogThumbnails[0],
-  },
-  {
-    id: "2",
-    title: "픽셀을 넘어 공간으로: AI 시대, 디자이너가 XR에 주목해야 하는 이유",
-    description:
-      "오늘은 요즘 디자이너들 사이에서 가장 뜨거운 화두인 'AI', 그리고 그 너머의 'Next Generation'에 대해 이야기해 보려 합니다. 오늘은 요즘 디자이너들 사이에서 가장 뜨거운 화두인 'AI', 그리고 그 너머의 'Next Generation'에 대해 이야기해 보려 합니다.",
-    thumbnail: assets.blogThumbnails[1],
-  },
-] as const;
 
 const Section = styled.section({
   background: colors.background,
@@ -284,13 +266,13 @@ const MoreButton = styled(Link)({
 });
 
 type Props = {
-  items?: ArticleItem[];
+  items: ArticleItem[];
 };
 
 export const BlogSection = ({ items }: Props) => {
   const [activeSlide, setActiveSlide] = useState(0);
   const articleListRef = useRef<HTMLDivElement | null>(null);
-  const sourceArticles: readonly ArticleItem[] = items?.length ? items : ARTICLES;
+  const sourceArticles: readonly ArticleItem[] = items;
 
   const updateActiveSlide = useCallback(() => {
     const container = articleListRef.current;
@@ -338,7 +320,7 @@ export const BlogSection = ({ items }: Props) => {
       container.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [updateActiveSlide]);
+  }, [updateActiveSlide, items]);
 
   return (
     <Section>

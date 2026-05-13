@@ -10,7 +10,6 @@
 !.yarn/releases
 !.yarn/versions
 
-
 # testing
 **/coverage/
 
@@ -21,9 +20,6 @@
 # build outputs
 **/build/
 **/dist/
-
-# Orval generated code (백엔드 스펙 동기화 전까지 gitignore)
-packages/api/src/generated/
 
 # misc
 .DS_Store
@@ -37,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!**/.env.example
 
 # vercel
 **/.vercel/
@@ -58,5 +55,17 @@ yarn-error.log*
 # agent
 .agent/
 .agents/
-.claude/
-swagger.json
+# .claude/
+
+# git worktrees
+.worktrees/
+
+# playwright-mcp screenshots / snapshots
+.playwright-mcp/
+**/.playwright-mcp/
+/*.png
+/*.jpg
+/*.jpeg
+
+#docs/*
+!docs/hero-ui.txt

@@ -1,17 +1,11 @@
 import { configureApi, webApi } from "@ddd/api";
 import { ApiError } from "@ddd/api";
+import type { SubmitApplicationRequest } from "@ddd/api";
 import type { ArticleItem } from "@/constants/articles";
 import type { ProjectItem } from "@/constants/projects";
-import { articles as fallbackArticles } from "@/constants/articles";
-import { projects as fallbackProjects } from "@/constants/projects";
 import type { RecruitStatus } from "@/constants/recruit";
 
 type JsonObject = Record<string, unknown>;
-
-function warnFallback(functionName: string, error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.warn(`[web-api:${functionName}] API failed, using fallback data`, { message });
-}
 
 function ensureApiConfigured() {
   const baseUrl =
@@ -25,6 +19,20 @@ function ensureApiConfigured() {
 
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null;
+}
+
+/** API가 `data: T[]` 또는 `data: { items, nextCursor }` 중 어떤 형태로 오든 목록을 꺼냅니다. */
+function normalizeCursorListPayload(data: unknown): { items: unknown[]; nextCursor: string | null } {
+  if (Array.isArray(data)) {
+    return { items: data, nextCursor: null };
+  }
+  if (!isObject(data)) {
+    return { items: [], nextCursor: null };
+  }
+  const items = Array.isArray(data.items) ? data.items : [];
+  const nextCursor =
+    typeof data.nextCursor === "string" && data.nextCursor ? data.nextCursor : null;
+  return { items, nextCursor };
 }
 
 function toStringValue(value: unknown, fallback = ""): string {
@@ -78,13 +86,6 @@ function mapProject(item: unknown): ProjectItem | null {
 
 type ProjectPlatform = "IOS" | "AOS" | "WEB";
 
-function mapPlatformToCategory(platform?: ProjectPlatform): ProjectItem["category"] | null {
-  if (!platform) return null;
-  if (platform === "IOS") return "iOS";
-  if (platform === "AOS") return "AOS";
-  return "WEB";
-}
-
 function mapArticle(item: unknown): ArticleItem | null {
   if (!isObject(item)) return null;
   const id = item.id;
@@ -108,19 +109,10 @@ function mapArticle(item: unknown): ArticleItem | null {
 }
 
 export async function fetchPublicProjects(): Promise<ProjectItem[]> {
-  try {
-    ensureApiConfigured();
-    const response = await webApi.getProjects({ limit: 100 });
-    const items = Array.isArray(response.items) ? response.items : [];
-    const mapped = items.map(mapProject).filter((item): item is ProjectItem => Boolean(item));
-    if (mapped.length === 0) {
-      console.warn("[web-api:fetchPublicProjects] Empty API payload, using fallback data");
-    }
-    return mapped.length > 0 ? mapped : fallbackProjects;
-  } catch (error) {
-    warnFallback("fetchPublicProjects", error);
-    return fallbackProjects;
-  }
+  ensureApiConfigured();
+  const response = await webApi.getProjects({ limit: 100 });
+  const { items } = normalizeCursorListPayload(response);
+  return items.map(mapProject).filter((item): item is ProjectItem => Boolean(item));
 }
 
 export type ProjectCursorPage = {
@@ -133,61 +125,29 @@ export async function fetchPublicProjectsPage(options?: {
   limit?: number;
   platform?: ProjectPlatform;
 }): Promise<ProjectCursorPage> {
-  try {
-    ensureApiConfigured();
-    const response = await webApi.getProjects({
-      cursor: options?.cursor,
-      limit: options?.limit ?? 9,
-      platform: options?.platform,
-    });
-    const items = Array.isArray(response.items) ? response.items : [];
-    const mapped = items.map(mapProject).filter((item): item is ProjectItem => Boolean(item));
-    const nextCursor =
-      typeof response.nextCursor === "string" && response.nextCursor ? response.nextCursor : null;
+  ensureApiConfigured();
+  const response = await webApi.getProjects({
+    cursor: options?.cursor,
+    limit: options?.limit ?? 9,
+    platform: options?.platform,
+  });
+  const { items, nextCursor } = normalizeCursorListPayload(response);
+  const mapped = items.map(mapProject).filter((item): item is ProjectItem => Boolean(item));
 
-    if (mapped.length > 0) {
-      return { items: mapped, nextCursor };
-    }
-
-    const fallbackCategory = mapPlatformToCategory(options?.platform);
-    const fallback = fallbackCategory
-      ? fallbackProjects.filter((project) => project.category === fallbackCategory)
-      : fallbackProjects;
-    return { items: fallback, nextCursor: null };
-  } catch (error) {
-    warnFallback("fetchPublicProjectsPage", error);
-    const fallbackCategory = mapPlatformToCategory(options?.platform);
-    const fallback = fallbackCategory
-      ? fallbackProjects.filter((project) => project.category === fallbackCategory)
-      : fallbackProjects;
-    return { items: fallback, nextCursor: null };
-  }
+  return { items: mapped, nextCursor };
 }
 
 export async function fetchPublicProjectById(id: string): Promise<ProjectItem | null> {
-  try {
-    ensureApiConfigured();
-    const response = await webApi.getProjectById(Number(id));
-    return mapProject(response);
-  } catch {
-    return fallbackProjects.find((project) => project.id === id) ?? null;
-  }
+  ensureApiConfigured();
+  const response = await webApi.getProjectById(Number(id));
+  return mapProject(response);
 }
 
 export async function fetchPublicArticles(): Promise<ArticleItem[]> {
-  try {
-    ensureApiConfigured();
-    const response = await webApi.getBlogPosts({ limit: 100 });
-    const items = Array.isArray(response.items) ? response.items : [];
-    const mapped = items.map(mapArticle).filter((item): item is ArticleItem => Boolean(item));
-    if (mapped.length === 0) {
-      console.warn("[web-api:fetchPublicArticles] Empty API payload, using fallback data");
-    }
-    return mapped.length > 0 ? mapped : [...fallbackArticles];
-  } catch (error) {
-    warnFallback("fetchPublicArticles", error);
-    return [...fallbackArticles];
-  }
+  ensureApiConfigured();
+  const response = await webApi.getBlogPosts({ limit: 100 });
+  const { items } = normalizeCursorListPayload(response);
+  return items.map(mapArticle).filter((item): item is ArticleItem => Boolean(item));
 }
 
 export type ArticleCursorPage = {
@@ -198,27 +158,16 @@ export type ArticleCursorPage = {
 export async function fetchPublicArticlesPage(
   options?: { cursor?: string; limit?: number },
 ): Promise<ArticleCursorPage> {
-  try {
-    ensureApiConfigured();
-    const response = await webApi.getBlogPosts({
-      cursor: options?.cursor,
-      limit: options?.limit ?? 4,
-    });
+  ensureApiConfigured();
+  const response = await webApi.getBlogPosts({
+    cursor: options?.cursor,
+    limit: options?.limit ?? 4,
+  });
 
-    const items = Array.isArray(response.items) ? response.items : [];
-    const mapped = items.map(mapArticle).filter((item): item is ArticleItem => Boolean(item));
-    const nextCursor = typeof response.nextCursor === "string" && response.nextCursor
-      ? response.nextCursor
-      : null;
+  const { items, nextCursor } = normalizeCursorListPayload(response);
+  const mapped = items.map(mapArticle).filter((item): item is ArticleItem => Boolean(item));
 
-    return {
-      items: mapped.length > 0 ? mapped : [...fallbackArticles],
-      nextCursor,
-    };
-  } catch (error) {
-    warnFallback("fetchPublicArticlesPage", error);
-    return { items: [...fallbackArticles], nextCursor: null };
-  }
+  return { items: mapped, nextCursor };
 }
 
 export async function subscribeEarlyNotification(email: string, cohortId = 1): Promise<void> {
@@ -315,4 +264,123 @@ export async function subscribeEarlyNotificationWithActiveCohort(email: string):
     );
   }
   await subscribeEarlyNotification(email, activeCohortId);
+}
+
+export const APPLY_PART_OPTIONS = ["iOS", "AOS", "FE", "BE", "PM", "PD"] as const;
+export type ApplyPartOption = (typeof APPLY_PART_OPTIONS)[number];
+
+function normalizePartToken(raw: string): string {
+  return raw.trim().toUpperCase().replace(/[\s._-]/g, "");
+}
+
+function labelToApplyPartOption(raw: string): ApplyPartOption | null {
+  const token = normalizePartToken(raw);
+  if (!token) return null;
+
+  const groups: Array<{ option: ApplyPartOption; aliases: string[] }> = [
+    { option: "iOS", aliases: ["IOS", "IPHONE", "SWIFT"] },
+    { option: "AOS", aliases: ["AOS", "ANDROID", "KOTLIN", "AND"] },
+    { option: "FE", aliases: ["FE", "FRONTEND", "FRONT"] },
+    { option: "BE", aliases: ["BE", "BACKEND", "SERVER"] },
+    { option: "PM", aliases: ["PM", "PRODUCTMANAGER"] },
+    { option: "PD", aliases: ["PD", "PRODUCTDESIGNER", "DESIGNER", "UX", "UI"] },
+  ];
+
+  for (const { option, aliases } of groups) {
+    if (aliases.some((alias) => token === alias)) return option;
+  }
+  for (const { option, aliases } of groups) {
+    if (aliases.some((alias) => alias.length >= 4 && token.includes(alias))) return option;
+  }
+
+  const direct: Record<string, ApplyPartOption> = {
+    IOS: "iOS",
+    AND: "AOS",
+    AOS: "AOS",
+    FE: "FE",
+    BE: "BE",
+    PM: "PM",
+    PD: "PD",
+  };
+  return direct[token] ?? null;
+}
+
+export async function fetchApplyPartIdMap(): Promise<Partial<Record<ApplyPartOption, number>>> {
+  ensureApiConfigured();
+  const active = await webApi.getActiveCohort();
+  const parts = Array.isArray(active.parts) ? active.parts : [];
+  const map: Partial<Record<ApplyPartOption, number>> = {};
+
+  for (const raw of parts) {
+    if (!isObject(raw)) continue;
+    const id = raw.id;
+    if (typeof id !== "number" || !Number.isFinite(id)) continue;
+    if (raw.isOpen === false) continue;
+
+    const candidates = [
+      toStringValue(raw.track),
+      toStringValue(raw.role),
+      toStringValue(raw.part),
+      toStringValue(raw.name),
+      toStringValue(raw.partName),
+      toStringValue(raw.title),
+      toStringValue(raw.label),
+    ].filter((value) => value.length > 0);
+
+    let matched: ApplyPartOption | null = null;
+    for (const candidate of candidates) {
+      matched = labelToApplyPartOption(candidate);
+      if (matched) break;
+    }
+    if (matched) map[matched] = id;
+  }
+
+  return map;
+}
+
+export async function fetchApplicationDraftAnswers(
+  cohortPartId: number,
+): Promise<Record<string, unknown> | null> {
+  ensureApiConfigured();
+  try {
+    const data = await webApi.getApplicationDraftByPart(cohortPartId);
+    if (!isObject(data)) return null;
+    const answers = data.answers;
+    if (isObject(answers)) return answers as Record<string, unknown>;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveRecruitApplicationDraft(
+  cohortPartId: number,
+  answers: Record<string, unknown>,
+): Promise<void> {
+  ensureApiConfigured();
+  await webApi.saveApplicationDraft({ cohortPartId, answers });
+}
+
+export async function submitRecruitApplication(payload: SubmitApplicationRequest): Promise<void> {
+  ensureApiConfigured();
+  await webApi.submitApplication(payload);
+}
+
+export function birthInputToApiDate(birth: string): string | undefined {
+  const match = birth.trim().match(/^(\d{4})[/.-](\d{2})[/.-](\d{2})$/);
+  if (!match) return undefined;
+  return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+/** OpenAPI `applicantPhone` 패턴(01x-…-xxxx)에 맞게 하이픈을 넣습니다. */
+export function formatApplicantPhoneKorea(phone: string): string {
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length === 11 && /^01[0-9]/.test(digits)) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+  }
+  if (digits.length === 10 && /^01[0-9]/.test(digits)) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  }
+  return trimmed;
 }

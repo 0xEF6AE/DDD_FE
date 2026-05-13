@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectDetailSection } from "@/components/sections/ProjectDetailSection";
-import { fetchPublicProjectById, fetchPublicProjects } from "@/lib/web-api";
+import { fetchPublicProjectById } from "@/lib/web-api";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -25,21 +25,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project = await fetchPublicProjectById(id);
 
   if (!project) {
-    const fallbackProjects = await fetchPublicProjects();
-    const fallbackProject = fallbackProjects.find((item) => item.id === id);
-    if (!fallbackProject) {
-      notFound();
-    }
-
-    return (
-      <>
-        <Navigation />
-        <main>
-          <ProjectDetailSection project={fallbackProject} />
-        </main>
-        <Footer />
-      </>
-    );
+    notFound();
   }
 
   return (

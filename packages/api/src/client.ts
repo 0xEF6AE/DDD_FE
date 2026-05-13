@@ -46,6 +46,7 @@ export async function apiFetch<T>(
   }
   const res = await fetch(buildUrl(path), {
     ...init,
+    credentials: init?.credentials ?? "include",
     headers,
     signal,
   });

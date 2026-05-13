@@ -1,10 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import styled from "@emotion/styled";
+import { ApiError } from "@ddd/api";
 import { colors, fontWeights } from "@/constants/tokens";
 import successIcon from "@/public/images/success.png";
+import {
+  APPLY_PART_OPTIONS,
+  birthInputToApiDate,
+  formatApplicantPhoneKorea,
+  fetchApplicationDraftAnswers,
+  fetchApplyPartIdMap,
+  saveRecruitApplicationDraft,
+  submitRecruitApplication,
+  type ApplyPartOption,
+} from "@/lib/web-api";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type BasicField = "name" | "email" | "phone" | "birth" | "region";
@@ -23,7 +34,6 @@ type FormValues = {
   channels: string[];
 };
 
-const PART_OPTIONS = ["iOS", "AOS", "FE", "BE", "PM", "PD"] as const;
 const CHANNEL_OPTIONS = [
   "지인 추천",
   "인스타그램",
@@ -33,7 +43,7 @@ const CHANNEL_OPTIONS = [
   "이전 기수 활동",
   "기타",
 ] as const;
-const PART_DESCRIPTIONS: Record<(typeof PART_OPTIONS)[number], string> = {
+const PART_DESCRIPTIONS: Record<ApplyPartOption, string> = {
   iOS: "Apple 생태계에 맞춰 안정적인 앱을 만들어요. 섬세한 디테일로 완성도 높은 경험을 설계해요.",
   AOS: "다양한 환경에서 안정적으로 동작하는 앱을 만들어요. 지속 성장 가능한 서비스를 함께 개발해요.",
   FE: "사용자 중심의 직관적이고 빠른 웹 환경을 구축합니다. 최적화된 코드로 끊김 없는 사용자 경험을 제공합니다.",
@@ -41,6 +51,33 @@ const PART_DESCRIPTIONS: Record<(typeof PART_OPTIONS)[number], string> = {
   PM: "문제를 정의하고 방향을 제시해 팀이 같은 목표를 향해 나아가도록 이끌어요. 우선순위를 정하고 실행을 조율해 제품 가치를 만듭니다.",
   PD: "사용자의 니즈를 반영한 최상의 UI/UX를 만들어요. 여러 툴을 활용해 협업하며, 더 나은 사용자 경험을 고민해요.",
 };
+
+function parseDraftToFormValues(draft: Record<string, unknown>): Partial<FormValues> {
+  const patch: Partial<FormValues> = {};
+  if (typeof draft.email === "string") patch.email = draft.email;
+  if (typeof draft.name === "string") patch.name = draft.name;
+  if (typeof draft.phone === "string") patch.phone = draft.phone;
+  if (typeof draft.birth === "string") patch.birth = draft.birth;
+  if (typeof draft.region === "string") patch.region = draft.region;
+  if (typeof draft.essay === "string") patch.essay = draft.essay;
+  if (typeof draft.portfolioLink === "string") patch.portfolioLink = draft.portfolioLink;
+  if ("agreedToPrivacy" in draft && typeof draft.agreedToPrivacy === "boolean") {
+    patch.agreedToPrivacy = draft.agreedToPrivacy;
+  }
+  if (Array.isArray(draft.channels)) {
+    patch.channels = draft.channels.filter(
+      (c): c is string =>
+        typeof c === "string" && (CHANNEL_OPTIONS as readonly string[]).includes(c),
+    );
+  }
+  if (
+    typeof draft.part === "string" &&
+    (APPLY_PART_OPTIONS as readonly string[]).includes(draft.part)
+  ) {
+    patch.part = draft.part as FormValues["part"];
+  }
+  return patch;
+}
 
 const BANNER_TEXT = "함께 성장할 PM, 디자이너, 개발자를 기다리고 있어요.";
 
@@ -611,8 +648,94 @@ export const RecruitApplySection = () => {
   const [basicErrors, setBasicErrors] = useState<Partial<Record<BasicField, string>>>({});
   const [basicTouched, setBasicTouched] = useState<Partial<Record<BasicField, boolean>>>({});
   const [focusedField, setFocusedField] = useState<BasicField | null>(null);
+  const [partIdByOption, setPartIdByOption] = useState<Partial<Record<ApplyPartOption, number>>>(
+    {},
+  );
+  const [configError, setConfigError] = useState<string | null>(null);
+  const [isBootstrapLoading, setIsBootstrapLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isLoadingDraft, setIsLoadingDraft] = useState(false);
 
   const stepLabels = useMemo(() => ["기본 정보", "지원 파트", "지원서", "기타 정보"], []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setIsBootstrapLoading(true);
+      setConfigError(null);
+      try {
+        const map = await fetchApplyPartIdMap();
+        if (!mounted) return;
+        setPartIdByOption(map);
+        if (Object.keys(map).length === 0) {
+          setConfigError(
+            "현재 모집 중인 지원 파트 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.",
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setConfigError(e instanceof ApiError ? e.message : "모집 정보를 불러오지 못했습니다.");
+      } finally {
+        if (mounted) setIsBootstrapLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!values.part) return;
+    const cohortPartId = partIdByOption[values.part as ApplyPartOption];
+    if (typeof cohortPartId !== "number") return;
+
+    let cancelled = false;
+    (async () => {
+      setIsLoadingDraft(true);
+      try {
+        const draft = await fetchApplicationDraftAnswers(cohortPartId);
+        if (cancelled || !draft) return;
+        const patch = parseDraftToFormValues(draft);
+        setValues((prev) => {
+          const next: FormValues = { ...prev };
+          if (patch.email !== undefined) next.email = patch.email;
+          if (patch.name !== undefined) next.name = patch.name;
+          if (patch.phone !== undefined) next.phone = patch.phone;
+          if (patch.birth !== undefined) next.birth = patch.birth;
+          if (patch.region !== undefined) next.region = patch.region;
+          if (patch.agreedToPrivacy !== undefined) next.agreedToPrivacy = patch.agreedToPrivacy;
+          if (patch.part !== undefined) next.part = patch.part;
+          if (patch.essay !== undefined) next.essay = patch.essay;
+          if (patch.portfolioLink !== undefined) next.portfolioLink = patch.portfolioLink;
+          if (patch.channels !== undefined) next.channels = patch.channels;
+          return next;
+        });
+      } finally {
+        if (!cancelled) setIsLoadingDraft(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [values.part, partIdByOption]);
+
+  const buildDraftAnswers = useCallback((): Record<string, unknown> => {
+    return {
+      email: values.email,
+      name: values.name,
+      phone: formatApplicantPhoneKorea(values.phone),
+      birth: values.birth,
+      region: values.region,
+      agreedToPrivacy: values.agreedToPrivacy,
+      part: values.part,
+      essay: values.essay,
+      portfolioLink: values.portfolioLink,
+      portfolioFileName: values.portfolioFile?.name ?? "",
+      channels: values.channels,
+    };
+  }, [values]);
 
   const validateCurrentStep = () => {
     if (step === 1) {
@@ -666,9 +789,107 @@ export const RecruitApplySection = () => {
     return true;
   };
 
-  const handleNext = (event: FormEvent) => {
+  const validateAllStepsForSubmit = (): boolean => {
+    const nextBasicErrors: Partial<Record<BasicField, string>> = {};
+    const nameError = validateBasicField("name", values.name);
+    const emailError = validateBasicField("email", values.email);
+    const phoneError = validateBasicField("phone", values.phone);
+    const birthError = validateBasicField("birth", values.birth);
+    const regionError = validateBasicField("region", values.region);
+    if (nameError) nextBasicErrors.name = nameError;
+    if (emailError) nextBasicErrors.email = emailError;
+    if (phoneError) nextBasicErrors.phone = phoneError;
+    if (birthError) nextBasicErrors.birth = birthError;
+    if (regionError) nextBasicErrors.region = regionError;
+    setBasicErrors(nextBasicErrors);
+    setBasicTouched((prev) => ({
+      ...prev,
+      name: true,
+      email: true,
+      phone: true,
+      birth: true,
+      region: true,
+    }));
+
+    if (nameError || emailError || phoneError || birthError || regionError) {
+      setError("기본 정보를 다시 확인해주세요.");
+      return false;
+    }
+    if (!values.agreedToPrivacy) {
+      setError("개인정보 수집 및 이용에 동의해주세요.");
+      return false;
+    }
+    if (!values.part) {
+      setError("지원 파트를 선택해주세요.");
+      return false;
+    }
+    if (!values.essay.trim()) {
+      setError("지원서를 입력해주세요.");
+      return false;
+    }
+    if (values.channels.length === 0) {
+      setError("DDD를 알게 된 경로를 1개 이상 선택해주세요.");
+      return false;
+    }
+    setError(null);
+    return true;
+  };
+
+  const handleSaveDraft = useCallback(async () => {
+    if (!values.part) {
+      setError("지원 파트를 선택한 뒤 임시저장할 수 있어요.");
+      return;
+    }
+    const cohortPartId = partIdByOption[values.part as ApplyPartOption];
+    if (typeof cohortPartId !== "number") {
+      setError("선택한 파트의 모집 정보를 찾지 못했어요.");
+      return;
+    }
+    setError(null);
+    setIsSavingDraft(true);
+    try {
+      await saveRecruitApplicationDraft(cohortPartId, buildDraftAnswers());
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "임시저장에 실패했습니다.");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }, [values.part, partIdByOption, buildDraftAnswers]);
+
+  const handleNext = async (event: FormEvent) => {
     event.preventDefault();
+    if (isSubmitting || isBootstrapLoading) return;
     if (!validateCurrentStep()) return;
+
+    if (step === 4) {
+      if (!validateAllStepsForSubmit()) return;
+      const cohortPartId = partIdByOption[values.part as ApplyPartOption];
+      if (typeof cohortPartId !== "number") {
+        setError("지원 파트 정보를 불러오지 못해 제출할 수 없어요.");
+        return;
+      }
+      const birthApi = birthInputToApiDate(values.birth);
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        await submitRecruitApplication({
+          cohortPartId,
+          applicantName: values.name.trim(),
+          applicantPhone: formatApplicantPhoneKorea(values.phone),
+          applicantBirthDate: birthApi,
+          applicantRegion: values.region.trim(),
+          answers: buildDraftAnswers(),
+          privacyAgreed: values.agreedToPrivacy,
+        });
+        setStep(5);
+      } catch (e) {
+        setError(e instanceof ApiError ? e.message : "제출에 실패했습니다.");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     setStep((prev) => (prev < 5 ? ((prev + 1) as Step) : prev));
   };
 
@@ -716,6 +937,33 @@ export const RecruitApplySection = () => {
             <>
               <FormTitle>DDD 지원서</FormTitle>
               <FormDescription>{BANNER_TEXT}</FormDescription>
+              {configError ? (
+                <ErrorText style={{ marginTop: "16px", textAlign: "center" }}>{configError}</ErrorText>
+              ) : null}
+              {isBootstrapLoading ? (
+                <p
+                  style={{
+                    marginTop: "12px",
+                    textAlign: "center",
+                    color: "#94a3b8",
+                    fontSize: "16px",
+                  }}
+                >
+                  모집 정보를 불러오는 중이에요...
+                </p>
+              ) : null}
+              {isLoadingDraft && values.part ? (
+                <p
+                  style={{
+                    marginTop: "8px",
+                    textAlign: "center",
+                    color: "#94a3b8",
+                    fontSize: "14px",
+                  }}
+                >
+                  저장된 임시 지원서를 불러오는 중이에요...
+                </p>
+              ) : null}
             </>
           ) : null}
 
@@ -874,7 +1122,7 @@ export const RecruitApplySection = () => {
                         지원할 파트를 선택해주세요. <Required>*</Required>
                       </Label>
                       <ChipGrid>
-                        {PART_OPTIONS.map((option) => (
+                        {APPLY_PART_OPTIONS.map((option) => (
                           <Chip
                             type="button"
                             key={option}
@@ -887,7 +1135,7 @@ export const RecruitApplySection = () => {
                       </ChipGrid>
                       {values.part ? (
                         <PartDescription>
-                          {PART_DESCRIPTIONS[values.part as (typeof PART_OPTIONS)[number]]}
+                          {PART_DESCRIPTIONS[values.part as ApplyPartOption]}
                         </PartDescription>
                       ) : null}
                     </Fields>
@@ -1026,12 +1274,42 @@ export const RecruitApplySection = () => {
 
                 <ButtonRow>
                   {step > 1 ? (
-                    <ActionButton type="button" onClick={handlePrev}>
+                    <ActionButton
+                      type="button"
+                      onClick={handlePrev}
+                      disabled={isSubmitting || isBootstrapLoading}
+                    >
                       이전 <Arrow back />
                     </ActionButton>
                   ) : null}
-                  <ActionButton type="submit" primary full>
-                    다음 <Arrow />
+                  {step >= 2 && step <= 4 && values.part ? (
+                    <ActionButton
+                      type="button"
+                      onClick={() => void handleSaveDraft()}
+                      disabled={
+                        isSavingDraft || isSubmitting || isBootstrapLoading || Boolean(configError)
+                      }
+                    >
+                      {isSavingDraft ? "저장 중..." : "임시저장"}
+                    </ActionButton>
+                  ) : null}
+                  <ActionButton
+                    type="submit"
+                    primary
+                    full={step !== 4}
+                    disabled={isSubmitting || isBootstrapLoading || Boolean(configError)}
+                  >
+                    {step === 4 ? (
+                      isSubmitting ? (
+                        "제출 중..."
+                      ) : (
+                        "제출하기"
+                      )
+                    ) : (
+                      <>
+                        다음 <Arrow />
+                      </>
+                    )}
                   </ActionButton>
                 </ButtonRow>
               </form>
@@ -1055,7 +1333,17 @@ export const RecruitApplySection = () => {
                   DDD와 함께할 날을 기대하고 있을게요 :)
                 </p>
               </div>
-              <ActionButton primary full onClick={() => setStep(1)}>
+              <ActionButton
+                primary
+                full
+                onClick={() => {
+                  setValues(initialValues);
+                  setBasicErrors({});
+                  setBasicTouched({});
+                  setError(null);
+                  setStep(1);
+                }}
+              >
                 완료
               </ActionButton>
             </SuccessWrap>
