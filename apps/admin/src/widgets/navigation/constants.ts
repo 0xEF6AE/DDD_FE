@@ -2,6 +2,7 @@ import { paths } from "@/shared/lib/paths"
 import {
   BellDot,
   Calendar01Icon,
+  Calendar03Icon,
   ComputerCloudIcon,
   LicenseDraftIcon,
   UserGroup02Icon,
@@ -18,6 +19,11 @@ export const OPERATIONS = [
     name: "지원자 관리",
     icon: UserGroup02Icon,
     path: paths.applications,
+  },
+  {
+    name: "면접 슬롯",
+    icon: Calendar03Icon,
+    path: paths.interviewSlots,
   },
 ]
 

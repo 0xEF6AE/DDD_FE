@@ -1,0 +1,84 @@
+name: Deploy admin to GCP VM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/admin/**"
+      - "packages/api/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-admin.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-admin
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build admin
+        run: pnpm --filter @ddd/admin... build
+        env:
+          VITE_API_URL: ""
+          VITE_MSW_ENABLED: "false"
+
+      - name: Pack dist
+        run: tar -czf admin-dist.tar.gz -C apps/admin/dist .
+
+      - name: SCP to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          source: admin-dist.tar.gz
+          target: /opt/admin/frontend/
+
+      - name: Atomic swap
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          envs: GITHUB_SHA
+          script: |
+            set -euo pipefail
+            cd /opt/admin/frontend
+            REL="releases/$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+            mkdir -p "$REL"
+            tar -xzf admin-dist.tar.gz -C "$REL"
+            ln -sfn "$REL" current.new
+            mv -Tf current.new current
+            rm -f admin-dist.tar.gz
+            ls -1dt releases/*/ | tail -n +6 | xargs -r rm -rf
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 6); do
+            if curl -fsI https://admin.dddstudy.kr/ > /dev/null; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
+          echo "Health check failed after 6 attempts"
+          exit 1

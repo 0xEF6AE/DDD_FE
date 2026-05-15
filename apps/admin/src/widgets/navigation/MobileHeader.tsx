@@ -1,14 +1,6 @@
-import { Avatar } from "@/shared/ui/avatar"
-import { Button } from "@/shared/ui/button"
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-  DrawerTrigger,
-  DrawerDescription,
-} from "@/shared/ui/drawer"
-import { FlexBox } from "@/shared/ui/FlexBox"
+import { Avatar, Button, Drawer, DrawerContent, DrawerHeader, DrawerBody } from "@heroui/react"
 import { OPERATIONS, CONTENTS } from "./constants"
+import { UserMenuDropdown } from "./UserMenuDropdown"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
 import type { MenuItemType } from "./types"
@@ -37,46 +29,36 @@ export const MobileHeader = () => {
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between border-b bg-gray-100 px-4 py-2">
-      <Drawer direction="left" open={isOpen} onOpenChange={setIsOpen}>
-        <DrawerTrigger>
-          <HanburgerIcon />
-        </DrawerTrigger>
+      <Button isIconOnly variant="outline" onPress={() => setIsOpen(true)}>
+        <HanburgerIcon />
+      </Button>
+
+      <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
         <DrawerContent>
-          <FlexBox direction="column">
-            <DrawerTitle className="flex w-full items-center justify-between px-4 py-2">
-              <div className="size-8">
-                <img
-                  src="/logo.png"
-                  alt="Logo"
-                  className={`size-full ${isOpen ? "" : "group-hover:opacity-0"}`}
-                />
-              </div>
-              <Button
-                variant="ghost"
-                onClick={() => setIsOpen(false)}
-                size="icon-lg"
-              >
-                <HugeiconsIcon
-                  icon={Cancel01Icon}
-                  size={18}
-                  aria-hidden="true"
-                  className="shrink-0"
-                />
-              </Button>
-            </DrawerTitle>
+          <DrawerHeader className="flex items-center justify-between">
+            <div className="size-8">
+              <img src="/logo.png" alt="Logo" className="size-full" />
+            </div>
+            <Button isIconOnly variant="outline" onPress={() => setIsOpen(false)}>
+              <HugeiconsIcon icon={Cancel01Icon} size={18} aria-hidden="true" />
+            </Button>
+          </DrawerHeader>
+          <DrawerBody>
             <MenuList />
-            <DrawerDescription className="hidden">
-              이것은 모바일 헤더입니다. 햄버거 메뉴를 클릭하여 사이드바를 열고
-              닫을 수 있습니다.
-            </DrawerDescription>
-          </FlexBox>
+          </DrawerBody>
         </DrawerContent>
       </Drawer>
 
       <h1 className="text-gray-900">{currentPageTitle}</h1>
-      <Avatar className="inline-flex size-8 items-center justify-center rounded-full bg-green-400 align-middle text-base text-white select-none">
-        W
-      </Avatar>
+      <UserMenuDropdown
+        placement="bottom end"
+        aria-label="사용자 메뉴"
+        className="cursor-pointer rounded-full transition-shadow hover:ring-2 hover:ring-gray-300"
+      >
+        <Avatar className="inline-flex size-8 items-center justify-center rounded-full bg-green-400 align-middle text-base text-white select-none">
+          W
+        </Avatar>
+      </UserMenuDropdown>
     </header>
   )
 }

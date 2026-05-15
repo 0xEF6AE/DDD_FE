@@ -1,10 +1,10 @@
 /** Paths 상수로 관리 */
 export const paths = {
   login: "/",
-  register: "/register",
   applications: "/applications",
   semesters: "/semesters",
-  reminders: "/reminders",
+  reminders: "/early-notification",
+  interviewSlots: "/interview-slots",
   projects: "/projects",
   blogPosts: "/blog-posts",
 }
