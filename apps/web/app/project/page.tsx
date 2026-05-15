@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectListPageSection } from "@/components/sections/ProjectListPageSection";
-import { fetchPublicProjectsPage } from "@/lib/web-api";
+import { fetchPublicProjectsPage } from "@/lib/api/project";
 
 export const metadata: Metadata = {
   title: "DDD 프로젝트 - 사이드 프로젝트 결과물 모음",

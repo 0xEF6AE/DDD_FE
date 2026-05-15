@@ -8,14 +8,15 @@ import { colors, fontWeights } from "@/constants/tokens";
 import successIcon from "@/public/images/success.png";
 import {
   APPLY_PART_OPTIONS,
-  birthInputToApiDate,
-  formatApplicantPhoneKorea,
-  fetchApplicationDraftAnswers,
   fetchApplyPartIdMap,
+  type ApplyPartOption,
+} from "@/lib/api/cohort";
+import {
+  fetchApplicationDraftAnswers,
   saveRecruitApplicationDraft,
   submitRecruitApplication,
-  type ApplyPartOption,
-} from "@/lib/web-api";
+} from "@/lib/api/application";
+import { birthInputToApiDate, formatApplicantPhoneKorea } from "@/lib/format";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type BasicField = "name" | "email" | "phone" | "birth" | "region";

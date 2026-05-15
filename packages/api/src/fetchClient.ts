@@ -23,6 +23,16 @@ interface BeWrapper {
   code?: string;
   message?: string;
   data?: unknown;
+  meta?: unknown;
+}
+
+interface CursorMeta {
+  nextCursor?: unknown;
+  hasNext?: unknown;
+}
+
+function isCursorMeta(value: unknown): value is CursorMeta {
+  return typeof value === "object" && value !== null;
 }
 
 export type UnwrapData<T> = T extends { data?: infer U }
@@ -35,6 +45,21 @@ function isBeWrapper(value: unknown): value is BeWrapper {
     value !== null &&
     ("code" in value || "message" in value || "data" in value)
   );
+}
+
+/**
+ * BE 응답 envelope `{ data: [...], meta: { nextCursor, hasNext } }` 를
+ * SDK 의 페이지네이션 DTO 형태 `{ items, nextCursor?, hasMore }` 로 정규화한다.
+ * meta 가 없으면 `data` 그대로 반환 (단순 배열 응답 호환).
+ */
+function normalizeCursorListPayload(payload: unknown[], meta: unknown): unknown {
+  if (!isCursorMeta(meta)) return payload;
+  const nextCursor = typeof meta.nextCursor === "string" ? meta.nextCursor : undefined;
+  return {
+    items: payload,
+    nextCursor,
+    hasMore: meta.hasNext === true,
+  };
 }
 
 function toErrorCode(code: string | undefined): ErrorMessageKey {
@@ -163,7 +188,12 @@ class ApiClient {
     if (data.code && data.code !== "SUCCESS") {
       throw new ApiError(toErrorCode(data.code), data.message ?? "Request failed");
     }
-    return (data.data ?? null) as R;
+
+    const payload = data.data ?? null;
+    if (Array.isArray(payload) && data.meta !== undefined) {
+      return normalizeCursorListPayload(payload, data.meta) as R;
+    }
+    return payload as R;
   }
 }
 

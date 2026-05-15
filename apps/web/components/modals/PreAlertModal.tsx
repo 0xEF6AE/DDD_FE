@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { colors, fontWeights } from "@/constants/tokens";
 import { ApiError } from "@ddd/api";
-import { subscribeEarlyNotificationWithActiveCohort } from "@/lib/web-api";
+import { subscribeEarlyNotificationWithActiveCohort } from "@/lib/api/early-notification";
 import successIcon from "@/public/images/success.png";
 import modalImageIcon from "@/public/images/modal_image.png";
 

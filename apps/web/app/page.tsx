@@ -7,7 +7,8 @@ import { BlogSection } from '@/components/sections/BlogSection';
 import { FaqSection } from '@/components/sections/FaqSection';
 import { SponsorSection } from '@/components/sections/SponsorSection';
 import { CtaSection } from '@/components/sections/CtaSection';
-import { fetchPublicArticles, fetchPublicProjects } from '@/lib/web-api';
+import { fetchPublicArticles } from '@/lib/api/blog';
+import { fetchPublicProjects } from '@/lib/api/project';
 
 export default async function HomePage() {
   const [projects, articles] = await Promise.all([fetchPublicProjects(), fetchPublicArticles()]);

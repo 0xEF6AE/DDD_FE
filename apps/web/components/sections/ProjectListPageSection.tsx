@@ -4,7 +4,7 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import { colors, fontWeights } from "@/constants/tokens";
 import type { ProjectCategory, ProjectItem } from "@/constants/projects";
-import { fetchPublicProjectsPage } from "@/lib/web-api";
+import { fetchPublicProjectsPage } from "@/lib/api/project";
 
 const tabs: ProjectCategory[] = ["전체", "iOS", "AOS", "WEB"];
 

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { colors, fontWeights } from "@/constants/tokens";
 import { recruitParts } from "@/constants/recruit";
 import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
-import { fetchCohortPartByActiveCohortId } from "@/lib/web-api";
+import { fetchCohortPartByActiveCohortId } from "@/lib/api/cohort";
 
 const Section = styled.section({
   background: colors.background,

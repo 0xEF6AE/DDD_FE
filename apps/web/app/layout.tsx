@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { PreAlertModal } from '@/components/modals/PreAlertModal';
 import { RecruitStatusProvider } from "@/components/providers/RecruitStatusProvider";
-import { fetchRecruitStatus } from "@/lib/web-api";
+import { fetchRecruitStatus } from "@/lib/api/cohort";
 import './globals.css';
 
 export const metadata: Metadata = {

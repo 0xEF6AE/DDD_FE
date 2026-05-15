@@ -4,7 +4,7 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import { fontWeights } from "@/constants/tokens";
 import type { ArticleItem } from "@/constants/articles";
-import { fetchPublicArticlesPage } from "@/lib/web-api";
+import { fetchPublicArticlesPage } from "@/lib/api/blog";
 
 const Section = styled.section({
   background: "#fff",

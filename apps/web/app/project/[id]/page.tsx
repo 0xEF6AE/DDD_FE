@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectDetailSection } from "@/components/sections/ProjectDetailSection";
-import { fetchPublicProjectById } from "@/lib/web-api";
+import { fetchPublicProjectById } from "@/lib/api/project";
 
 type Props = {
   params: Promise<{ id: string }>;

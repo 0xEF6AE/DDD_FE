@@ -6,7 +6,7 @@ import { RecruitRolesSection } from "@/components/sections/RecruitRolesSection";
 import { RecruitScheduleSection } from "@/components/sections/RecruitScheduleSection";
 import { RecruitCurriculumSection } from "@/components/sections/RecruitCurriculumSection";
 import { recruitPageMetaDescriptionByStatus } from "@/constants/recruit";
-import { fetchRecruitStatus } from "@/lib/web-api";
+import { fetchRecruitStatus } from "@/lib/api/cohort";
 
 export async function generateMetadata(): Promise<Metadata> {
   const recruitStatus = await fetchRecruitStatus();

@@ -44,7 +44,7 @@ export const applicationAPI = {
     payload: PostSaveApplicationDraftRequest;
   }) =>
     api.post("/api/v1/applications/draft", {
-      body: payload,
+      body: payload as never,
     }) as unknown as Promise<void>,
 
   /** 임시저장 단건 조회 - GET /api/v1/applications/draft/{cohortPartId} */
@@ -59,5 +59,7 @@ export const applicationAPI = {
   }: {
     payload: PostSubmitApplicationRequest;
   }) =>
-    api.post("/api/v1/applications", { body: payload }) as unknown as Promise<void>,
+    api.post("/api/v1/applications", {
+      body: payload as never,
+    }) as unknown as Promise<void>,
 };

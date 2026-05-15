@@ -3,6 +3,7 @@ import { cohortAPI, cohortPublicAPI } from "./api";
 import { cohortKeys } from "./queryKeys";
 import type {
   GetCohortParams,
+  GetCohortPartParams,
   PatchUpdateCohortParams,
   PatchUpdateCohortRequest,
   DeleteCohortParams,
@@ -128,5 +129,23 @@ export const cohortPublicQueries = {
     queryOptions({
       queryKey: cohortKeys.active(),
       queryFn: () => cohortPublicAPI.getActiveCohort(),
+    }),
+
+  /**
+   * 모집 파트 상세 조회 쿼리 (GET /api/v1/cohorts/parts/{id})
+   *
+   * @param {GetCohortPartParams} params - 조회 파라미터
+   * @param {number} params.id - 파트 ID
+   *
+   * @returns {QueryOptions} TanStack Query 옵션 객체
+   *
+   * @example
+   * const partQuery = useQuery(cohortPublicQueries.getCohortPart({ params: { id: 1 } }))
+   */
+  getCohortPart: ({ params }: { params: GetCohortPartParams }) =>
+    queryOptions({
+      queryKey: cohortKeys.part(params),
+      queryFn: () => cohortPublicAPI.getCohortPart({ params }),
+      enabled: !!params.id,
     }),
 };

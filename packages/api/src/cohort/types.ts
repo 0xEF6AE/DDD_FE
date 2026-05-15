@@ -101,6 +101,10 @@ export type PutUpdateCohortPartsResponse = CohortDto;
 // GET /api/v1/cohorts/active - 현재 활성 기수 조회 (public)
 export type GetActiveCohortResponse = CohortDto;
 
+// GET /api/v1/cohorts/parts/{id} - 모집 파트 상세 조회 (public)
+export type GetCohortPartParams = { id: number };
+export type GetCohortPartResponse = CohortPartConfigDto;
+
 // ---------- CohortDto 엔티티 (BE 응답 schema 미정의 → 수동 정의) ----------
 export interface CohortDto {
   id: number;

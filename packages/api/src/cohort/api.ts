@@ -13,6 +13,8 @@ import type {
   PutUpdateCohortPartsRequest,
   PutUpdateCohortPartsResponse,
   GetActiveCohortResponse,
+  GetCohortPartParams,
+  GetCohortPartResponse,
 } from "./types";
 
 /** 어드민 기수 API */
@@ -71,4 +73,10 @@ export const cohortPublicAPI = {
   /** 현재 활성 기수 조회 - GET /api/v1/cohorts/active */
   getActiveCohort: () =>
     api.get("/api/v1/cohorts/active") as unknown as Promise<GetActiveCohortResponse>,
+
+  /** 모집 파트 상세 조회 - GET /api/v1/cohorts/parts/{id} */
+  getCohortPart: ({ params }: { params: GetCohortPartParams }) =>
+    api.get("/api/v1/cohorts/parts/{id}", {
+      params: { path: { id: params.id } },
+    }) as unknown as Promise<GetCohortPartResponse>,
 };

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { ArticleListPageSection } from "@/components/sections/ArticleListPageSection";
-import { fetchPublicArticlesPage } from "@/lib/web-api";
+import { fetchPublicArticlesPage } from "@/lib/api/blog";
 
 export const metadata: Metadata = {
   title: "DDD 블로그 - 사이드 프로젝트 인사이트",
