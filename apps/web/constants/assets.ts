@@ -1,0 +1,27 @@
+export const assets = {
+  logo: "/images/logo.png",
+  heroBg: "https://www.figma.com/api/mcp/asset/368a3885-c833-4a97-bae3-923bf3c60070",
+  heroTextBg: "https://www.figma.com/api/mcp/asset/b0a8d8db-c55b-4d71-9a03-7bba5fbcd1a6",
+  recruitHeroBg: "https://www.figma.com/api/mcp/asset/d893df99-d978-48ed-b6d8-f83490db30b8",
+  recruitHeroTextBg: "https://www.figma.com/api/mcp/asset/e7dc7d16-f496-491c-9ad9-ac2771191474",
+  recruit3d: "https://www.figma.com/api/mcp/asset/e16d4787-f270-41f0-ad5d-0c40683b9c77",
+  hero3d: "/images/hero/main-hero-3d.png",
+  hero3d1024: "https://www.figma.com/api/mcp/asset/baac66b4-230e-4fa2-8529-3fdf3ca3988e",
+  hero3d768: "https://www.figma.com/api/mcp/asset/500cd51c-3def-4ced-bf9a-c3bafa84f13d",
+  hero3d375: "https://www.figma.com/api/mcp/asset/77b87f10-9900-430d-839e-662ba3e26fa7",
+  arrowRight: "https://www.figma.com/api/mcp/asset/962d703d-9e8e-47c9-b2a4-3e9d1bf0edf2",
+  arrowLeft: "https://www.figma.com/api/mcp/asset/475824fe-4859-46e5-8228-9e4a34252ce5",
+  chevronDown: "https://www.figma.com/api/mcp/asset/d136abfc-f9a0-4ac5-91f3-f513323f26cf",
+  sponsors: {
+    elice: "/images/imag_elice.png",
+    ictcoc: "/images/image_ictcoc.png",
+    asanNanum: "/images/image_asan-nanum.png",
+    hanbit: "/images/image_hanbit.png",
+  },
+  social: {
+    tistory: "/images/Tistory.png",
+    medium: "/images/Medium.png",
+    brunch: "/images/Brunch.png",
+    instagram: "/images/Instagram.png",
+  },
+} as const;

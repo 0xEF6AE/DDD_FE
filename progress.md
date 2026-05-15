@@ -257,7 +257,9 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 | ~~**auth**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
 | ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료 | 갭 해소 |
 | ~~**interview**~~ | ✅ `cancelInterviewReservation` mutation + 어드민 UI(`ReservationsDrawer` / `CancelReservationDialog`) 연결 완료 | 갭 해소 |
-| **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
+| ~~**early-notification**~~ | ✅ `subscribeGeneralEarlyNotification` (POST /api/v1/early-notifications/general) SDK·queries 추가, `apps/web/lib/api/early-notification.ts` 에서 활성 기수 없을 때 자동 폴백 | 갭 해소 |
+| ~~**cohort (public)**~~ | ✅ `getCohortPart` (GET /api/v1/cohorts/parts/{id}) SDK·queries 추가 | 갭 해소 |
+| ~~**legacy `webApi` 단일 객체**~~ | ✅ `packages/api/src/web.ts` 폐기. `apps/web/lib/api/{project,blog,cohort,application,early-notification}.ts` 도메인별 파일 + `lib/mappers/*` 매퍼 분리로 정리 | 갭 해소 |
 
 
 ### HTML 목업에는 있는데 미구현인 UI

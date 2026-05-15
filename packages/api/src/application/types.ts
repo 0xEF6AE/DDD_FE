@@ -1,12 +1,20 @@
 import type { components, paths } from "../generated/api";
 
 // Request DTO 재노출
+//
+// BE OpenAPI 가 `answers` 를 `Record<string, never>` (빈 객체) 로 정의해두어
+// 실제 응답/요청 (자유 폼) 과 충돌한다. cohort 의 `process` / `curriculum` 패턴
+// 처럼 FE 에서 `Record<string, unknown>` 으로 완화한다.
 export type UpdateApplicationStatusRequestDto =
   components["schemas"]["UpdateApplicationStatusRequestDto"];
-export type SaveApplicationDraftRequestDto =
-  components["schemas"]["SaveApplicationDraftRequestDto"];
-export type SubmitApplicationRequestDto =
-  components["schemas"]["SubmitApplicationRequestDto"];
+export type SaveApplicationDraftRequestDto = Omit<
+  components["schemas"]["SaveApplicationDraftRequestDto"],
+  "answers"
+> & { answers: Record<string, unknown> };
+export type SubmitApplicationRequestDto = Omit<
+  components["schemas"]["SubmitApplicationRequestDto"],
+  "answers"
+> & { answers: Record<string, unknown> };
 
 // GET /api/v1/admin/applications - 어드민 지원서 목록 조회
 export type ApplicationGetAdminListParams =

@@ -6,6 +6,7 @@ import type {
   GetAdminEarlyNotificationsCsvParams,
   PostSendBulkEarlyNotificationRequest,
   PostSubscribeEarlyNotificationRequest,
+  PostSubscribeGeneralEarlyNotificationRequest,
 } from "./types";
 
 export const earlyNotificationQueries = {
@@ -90,5 +91,23 @@ export const earlyNotificationMutations = {
       }: {
         payload: PostSubscribeEarlyNotificationRequest;
       }) => earlyNotificationAPI.subscribeEarlyNotification({ payload }),
+    }),
+
+  /**
+   * 대기열 사전 알림 구독 mutation (cohortId 없이 다음 기수 알림 대기열 등록)
+   *
+   * @returns {MutationOptions} TanStack Query Mutation 옵션 객체
+   *
+   * @example
+   * const mutation = useMutation(earlyNotificationMutations.subscribeGeneralEarlyNotification())
+   * mutation.mutate({ payload: { email: 'user@example.com' } })
+   */
+  subscribeGeneralEarlyNotification: () =>
+    mutationOptions({
+      mutationFn: ({
+        payload,
+      }: {
+        payload: PostSubscribeGeneralEarlyNotificationRequest;
+      }) => earlyNotificationAPI.subscribeGeneralEarlyNotification({ payload }),
     }),
 };

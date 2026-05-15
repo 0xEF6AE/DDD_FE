@@ -20,6 +20,11 @@ export type PostSubscribeEarlyNotificationRequest =
   components["schemas"]["SubscribeEarlyNotificationRequestDto"];
 export type PostSubscribeEarlyNotificationResponse = void;
 
+// POST /api/v1/early-notifications/general - 대기열 사전 알림 구독 (cohortId 없음)
+export type PostSubscribeGeneralEarlyNotificationRequest =
+  components["schemas"]["SubscribeGeneralEarlyNotificationRequestDto"];
+export type PostSubscribeGeneralEarlyNotificationResponse = void;
+
 // 엔티티 타입 (BE OpenAPI 가 응답 schema 미정의 → 수동 정의)
 export interface EarlyNotificationDto {
   id: number;

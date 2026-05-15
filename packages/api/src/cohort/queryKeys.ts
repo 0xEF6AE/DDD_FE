@@ -1,4 +1,4 @@
-import type { GetCohortParams } from "./types";
+import type { GetCohortParams, GetCohortPartParams } from "./types";
 
 export const cohortKeys = {
   /** 기수 base key */
@@ -18,4 +18,13 @@ export const cohortKeys = {
 
   /** 현재 활성 기수 key (public) */
   active: () => [...cohortKeys.all, "active"] as const,
+
+  /**
+   * 모집 파트 상세 key (public)
+   *
+   * @param {GetCohortPartParams} params - 조회 파라미터
+   * @param {number} params.id - 파트 ID
+   */
+  part: (params: GetCohortPartParams) =>
+    [...cohortKeys.all, "part", params] as const,
 };
