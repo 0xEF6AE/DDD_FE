@@ -5,15 +5,17 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
 import type { MenuItemType } from "./types"
 import { Link, useLocation } from "react-router"
-import { useEffect, useEffectEvent, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 export const MobileHeader = () => {
   const [isOpen, setIsOpen] = useState(false)
   const location = useLocation()
 
-  const closeWhenPathChange = useEffectEvent(() => {
+  const [prevPathname, setPrevPathname] = useState(location.pathname)
+  if (prevPathname !== location.pathname) {
+    setPrevPathname(location.pathname)
     setIsOpen(false)
-  })
+  }
 
   const currentPageTitle = useMemo(() => {
     const allMenuItems = [...OPERATIONS, ...CONTENTS]
@@ -21,10 +23,6 @@ export const MobileHeader = () => {
       (item) => item.path === location.pathname
     )
     return currentItem ? currentItem.name : ""
-  }, [location.pathname])
-
-  useEffect(() => {
-    closeWhenPathChange()
   }, [location.pathname])
 
   return (
