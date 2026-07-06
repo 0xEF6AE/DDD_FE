@@ -74,7 +74,7 @@ export function InterviewSlotRegisterDrawer({
     formState: { isSubmitting },
   } = methods
 
-  useEffect(() => {
+  useEffect(function resetFormOnOpen() {
     if (isOpen) reset(buildInterviewSlotFormDefaults(prefill))
   }, [isOpen, mode, prefill, reset])
 

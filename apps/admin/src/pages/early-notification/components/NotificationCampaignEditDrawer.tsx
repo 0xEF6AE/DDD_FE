@@ -35,7 +35,7 @@ export const NotificationCampaignEditDrawer = ({
     defaultValues: buildCampaignFormDefaults(campaign),
   })
 
-  useEffect(() => {
+  useEffect(function resetFormOnOpen() {
     if (isOpen) reset(buildCampaignFormDefaults(campaign))
   }, [isOpen, campaign, reset])
 

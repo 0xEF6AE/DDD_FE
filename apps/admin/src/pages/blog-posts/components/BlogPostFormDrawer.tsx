@@ -77,7 +77,7 @@ export const BlogPostFormDrawer = ({
     defaultValues: buildDefaults(post),
   })
 
-  useEffect(() => {
+  useEffect(function resetFormOnOpen() {
     if (isOpen) reset(buildDefaults(post))
   }, [isOpen, mode, post, reset])
 

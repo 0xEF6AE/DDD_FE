@@ -64,7 +64,7 @@ export const ProjectFormDrawer = ({
     remove: removeMember,
   } = useFieldArray({ control, name: "members" })
 
-  useEffect(() => {
+  useEffect(function resetFormOnOpen() {
     if (isOpen) reset(buildProjectFormDefaults(project))
   }, [isOpen, mode, project, reset])
 

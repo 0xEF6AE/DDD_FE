@@ -71,7 +71,7 @@ export const EarlyNotificationBulkSendDrawer = ({
     defaultValues: DEFAULT_VALUES,
   })
 
-  useEffect(() => {
+  useEffect(function resetFormOnClose() {
     if (!isOpen) {
       reset(DEFAULT_VALUES)
     }

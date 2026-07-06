@@ -90,14 +90,14 @@ export function SemesterRegisterDrawer({
     watch,
   } = methods
 
-  useEffect(() => {
+  useEffect(function resetFormOnOpen() {
     if (isOpen) reset(buildDefaults(prefill))
   }, [isOpen, mode, prefill, reset])
 
   const [invalidCells, setInvalidCells] = useState<ReadonlySet<string>>(
     () => new Set()
   )
-  useEffect(() => {
+  useEffect(function clearInvalidCellsOnPartsChange() {
     const subscription = watch((_, { name }) => {
       if (name?.startsWith("parts")) {
         setInvalidCells((prev) => (prev.size === 0 ? prev : new Set()))
