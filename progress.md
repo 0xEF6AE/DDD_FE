@@ -48,9 +48,8 @@
 - TanStack Query (`QueryProvider`)
 - MSW 목업 환경 — `apps/admin/src/mocks/`
 - ESLint + Prettier + Lefthook
-- FSD 디렉터리 구조 (`app / pages / widgets / shared`)
+- pages/shared 2단 디렉터리 구조 (페이지 콜로케이션, FSD 폐기)
 - `AdminLayout` (SideBar + MobileHeader + Outlet)
-- `ThemeProvider` (localStorage, `d` 키 토글, 다크/라이트/시스템)
 
 **API 레이어 연동 현황**
 
@@ -64,7 +63,7 @@
 
 - ✅ Google OAuth 실제 연결 — `LoginPage` 가 `/api/v1/auth/google` 로 top-level navigation (same-origin), 백엔드가 `CLIENT_REDIRECT_URL` 로 되돌림 (httpOnly 쿠키)
 - ✅ 인증 보호 라우트 (Minimal) — 별도 loader 가드 없이 `client.ts` 401 인터셉터 + `main.tsx` `onUnauthorized` 콜백에 위임. 401 발생 시 `paths.login` 으로 자동 redirect
-- ✅ 사이드바 사용자 메뉴 드롭다운 + 로그아웃 흐름 — `widgets/navigation/UserMenuDropdown.tsx` + `entities/auth/model/useLogoutFlow.ts` (`@ddd/api` `useLogout` mutation → 토스트 → `paths.login` redirect)
+- ✅ 사이드바 사용자 메뉴 드롭다운 + 로그아웃 흐름 — `shared/ui/AdminLayout/UserMenuDropdown.tsx` + `shared/hooks/useLogoutFlow.ts` (`@ddd/api` `useLogout` mutation → 토스트 → `paths.login` redirect)
 - ✅ same-origin 배포 환경 코드 준비 — `client.ts` `buildUrl()` 이 `window.location.origin` 자동 결합, Vite dev proxy (`/api → localhost:3000`), `.github/workflows/deploy-admin.yml` (SCP + atomic swap). 머지 전 GitHub Secrets 등록 + BE 측 Caddy/compose 부트스트랩 필요 — 단일 출처: [docs/admin-deploy.md](./docs/admin-deploy.md)
 
 **비-목표 (별도 라운드)**
@@ -155,7 +154,7 @@
   - capacity / location / description
   - 수정 모드 시 cohortId/cohortPartId Select 는 isReadOnly + 안내 caption (BE PATCH DTO 가 두 필드를 미지원)
 - ✅ 슬롯 삭제 Dialog (`DeleteInterviewSlotDialog`) — `DeleteCohortDialog` 패턴 미러링
-- ✅ 흐름 훅 — `entities/interview-slot/model/useCreateOrUpdateSlotFlow` + `useDeleteSlotFlow` + `serialize`
+- ✅ 흐름 훅 — `pages/interview-slots/hooks/useCreateOrUpdateSlotFlow` + `useDeleteSlotFlow` + `serialize`
 - ✅ Phase B — `StatusChangeModal` 의 `INTERVIEW_SLOTS_NOT_READY` 분기에서 `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → "슬롯 등록하러 가기" 시 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill)
 - ✅ 예약자 목록 표시 — 슬롯 행 "예약/정원" 셀 클릭 → `ReservationsDrawer` 오픈 (`InterviewSlotResponseDto.reservations` nested 활용). 지원자명은 `applicationQueries.getAdminApplications({ cohortId })` `useSuspenseQuery` 로 `applicationFormId → applicantName` 매핑
 - ✅ 예약 취소 어드민 UI — `CancelReservationDialog` (AlertDialog) + `useCancelReservationFlow` (`cancelInterviewReservation` mutation → toast + `slotLists()` invalidate). Drawer 안 예약 행 [취소] 버튼에서 confirm 후 호출

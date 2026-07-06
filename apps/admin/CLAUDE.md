@@ -10,8 +10,8 @@ DDD 동아리 운영진용 어드민 페이지. Vite + React 19, Tailwind CSS 4,
 - **스타일링**: Tailwind CSS 4 + `cn()` 유틸
 - **UI 라이브러리**: `@heroui/react` v3 (React Aria Components 기반)
 - **아이콘**: `@hugeicons/react`
-- **테마**: `ThemeProvider` — localStorage 유지, `d` 키로 토글, 다크/라이트/시스템 지원
 - **API**: `@ddd/api` 패키지에서 import, `main.tsx`에서 `configureApi()` 초기화
+- **테마 없음**: ThemeProvider 제거됨(라이트 고정). 다크모드 미지원
 
 ---
 
@@ -19,7 +19,7 @@ DDD 동아리 운영진용 어드민 페이지. Vite + React 19, Tailwind CSS 4,
 
 | 문서 | 내용 |
 | ---- | ---- |
-| **[docs/admin-architecture.md](../../docs/admin-architecture.md)** | FSD 디렉터리 구조, 레이어 규칙, 훅 위치 결정, 새 페이지 추가 방법 |
+| **[docs/admin-architecture.md](../../docs/admin-architecture.md)** | pages/shared 2단 디렉터리 구조, 콜로케이션 규칙, 훅 위치 결정, 새 페이지 추가 방법 |
 | **[docs/admin-heroui.md](../../docs/admin-heroui.md)** | HeroUI v3 사용 규약 — import 형태, `shared/ui` 배치 기준, 금지 패턴 (UI 작업 전 확인) |
 | **[docs/hero-ui.txt](../../docs/hero-ui.txt)** | HeroUI v3 컴포넌트 API (props·slots 단일 출처) |
 | **[docs/admin-toast.md](../../docs/admin-toast.md)** | 토스트(`toast.success/error/info/warning`) 표준 패턴 |

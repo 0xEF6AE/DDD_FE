@@ -2,7 +2,7 @@ import { AlertDialog, Button } from "@heroui/react"
 
 import type { CohortDto } from "@ddd/api"
 
-import { useDeleteCohortFlow } from "@/entities/cohort"
+import { useDeleteCohortFlow } from "@/pages/semesters/hooks/useDeleteCohortFlow"
 
 interface Props {
   cohort: Pick<CohortDto, "id" | "name">

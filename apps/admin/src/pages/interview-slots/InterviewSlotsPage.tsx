@@ -5,17 +5,15 @@ import { useQuery } from "@tanstack/react-query"
 import { cohortQueries, interviewQueries } from "@ddd/api"
 import type { InterviewSlot } from "@ddd/api"
 
-import { serializeSlotToForm } from "@/entities/interview-slot"
+import { serializeSlotToForm } from "@/pages/interview-slots/lib/serialize"
 import { FlexBox } from "@/shared/ui/FlexBox"
-import { TitleSection } from "@/widgets/heading"
+import { TitleSection } from "@/shared/ui/Heading"
 
-import {
-  DeleteInterviewSlotDialog,
-  InterviewSlotRegisterDrawer,
-  InterviewSlotsTable,
-  InterviewSlotsToolbar,
-  ReservationsDrawer,
-} from "./components"
+import { DeleteInterviewSlotDialog } from "@/pages/interview-slots/components/DeleteInterviewSlotDialog"
+import { InterviewSlotRegisterDrawer } from "@/pages/interview-slots/components/InterviewSlotRegisterDrawer"
+import { InterviewSlotsTable } from "@/pages/interview-slots/components/InterviewSlotsTable"
+import { InterviewSlotsToolbar } from "@/pages/interview-slots/components/InterviewSlotsToolbar"
+import { ReservationsDrawer } from "@/pages/interview-slots/components/ReservationsDrawer"
 import { ALL_PARTS, type PartFilterValue } from "./constants"
 import type { InterviewSlotForm } from "./types"
 

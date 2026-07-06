@@ -1,6 +1,6 @@
 import { AlertDialog, Button } from "@heroui/react"
 
-import { useCancelReservationFlow } from "@/entities/interview-slot"
+import { useCancelReservationFlow } from "@/pages/interview-slots/hooks/useCancelReservationFlow"
 
 interface Props {
   reservationId: number

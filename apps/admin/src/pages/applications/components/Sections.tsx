@@ -1,7 +1,7 @@
 import { GridBox } from "@/shared/ui/GridBox"
 import { StatCard } from "@/shared/ui/StatCard"
 
-import type { ApplicationStatus } from "@/entities/application"
+import type { ApplicationStatus } from "@/pages/applications/constants"
 
 type CardSectionProps = {
   total: number

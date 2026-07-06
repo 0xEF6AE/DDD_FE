@@ -2,7 +2,7 @@ import { AlertDialog, Button } from "@heroui/react"
 
 import type { InterviewSlot } from "@ddd/api"
 
-import { useDeleteSlotFlow } from "@/entities/interview-slot"
+import { useDeleteSlotFlow } from "@/pages/interview-slots/hooks/useDeleteSlotFlow"
 
 interface Props {
   slot: Pick<InterviewSlot, "id">

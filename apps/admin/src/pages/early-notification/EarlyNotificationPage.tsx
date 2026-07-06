@@ -2,7 +2,7 @@ import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { ErrorFallback } from "@/shared/ui/ErrorFallback"
-import { TitleSection } from "@/widgets/heading"
+import { TitleSection } from "@/shared/ui/Heading"
 
 import { CohortsAreaSkeleton } from "./components/CohortsAreaSkeleton"
 import { EarlyNotificationContent } from "./EarlyNotificationContent"

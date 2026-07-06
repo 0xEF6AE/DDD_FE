@@ -54,7 +54,7 @@ BE `ApplicationAnswerValidator` 가 읽는 형태:
 
 ### 클라이언트 검증
 
-저장 직전 `validateFormParts` (`apps/admin/src/entities/cohort/model/validateParts.ts`) 가 다음을 차단한다:
+저장 직전 `validateFormParts` (`apps/admin/src/pages/semesters/lib/validateParts.ts`) 가 다음을 차단한다:
 
 1. **빈 label** — 어떤 question 의 label 이 trim 후 빈 문자열이면 toast 로 알리고 저장 중단.
 2. **part 내부 중복 key** — `key.trim() || slugify(label)` 결과가 같은 part 안에서 충돌하면 toast 로 알리고 저장 중단.
@@ -63,7 +63,7 @@ BE `ApplicationAnswerValidator` 가 읽는 형태:
 
 ## 직렬화 위치
 
-`apps/admin/src/entities/cohort/model/serialize.ts`:
+`apps/admin/src/pages/semesters/lib/serialize.ts`:
 
 - `serializeFormToCreatePayload` / `serializeFormToUpdatePayload` — `applicationForm` 없음
 - `serializeFormToPartsPayload` — `parts: CohortPartConfigDto[]` 생성

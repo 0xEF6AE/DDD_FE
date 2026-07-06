@@ -27,7 +27,7 @@
 
 | 명세 상태 | 실제 enum 값 | 처리 주체 | 백엔드 | 프론트엔드 | 비고 |
 |-----------|-------------|-----------|--------|-----------|------|
-| 모집예정 | `UPCOMING` | 양쪽 | ✅ | ✅ | FE: `entities/cohort/model/statusFlow.ts` `STATUS_LABEL` |
+| 모집예정 | `UPCOMING` | 양쪽 | ✅ | ✅ | FE: `pages/semesters/lib/statusFlow.ts` `STATUS_LABEL` |
 | 모집중 | `RECRUITING` | 양쪽 | ✅ | ✅ | |
 | 활동중 | `ACTIVE` | 양쪽 | ✅ | ✅ | |
 | 활동종료 | `CLOSED` | 양쪽 | ✅ | ✅ | |
@@ -81,7 +81,7 @@
 
 | 명세 상태 | 실제 enum 값 | 처리 주체 | 백엔드 | 프론트엔드 | 비고 |
 |-----------|-------------|-----------|--------|-----------|------|
-| 서류대기 | `서류심사대기` | 양쪽 | ✅ | ✅ | FE: `entities/application/model/constants.ts` `ApplicationStatus` |
+| 서류대기 | `서류심사대기` | 양쪽 | ✅ | ✅ | FE: `pages/applications/constants.ts` `ApplicationStatus` |
 | 서류불합격 | `서류불합격` | 양쪽 | ✅ | ✅ | |
 | 서류합격 | `서류합격` | 양쪽 | ✅ | ✅ | |
 | 최종불합격 | `최종불합격` | 양쪽 | ✅ | ✅ | |
@@ -99,7 +99,7 @@
 활동중       → 활동완료 | 활동중단
 ```
 
-FE: `entities/application/model/constants.ts` `STATUS_BRANCH` 로 합격/불합격 분기 매핑.
+FE: `pages/applications/constants.ts` `STATUS_BRANCH` 로 합격/불합격 분기 매핑.
 
 ### 지원자 목록 / 필터
 

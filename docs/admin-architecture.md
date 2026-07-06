@@ -1,68 +1,61 @@
 # apps/admin — 아키텍처 참조
 
-## 디렉터리 구조 (FSD 기반)
+## 디렉터리 구조 (pages / shared 2단)
+
+FSD를 폐기하고 **페이지 콜로케이션** 구조를 사용한다. 원칙 한 줄: *쓰는 곳 옆에 둔다. 두 번째 소비자가 생기면 `shared/` 로 올린다.*
 
 ```
 src/
-├── app/                        # 앱 초기화 레이어
-│   └── providers/
-│       ├── QueryProvider.tsx   # TanStack Query Provider
-│       └── ThemeProvider.tsx   # 전역 테마 Provider + useTheme 훅
+├── main.tsx                    # 엔트리 — configureApi, QueryProvider, Router 마운트
 │
-├── pages/                      # 페이지 레이어 (라우트 1:1 대응, 주요 feature 단위)
+├── pages/                      # 라우트 1:1 페이지 폴더 (페이지 전용 코드 전부 콜로케이션)
 │   ├── index.tsx               # 라우터 설정 (createBrowserRouter)
 │   ├── login/
 │   ├── applications/
+│   │   ├── ApplicationsPage.tsx
+│   │   ├── components/         # 페이지 전용 컴포넌트 — 한 단계 평탄, 서브폴더 금지
+│   │   ├── hooks/              # 페이지 전용 훅 (useApplicationsBoard 등)
+│   │   └── constants.ts
 │   ├── semesters/
-│   ├── reminders/
+│   │   ├── SemestersPage.tsx
+│   │   ├── components/
+│   │   ├── hooks/              # useSemestersTableData, useCreateOrUpdateCohortFlow 등
+│   │   ├── lib/                # serialize, validateParts, statusFlow, completion
+│   │   ├── constants.ts
+│   │   └── types.d.ts
+│   ├── interview-slots/
+│   ├── early-notification/
 │   ├── projects/
 │   ├── blog-posts/
 │   └── error/
-│
-├── widgets/                    # 복합 UI 블록 레이어 (페이지 간 공유)
-│   ├── navigation/
-│   │   ├── SideBar.tsx         # 데스크톱 사이드바
-│   │   ├── MobileHeader.tsx    # 모바일 상단 헤더
-│   │   ├── constants.ts        # 메뉴 아이템 정의
-│   │   └── types.d.ts
-│   ├── heading/
-│   │   └── index.tsx           # 페이지 헤딩 블록
-│   └── admin-layout/
-│       └── AdminLayout.tsx     # 뷰포트에 따라 SideBar/MobileHeader + Outlet 구성
-│
-├── entities/                   # 도메인 모델 레이어 (비즈니스 흐름 훅, 도메인 상수/타입)
-│   └── {domain}/               # packages/api/src/{domain} 과 1:1 매핑 (auth, application, blog, ...)
-│       ├── model/              # 흐름 훅·상수·타입 (예: useLogoutFlow)
-│       ├── ui/                 # 도메인 전용 UI (필요 시)
-│       └── lib/                # 도메인 유틸 (필요 시)
 │
 ├── mocks/                      # MSW 목업 환경
 │   ├── browser.ts
 │   └── handlers.ts
 │
-└── shared/                     # 순수 공유 자원 레이어
-    ├── ui/                     # UI 컴포넌트 (HeroUI 외 커스텀 프리미티브)
-    ├── hooks/                  # 범용 UI/플랫폼 훅 (useIsMobile 등) — 도메인 무관
-    └── lib/                    # 유틸 함수 및 상수 (cn, paths, auth)
+└── shared/                     # 2개 이상 페이지가 쓰는 것만
+    ├── ui/                     # 공용 컴포넌트 (FlexBox, Heading, EmptyState, ...)
+    │   └── AdminLayout/        # 레이아웃 셸 (AdminLayout, SideBar, MobileHeader, UserMenuDropdown)
+    ├── hooks/                  # 크로스 페이지 훅 (useRequireAuth, useLogoutFlow, useIsMobile)
+    └── lib/                    # 유틸·상수·Provider (cn, paths, QueryProvider)
 ```
 
 ---
 
-## 레이어 규칙
+## 구조 규칙
 
 의존성 방향은 **단방향**으로 강제한다. (자세한 정의: 루트 [CODE_RULES.md §1](../CODE_RULES.md))
 
 ```
-app → pages → widgets → entities → shared
-                              ↘
-                          packages/api
+pages → shared
+    ↘
+ packages/api
 ```
 
-- 각 레이어는 자신보다 **아래** 레이어만 import 가능.
-- `entities`는 `packages/api` 와 `shared` 만 import 한다. `entities` 끼리는 **서로 import 금지** (도메인 결합 차단).
-- 두 도메인을 묶는 흐름은 `widgets` 또는 `pages` 의 책임이다.
-- `shared`는 어떤 레이어도 import하지 않는다.
-- `widgets`는 `pages`를 import하지 않는다.
+- **페이지끼리 import 금지.** `pages/{a}` 가 `pages/{b}` 의 파일이 필요해지면 그 파일을 `shared/` 로 승격한다.
+- `shared`는 `pages` 를 import 하지 않는다.
+- **barrel(`index.ts`) 금지** — 모든 import 는 파일 직접 경로. (`pages/index.tsx` 라우터는 barrel 이 아니라 라우터 모듈)
+- `components/` 하위 서브폴더 금지 — Drawer/Modal 복합 컴포넌트도 형제 파일로 평탄하게.
 
 ---
 
@@ -73,8 +66,8 @@ app → pages → widgets → entities → shared
 | 유형 | 예시 | 위치 |
 | ---- | ---- | ---- |
 | **쿼리/뮤테이션 팩토리** (`queryOptions`/`mutationOptions`) | `applicationQueries.getAdminApplications`, `authMutations.logout` | `packages/api/src/{domain}/queries.ts` |
-| **비즈니스 흐름 훅** (API + toast/라우팅/캐시 정리 등) | `useLogoutFlow`, `useApplicationsBoard` | `entities/{domain}/model/` |
-| **UI/플랫폼 훅** (도메인 무관) | `useIsMobile`, `useTheme` | `shared/hooks/` |
+| **페이지 전용 훅** (비즈니스 흐름 훅 포함) | `useApplicationsBoard`, `useCreateOrUpdateCohortFlow` | `pages/{page}/hooks/` |
+| **크로스 페이지 훅** | `useRequireAuth`, `useLogoutFlow`, `useIsMobile` | `shared/hooks/` |
 
 ---
 
@@ -84,30 +77,20 @@ app → pages → widgets → entities → shared
 2. 페이지 컴포넌트 작성 (`{페이지명}Page.tsx`)
 3. `src/pages/index.tsx` 라우터에 경로 추가
 4. `src/shared/lib/paths.ts`에 경로 상수 추가
-5. `src/widgets/navigation/constants.ts`에 메뉴 아이템 추가 (사이드바/모바일 헤더에 노출 시)
-
-### 페이지 slice 내부 구조
-
-현재 어드민 페이지들은 **feature 단위 평탄 구조**를 사용한다. 한 페이지가 다음 파일들로 구성된다.
-
-```
-pages/applications/
-├── ApplicationsPage.tsx        # 최상위 페이지 컴포넌트
-├── index.tsx                   # 외부 노출 배럴
-├── components/                 # 이 페이지 전용 하위 컴포넌트 (예: Sections.tsx)
-├── constants.ts                # 컬럼/필터/상태 라벨 등 상수
-└── types.d.ts                  # 임시 타입 (추후 `@ddd/api` 생성 타입으로 대체)
-```
+5. `src/shared/ui/AdminLayout/constants.ts`에 메뉴 아이템 추가 (사이드바/모바일 헤더에 노출 시)
 
 - 파일이 하나뿐인 단순 페이지(`login`, `error`)는 `{Feature}Page.tsx`만 두고 세부 폴더를 만들지 않는다.
-- 페이지 전용 Drawer/Modal 등 큰 서브 컴포넌트는 페이지 루트(`SemesterRegisterDrawer.tsx`) 또는 `components/` 하위에 둔다.
+- `hooks/`·`lib/`·`constants.ts` 는 실제 파일이 생길 때 만든다.
 
 ---
 
 ## shared/hooks와 shared/lib
 
-| 경로                          | 용도                       |
-| ----------------------------- | -------------------------- |
-| `shared/hooks/useIsMobile.ts` | 모바일 뷰포트 감지 훅      |
-| `shared/lib/cn.ts`            | clsx + tailwind-merge 유틸 |
-| `shared/lib/paths.ts`         | 라우트 경로 상수           |
+| 경로                            | 용도                                 |
+| ------------------------------- | ------------------------------------ |
+| `shared/hooks/useIsMobile.ts`   | 모바일 뷰포트 감지 훅                |
+| `shared/hooks/useRequireAuth.ts`| 보호 라우트 인증 가드                |
+| `shared/hooks/useLogoutFlow.ts` | 로그아웃 흐름 (캐시 정리 + 리다이렉트) |
+| `shared/lib/cn.ts`              | clsx + tailwind-merge 유틸           |
+| `shared/lib/paths.ts`           | 라우트 경로 상수                     |
+| `shared/lib/QueryProvider.tsx`  | TanStack Query Provider              |

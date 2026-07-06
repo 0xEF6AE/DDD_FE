@@ -11,21 +11,35 @@
 
 1. **패키지 의존성**: 의존 방향은 앱에서 패키지로만 허용한다. (`apps/*` → `packages/*`)
 2. **공통 컴포넌트**: 여러 앱에서 사용하는 컴포넌트는 `@ddd/ui`에 작성한다.
-3. **앱 전용 컴포넌트**: 특정 앱에서만 사용하는 컴포넌트는 해당 앱의 `components/`에 작성한다.
-4. **FSD 레이어 의존성**: FSD 구조를 채택한 앱(`apps/admin`)은 다음 단방향 의존성을 강제한다.
+3. **앱 전용 컴포넌트**: 특정 앱에서만 사용하는 컴포넌트는 해당 앱 안에 작성한다.
+4. **apps/admin 2단 구조**: FSD를 폐기하고 `pages`와 `shared` 두 계층만 둔다.
 
    ```
-   app → pages → widgets → entities → shared
-                                   ↘
-                                packages/api
+   pages → shared
+       ↘
+    packages/api
    ```
 
-   - `entities`는 **도메인 비즈니스 로직**(흐름 훅, 도메인 상수/타입)을 담당하며, `packages/api`와 `shared`만 import 한다.
-   - `entities`끼리는 서로 import 하지 않는다(도메인 결합 차단). 두 도메인을 묶는 흐름은 `widgets` 또는 `pages`의 책임이다.
-   - `entities` 하위 도메인 분류는 `packages/api/src/{domain}` 과 **1:1로 맞춘다** (예: `entities/auth/`, `entities/application/`).
-   - 도메인명은 **백엔드 표준 도메인명을 그대로 따른다** (대부분 단수: `cohort`, `application`, `interview`, `user`, `auth`, `google`, `discord`, `notification`, `blog`, `project`, `storage`, `audit`, `health`). `entities/{domain}` 과 `packages/api/src/{domain}` 둘 다 동일 명명을 사용해 백엔드 ↔ 프런트 도메인 매핑을 1:1로 유지한다.
-   - 페이지 slice 이름(`pages/{feature}/`)은 도메인명과 단/복수 표기가 달라도 무방하다 (예: `pages/applications/` ↔ `entities/application/`). 페이지는 화면 단위라 복수형이 자연스러운 경우가 있고, 도메인은 단일 모델 단위라 단수가 자연스럽다.
-   - `entities/{domain}` 내부는 FSD 표준에 따라 `model/`(훅·상수·타입), `ui/`(도메인 전용 UI), `lib/`(도메인 유틸) 등 하위 폴더로 분류한다. 처음에는 `model/`만 두고 필요할 때 점진 확장한다.
+   - **`pages/{page}/`** — 라우트 1:1 페이지 폴더. 그 페이지에서만 쓰는 모든 것(컴포넌트·훅·유틸·상수·타입·폼 스키마)을 **콜로케이션**한다.
+   - **`shared/`** — 2개 이상 페이지가 쓰는 것만 둔다. `ui/`(컴포넌트·레이아웃), `hooks/`, `lib/`(유틸·상수·Provider).
+   - **페이지끼리 import 금지.** `pages/{a}` 가 `pages/{b}` 의 파일을 쓰게 되는 순간 그 파일을 `shared/` 로 승격한다.
+   - **배치 원칙 한 줄**: *쓰는 곳 옆에 둔다. 두 번째 소비자가 생기면 shared 로 올린다.*
+
+5. **페이지 폴더 내부 구조** (완전 평탄화):
+
+   ```
+   pages/{page}/
+   ├── {Page}Page.tsx        # 최상위 페이지 컴포넌트
+   ├── components/           # 페이지 전용 컴포넌트 — 서브폴더·중첩 금지, 한 단계 평탄
+   ├── hooks/                # 페이지 전용 훅 (비즈니스 흐름 훅 포함)
+   ├── lib/                  # 페이지 전용 유틸·직렬화·검증·폼 스키마
+   ├── constants.ts          # 페이지 전용 상수
+   └── types.ts | types.d.ts # 페이지 전용 타입
+   ```
+
+   - 파일이 없는 분류의 폴더는 만들지 않는다. 단순 페이지(`login`, `error`)는 `{Page}Page.tsx` 하나로 충분하다.
+   - **barrel(`index.ts`) 금지.** 모든 import 는 파일 직접 경로로 한다.
+   - **`components/` 하위 서브폴더 금지.** Drawer/Modal 같은 복합 컴포넌트도 형제 파일로 평탄하게 둔다.
 
 ---
 
@@ -35,22 +49,21 @@
 
 ### 2.1 훅 위치 분류
 
-| 분류                                                                      | 위치                                                              | 예시                                                              |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **쿼리/뮤테이션 팩토리** (`queryOptions` / `mutationOptions`)             | `packages/api/src/{domain}/queries.ts`                            | `applicationQueries.getAdminApplications`, `authMutations.logout` |
-| **쿼리키 팩토리**                                                         | `packages/api/src/{domain}/queryKeys.ts`                          | `applicationKeys.adminList`, `cohortKeys.detail`                  |
-| **비즈니스 흐름 훅** (API 호출 + 부수효과: toast, 라우팅, 캐시 정리 등)   | `apps/{app}/src/entities/{domain}/model/`                         | `useLogoutFlow`, `useApplicationsBoard`                           |
-| **UI/플랫폼 훅** (도메인 무관)                                            | `apps/{app}/src/shared/hooks/`                                    | `useIsMobile`, `useTheme`                                         |
+| 분류                                                                    | 위치                                     | 예시                                                              |
+| ----------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| **쿼리/뮤테이션 팩토리** (`queryOptions` / `mutationOptions`)           | `packages/api/src/{domain}/queries.ts`   | `applicationQueries.getAdminApplications`, `authMutations.logout` |
+| **쿼리키 팩토리**                                                       | `packages/api/src/{domain}/queryKeys.ts` | `applicationKeys.adminList`, `cohortKeys.detail`                  |
+| **페이지 전용 훅** (비즈니스 흐름 훅 포함: API 호출 + toast·라우팅·캐시) | `apps/{app}/src/pages/{page}/hooks/`     | `useApplicationsBoard`, `useCreateOrUpdateCohortFlow`             |
+| **크로스 페이지 훅** (2개 이상 페이지·레이아웃에서 사용)                 | `apps/{app}/src/shared/hooks/`           | `useRequireAuth`, `useLogoutFlow`, `useIsMobile`                  |
 
 - `packages/api`는 앱-agnostic을 유지한다. UI 라이브러리(`@heroui/react`), 라우터(`react-router`), 앱 전용 상수(`paths`)에 의존하는 훅은 packages에 둘 수 없다.
 
-### 2.2 컴포넌트의 데이터 접근 패턴 (3단계)
+### 2.2 컴포넌트의 데이터 접근 패턴
 
-| 단계                                                                                                      | 패턴                                                                                                                                                | 위치                                       |
-| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **(a) 옵션 팩토리만으로 충분**                                                                            | `useQuery(xxxQueries.method({ params }))` / `useMutation(xxxMutations.method())` / `useSuspenseQuery(...)` 결과를 그대로 구조 분해해 사용             | 컴포넌트 인라인                            |
-| **(b) 추가 비즈니스 로직** (toast / 라우팅 / 캐시 무효화 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) | 흐름 훅으로 추출 (`useXxxFlow`, `useXxxBoard`, `useXxxForm` 등). 흐름 훅 내부에서도 옵션 팩토리만 사용한다.                                          | `apps/{app}/src/entities/{domain}/model/`  |
-| **(c) 단일 페이지 1회용 + 도메인성 약함**                                                                  | 페이지 slice 내부의 임시 훅. 두 곳 이상에서 반복 등장하면 (b) `entities` 흐름 훅으로 승격한다 (YAGNI).                                                | `apps/{app}/src/pages/{feature}/hooks/`    |
+| 단계                                                                                                        | 패턴                                                                                                                                      | 위치                                    |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| **(a) 옵션 팩토리만으로 충분**                                                                               | `useQuery(xxxQueries.method({ params }))` / `useMutation(xxxMutations.method())` / `useSuspenseQuery(...)` 결과를 그대로 구조 분해해 사용   | 컴포넌트 인라인                          |
+| **(b) 추가 비즈니스 로직** (toast / 라우팅 / 캐시 무효화 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계)   | 흐름 훅으로 추출 (`useXxxFlow`, `useXxxBoard`, `useXxxForm` 등). 흐름 훅 내부에서도 옵션 팩토리만 사용한다.                                  | `apps/{app}/src/pages/{page}/hooks/`    |
 
 **금지 패턴**:
 - `packages/api` 의 wrapper hook (`useAdminApplications`, `useDeleteCohort` 등) 을 컴포넌트·흐름 훅에서 직접 import 하는 것. 옵션 팩토리(`xxxQueries` / `xxxMutations`)를 `useQuery` / `useMutation` 에 전달한다.
@@ -87,7 +100,6 @@
 - 흐름 훅도 wrapper hook 을 사용하지 않는다. `useQuery(xxxQueries.method)` / `useMutation(xxxMutations.method)` 만 사용한다.
 - 반환은 객체 구조 분해가 가능하도록 객체로 반환한다.
 - 쿼리키는 `{domain}Keys` 팩토리를 그대로 사용한다 (캐시 무효화 · prefetch 등).
-- `entities` 끼리 import 금지 (§1 #4 재확인). 두 도메인을 묶는 흐름은 `widgets` 또는 `pages` 책임이다.
 
 ---
 
@@ -98,8 +110,8 @@
 - [ ] 컴포넌트가 단일 책임 원칙을 따르는가? (관심사 분리)
 - [ ] 공통으로 사용될 컴포넌트가 `@ddd/ui`에 있는가?
 - [ ] 앱/패키지 의존 방향이 `apps/* → packages/*` 단방향인가?
-- [ ] FSD 레이어 의존성(`app → pages → widgets → entities → shared`, `entities → packages/api`)을 지켰는가?
-- [ ] `entities` 끼리 서로 import 하지 않는가? (도메인 결합 차단)
+- [ ] 페이지 전용 코드가 `pages/{page}/` 안에 콜로케이션되어 있는가? 페이지끼리 import 하지 않는가? (§1 #4)
+- [ ] 2개 이상 페이지가 쓰는 코드만 `shared/` 에 있는가?
+- [ ] barrel(`index.ts`) 이나 `components/` 하위 서브폴더를 새로 만들지 않았는가? (§1 #5)
 - [ ] 컴포넌트·흐름 훅이 `@ddd/api` 의 wrapper hook (`useXxx`) 을 직접 import 하지 않고, `xxxQueries` / `xxxMutations` 옵션 팩토리를 `useQuery` / `useMutation` 에 전달하는가? (§2.2)
-- [ ] 비즈니스 로직(toast / 라우팅 / 캐시 정리 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) 이 컴포넌트가 아니라 `entities/{domain}/model/` 흐름 훅으로 분리되어 있는가? (§2.2)
-- [ ] `entities/{domain}` 명명이 백엔드 표준 도메인명과 1:1로 일치하는가? (§1 #4)
+- [ ] 비즈니스 로직(toast / 라우팅 / 캐시 정리 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) 이 컴포넌트가 아니라 `pages/{page}/hooks/` 흐름 훅으로 분리되어 있는가? (§2.2)

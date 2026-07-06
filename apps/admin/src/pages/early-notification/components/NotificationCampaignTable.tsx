@@ -2,14 +2,9 @@ import { Button, Table } from "@heroui/react"
 
 import type { NotificationCampaignDto } from "@ddd/api"
 
-import {
-  STATUS_LABEL,
-  STATUS_TONE,
-  canEdit,
-  canPause,
-  canResume,
-  useToggleCampaignScheduleFlow,
-} from "@/entities/notification-campaign"
+import { STATUS_LABEL, STATUS_TONE } from "@/pages/early-notification/lib/campaignConstants"
+import { canEdit, canPause, canResume } from "@/pages/early-notification/lib/statusFlow"
+import { useToggleCampaignScheduleFlow } from "@/pages/early-notification/hooks/useToggleCampaignScheduleFlow"
 import { cn } from "@/shared/lib/cn"
 
 type NotificationCampaignTableProps = {

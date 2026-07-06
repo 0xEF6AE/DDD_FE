@@ -7,7 +7,7 @@ import type { BlogPostDto } from "@ddd/api"
 
 import { ErrorFallback } from "@/shared/ui/ErrorFallback"
 import { FlexBox } from "@/shared/ui/FlexBox"
-import { TitleSection } from "@/widgets/heading"
+import { TitleSection } from "@/shared/ui/Heading"
 
 import { BlogPostFormDrawer } from "./components/BlogPostFormDrawer"
 import { BlogPostsList } from "./components/BlogPostsList"

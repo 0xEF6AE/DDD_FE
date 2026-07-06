@@ -14,10 +14,8 @@
 import { Toast } from "@heroui/react"
 
 <QueryProvider>
-  <ThemeProvider>
-    <Router />
-    <Toast.Provider placement="top end" />
-  </ThemeProvider>
+  <Router />
+  <Toast.Provider placement="top end" />
 </QueryProvider>
 ```
 

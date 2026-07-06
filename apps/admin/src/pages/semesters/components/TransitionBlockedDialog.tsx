@@ -1,6 +1,6 @@
 import { AlertDialog, Button } from "@heroui/react"
 
-import type { PartsRecruitingViolation } from "@/entities/cohort"
+import type { PartsRecruitingViolation } from "@/pages/semesters/lib/validateCohortPartsForRecruiting"
 
 interface Props {
   isOpen: boolean

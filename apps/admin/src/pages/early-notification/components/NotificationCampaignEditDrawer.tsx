@@ -5,12 +5,8 @@ import { Button, Drawer, Input, TextArea } from "@heroui/react"
 
 import type { NotificationCampaignDto } from "@ddd/api"
 
-import {
-  buildCampaignFormDefaults,
-  campaignFormSchema,
-  useUpdateCampaignFlow,
-  type CampaignFormValues,
-} from "@/entities/notification-campaign"
+import { buildCampaignFormDefaults, campaignFormSchema, type CampaignFormValues } from "@/pages/early-notification/lib/campaignForm"
+import { useUpdateCampaignFlow } from "@/pages/early-notification/hooks/useUpdateCampaignFlow"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { FormField } from "@/shared/ui/FormField"
 import { Section } from "@/shared/ui/Section"

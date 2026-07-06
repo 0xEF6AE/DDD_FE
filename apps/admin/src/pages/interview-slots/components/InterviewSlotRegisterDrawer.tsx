@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query"
 import { cohortQueries } from "@ddd/api"
 import type { CohortDto, CohortPartConfigDto } from "@ddd/api"
 
-import { useCreateOrUpdateSlotFlow } from "@/entities/interview-slot"
+import { useCreateOrUpdateSlotFlow } from "@/pages/interview-slots/hooks/useCreateOrUpdateSlotFlow"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { FormField } from "@/shared/ui/FormField"
 

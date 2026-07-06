@@ -10,7 +10,7 @@ import type { ProjectDto } from "@ddd/api"
 
 import { ErrorFallback } from "@/shared/ui/ErrorFallback"
 import { FlexBox } from "@/shared/ui/FlexBox"
-import { TitleSection } from "@/widgets/heading"
+import { TitleSection } from "@/shared/ui/Heading"
 
 import { DeleteProjectDialog } from "./components/DeleteProjectDialog"
 import { ProjectFormDrawer } from "./components/ProjectFormDrawer"

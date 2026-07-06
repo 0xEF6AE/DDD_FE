@@ -349,7 +349,7 @@ A. 현재 워크플로는 main 푸시만 트리거. preview 가 필요해지면 
 | 환경변수 진입점 | `apps/admin/src/main.tsx` |
 | API 클라이언트 + 401/refresh 인터셉터 + origin 자동 결합 | `packages/api/src/client.ts` |
 | 로그인 진입점 (OAuth top-level navigation) | `apps/admin/src/pages/login/LoginPage.tsx` |
-| 로그아웃 흐름 | `apps/admin/src/entities/auth/model/useLogoutFlow.ts` |
+| 로그아웃 흐름 | `apps/admin/src/shared/hooks/useLogoutFlow.ts` |
 | 라우트 경로 상수 | `apps/admin/src/shared/lib/paths.ts` |
 | CI/CD 워크플로 | `.github/workflows/deploy-admin.yml` |
 | 크롤러 차단 | `apps/admin/public/robots.txt`, `apps/admin/index.html` |

@@ -6,26 +6,19 @@ import { Button } from "@heroui/react"
 
 import type { CohortDto } from "@ddd/api"
 
-import {
-  serializeCohortToForm,
-  useTransitionCohortStatusFlow,
-  type PartsRecruitingViolation,
-} from "@/entities/cohort"
+import { serializeCohortToForm } from "@/pages/semesters/lib/serialize"
+import { useTransitionCohortStatusFlow } from "@/pages/semesters/hooks/useTransitionCohortStatusFlow"
+import { type PartsRecruitingViolation } from "@/pages/semesters/lib/validateCohortPartsForRecruiting"
 import { FlexBox } from "@/shared/ui/FlexBox"
 import { GridBox } from "@/shared/ui/GridBox"
 import { StatCard } from "@/shared/ui/StatCard"
-import { TitleSection } from "@/widgets/heading"
+import { TitleSection } from "@/shared/ui/Heading"
 
-import {
-  SemesterRegisterDrawer,
-  SemesterTableSection,
-  TransitionBlockedDialog,
-} from "./components"
-import {
-  useSemesterRegistrationMode,
-  useSemestersTableData,
-  type SemestersSummary,
-} from "./hooks"
+import { SemesterRegisterDrawer } from "@/pages/semesters/components/SemesterRegisterDrawer"
+import { SemesterTableSection } from "@/pages/semesters/components/SemesterTableSection"
+import { TransitionBlockedDialog } from "@/pages/semesters/components/TransitionBlockedDialog"
+import { useSemesterRegistrationMode } from "@/pages/semesters/hooks/useSemesterRegistrationMode"
+import { useSemestersTableData, type SemestersSummary } from "@/pages/semesters/hooks/useSemestersTableData"
 
 /** 기수 관리 페이지 */
 export default function SemestersPage() {

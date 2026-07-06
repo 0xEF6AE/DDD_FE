@@ -13,8 +13,8 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 >
 > - **범용 React/TypeScript 컨벤션**(선언 스타일·네이밍·조건문·타입·스타일링·테스트)은 `seokit-frontend:seokit-rules` 스킬이 단일 출처다. `.tsx`/`.ts` 작업 시 자동 로드된다.
 > - **이 모노레포 고유 구조 규약**은 **[CODE_RULES.md](./CODE_RULES.md)** 를 기준으로 한다. 새 모듈/훅 추가 시 위치 결정에 직결되므로 반드시 확인한다.
->   1. `§1 프로젝트 구조` — 패키지 의존성 + FSD 레이어 의존성(`app → pages → widgets → entities → shared`, `entities → packages/api`).
->   2. `§2 커스텀 훅 위치 & 데이터 접근` — 훅 위치 분류 (쿼리/뮤테이션 팩토리 = `packages/api`, 비즈니스 흐름 훅 = `entities/{domain}/model/`, UI/플랫폼 훅 = `shared/hooks/`) + wrapper hook 금지 패턴.
+>   1. `§1 프로젝트 구조` — 패키지 의존성 + apps/admin 2단 구조(`pages → shared`, `pages → packages/api`). 페이지 전용 코드는 `pages/{page}/` 콜로케이션, 2개 이상 페이지 공용만 `shared/`. barrel·서브폴더 금지.
+>   2. `§2 커스텀 훅 위치 & 데이터 접근` — 훅 위치 분류 (쿼리/뮤테이션 팩토리 = `packages/api`, 페이지 전용 훅 = `pages/{page}/hooks/`, 크로스 페이지 훅 = `shared/hooks/`) + wrapper hook 금지 패턴.
 > - 작업이 위 규칙을 위반하지 않는지 확인하고, 위반이 발견되면 그 자리에서 수정하거나 사용자와 합의 후 진행한다.
 > - PR 직전 CODE_RULES.md `§3 PR 체크리스트` 를 다시 한 번 검토한다.
 

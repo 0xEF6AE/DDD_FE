@@ -2,7 +2,7 @@ import { Button, Table } from "@heroui/react"
 
 import type { CohortDto, ProjectDto, ProjectPlatform } from "@ddd/api"
 
-import { PLATFORM_LABEL } from "@/entities/project"
+import { PLATFORM_LABEL } from "@/pages/projects/constants"
 import { cn } from "@/shared/lib/cn"
 
 type ProjectsTableProps = {

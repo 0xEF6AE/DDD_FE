@@ -140,10 +140,10 @@ POST /api/v1/auth/logout
 - 응답 204. 쿠키 모두 삭제됨.
 - 프론트는 호출 후 **로컬 인증 상태 / TanStack Query 캐시 초기화 + 로그인 페이지 redirect**.
 
-### 현재 구현 — `apps/admin/src/entities/auth/model/useLogoutFlow.ts`
+### 현재 구현 — `apps/admin/src/shared/hooks/useLogoutFlow.ts`
 
 ```tsx
-import { useLogoutFlow } from "@/entities/auth"
+import { useLogoutFlow } from "@/shared/hooks/useLogoutFlow"
 
 const { logoutAndRedirect, isPending } = useLogoutFlow()
 // 클릭 시 logoutAndRedirect() 호출 → 성공 시 queryClient.clear() + window.location.replace("/")
@@ -240,7 +240,7 @@ VITE_API_URL=
 | Auth mutations(`logout`, `refreshToken`, `withdrawal`) | `packages/api/src/auth/queries.ts` (`authMutations`)            |
 | API 초기화(`onUnauthorized`)      | `apps/admin/src/main.tsx`                                       |
 | Google 로그인 버튼/진입점         | `apps/admin/src/pages/login/LoginPage.tsx`                      |
-| 로그아웃 흐름 훅                  | `apps/admin/src/entities/auth/model/useLogoutFlow.ts`           |
+| 로그아웃 흐름 훅                  | `apps/admin/src/shared/hooks/useLogoutFlow.ts`           |
 | 라우트 경로 상수                  | `apps/admin/src/shared/lib/paths.ts`                            |
 | Vite dev proxy (`/api → localhost:3000`) | `apps/admin/vite.config.ts`                              |
 | 인증 가드 유틸 (TODO — `/users/me` 추가 후) | `apps/admin/src/shared/lib/auth.ts`                       |

@@ -1,9 +1,7 @@
 import { useState } from "react"
-import { TitleSection } from "@/widgets/heading"
-import {
-  useApplicationsBoard,
-  type ApplicationStatus,
-} from "@/entities/application"
+import { TitleSection } from "@/shared/ui/Heading"
+import { useApplicationsBoard } from "@/pages/applications/hooks/useApplicationsBoard"
+import { type ApplicationStatus } from "@/pages/applications/constants"
 import { CardSection } from "./components/Sections"
 import { ApplicationFilters } from "./components/ApplicationFilters"
 import { ApplicationTable } from "./components/ApplicationTable"

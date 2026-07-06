@@ -15,7 +15,7 @@ import type {
   ProjectDto,
 } from "@ddd/api"
 
-import { STATUS_LABEL } from "../../../entities/cohort"
+import { STATUS_LABEL } from "../lib/statusFlow"
 
 export interface CohortRow extends CohortDto {
   /** 해당 cohort 의 지원자 수. fetch 실패 시 null → UI 에 "-" */

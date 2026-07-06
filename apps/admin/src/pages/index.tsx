@@ -6,7 +6,7 @@ import InterviewSlotsPage from "./interview-slots/InterviewSlotsPage"
 import ProjectsPage from "./projects/ProjectsPage"
 import BlogPostsPage from "./blog-posts/BlogPostsPage"
 import { ErrorPage } from "./error/ErrorPage"
-import { AdminLayout } from "@/widgets/admin-layout/AdminLayout"
+import { AdminLayout } from "@/shared/ui/AdminLayout/AdminLayout"
 import ApplicationsPage from "./applications/ApplicationsPage"
 
 /** 라우터 설정 (리액트 라우터 Data Mode 기반) */

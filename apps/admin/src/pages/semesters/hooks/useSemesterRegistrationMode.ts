@@ -6,10 +6,8 @@ import { cohortQueries } from "@ddd/api"
 
 import type { CohortDto } from "@ddd/api"
 
-import {
-  isCohortComplete,
-  serializeCohortToForm,
-} from "../../../entities/cohort"
+import { isCohortComplete } from "../lib/completion"
+import { serializeCohortToForm } from "../lib/serialize"
 
 import type { SemesterRegisterForm } from "../types"
 
