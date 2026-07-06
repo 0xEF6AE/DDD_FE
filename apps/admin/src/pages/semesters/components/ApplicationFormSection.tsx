@@ -138,7 +138,7 @@ export function ApplicationFormSection({ invalidCells }: Props) {
                     >
                       질문 {qIndex + 1}
                     </label>
-                    {parts[part].questions.length > 1 && (
+                    {parts[part].questions.length > 0 && (
                       <Button
                         isIconOnly
                         variant="outline"
