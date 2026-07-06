@@ -1,17 +1,37 @@
-import { useState } from "react"
+import { Suspense, useState } from "react"
+import { ErrorBoundary } from "react-error-boundary"
+
 import { TitleSection } from "@/shared/ui/Heading"
+import { ErrorFallback } from "@/shared/ui/ErrorFallback"
 import { useApplicationsBoard } from "@/pages/applications/hooks/useApplicationsBoard"
 import { type ApplicationStatus } from "@/pages/applications/constants"
 import { CardSection } from "./components/Sections"
 import { ApplicationFilters } from "./components/ApplicationFilters"
 import { ApplicationTable } from "./components/ApplicationTable"
+import { ApplicationsTableSkeleton } from "./components/ApplicationsTableSkeleton"
 import { ApplicationDetailDrawer } from "./components/ApplicationDetailDrawer"
+
+export default function ApplicationsPage() {
+  return (
+    <div className="w-full space-y-5 p-5">
+      <TitleSection
+        title="지원자 관리"
+        description="지원서를 검토하고 상태를 변경합니다."
+      />
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Suspense fallback={<ApplicationsTableSkeleton />}>
+          <ApplicationsContent />
+        </Suspense>
+      </ErrorBoundary>
+    </div>
+  )
+}
 
 /**
  * undefined = "아직 사용자가 선택하지 않음(→ 최신 기수 자동 적용)"
  * null      = 사용자가 명시적으로 "전체 기수" 선택
  */
-export default function ApplicationsPage() {
+function ApplicationsContent() {
   const [searchText, setSearchText] = useState("")
   const [selectedCohortId, setSelectedCohortId] = useState<number | null | undefined>(undefined)
   const [selectedCohortPartId, setSelectedCohortPartId] = useState<number | undefined>(undefined)
@@ -39,12 +59,7 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="w-full space-y-5 p-5">
-      <TitleSection
-        title="지원자 관리"
-        description="지원서를 검토하고 상태를 변경합니다."
-      />
-
+    <>
       <CardSection
         total={cards.length}
         counts={counts}
@@ -76,6 +91,6 @@ export default function ApplicationsPage() {
         onOpenChange={(open) => !open && setSelectedApplicationId(null)}
         applicationId={selectedApplicationId}
       />
-    </div>
+    </>
   )
 }

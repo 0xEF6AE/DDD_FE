@@ -1,6 +1,8 @@
 import { Table } from "@heroui/react"
 import { type ApplicationDto, type CohortDto } from "@ddd/api"
 
+import { EmptyState } from "@/shared/ui/EmptyState"
+
 type ApplicationTableProps = {
   applications: ApplicationDto[]
   cohorts: CohortDto[]
@@ -29,6 +31,10 @@ export const ApplicationTable = ({
     id: number
     name: string
   }>
+
+  if (applications.length === 0) {
+    return <EmptyState>조건에 맞는 지원자가 없습니다.</EmptyState>
+  }
 
   return (
     <Table>

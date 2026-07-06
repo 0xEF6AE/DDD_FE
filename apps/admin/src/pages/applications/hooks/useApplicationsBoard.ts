@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query"
 import {
   applicationQueries,
   cohortQueries,
@@ -50,8 +50,7 @@ export const useApplicationsBoard = ({
   status,
   searchText,
 }: UseApplicationsBoardArgs) => {
-  const { data: cohortsData } = useQuery(cohortQueries.getCohorts())
-  const cohorts = useMemo(() => cohortsData ?? [], [cohortsData])
+  const { data: cohorts } = useSuspenseQuery(cohortQueries.getCohorts())
 
   const effectiveCohortId = useMemo(
     () =>
@@ -61,30 +60,31 @@ export const useApplicationsBoard = ({
     [cohortIdInput, cohorts],
   )
 
-  const { data: cardData } = useQuery(
-    applicationQueries.getAdminApplications({
-      params: {
-        ...(effectiveCohortId !== undefined && { cohortId: effectiveCohortId }),
-        ...(cohortPartId !== undefined && { cohortPartId }),
-      },
-    }),
-  )
-
-  const { data: tableData } = useQuery(
-    applicationQueries.getAdminApplications({
-      params: {
-        ...(effectiveCohortId !== undefined && { cohortId: effectiveCohortId }),
-        ...(cohortPartId !== undefined && { cohortPartId }),
-        ...(status !== undefined && { status }),
-      },
-    }),
-  )
-
-  const { data: slotData } = useQuery(
-    interviewQueries.getInterviewSlots({
-      params: effectiveCohortId !== undefined ? { cohortId: effectiveCohortId } : {},
-    }),
-  )
+  // cohorts 는 effectiveCohortId 도출에 필요해 먼저 받고, 나머지 3개는
+  // useSuspenseQueries 로 묶어 병렬 요청한다(개별 useSuspenseQuery 를 나열하면
+  // 하나씩 suspend 되며 네트워크 워터폴이 발생한다).
+  const [{ data: cardData }, { data: tableData }, { data: slotData }] =
+    useSuspenseQueries({
+      queries: [
+        applicationQueries.getAdminApplications({
+          params: {
+            ...(effectiveCohortId !== undefined && { cohortId: effectiveCohortId }),
+            ...(cohortPartId !== undefined && { cohortPartId }),
+          },
+        }),
+        applicationQueries.getAdminApplications({
+          params: {
+            ...(effectiveCohortId !== undefined && { cohortId: effectiveCohortId }),
+            ...(cohortPartId !== undefined && { cohortPartId }),
+            ...(status !== undefined && { status }),
+          },
+        }),
+        interviewQueries.getInterviewSlots({
+          params:
+            effectiveCohortId !== undefined ? { cohortId: effectiveCohortId } : {},
+        }),
+      ],
+    })
 
   const interviewScheduledByApplicationId = useMemo(() => {
     const map = new Map<number, string>()
