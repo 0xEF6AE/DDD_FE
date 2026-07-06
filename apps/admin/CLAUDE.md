@@ -20,7 +20,8 @@ DDD 동아리 운영진용 어드민 페이지. Vite + React 19, Tailwind CSS 4,
 | 문서 | 내용 |
 | ---- | ---- |
 | **[docs/admin-architecture.md](../../docs/admin-architecture.md)** | FSD 디렉터리 구조, 레이어 규칙, 훅 위치 결정, 새 페이지 추가 방법 |
-| **[docs/hero-ui.txt](../../docs/hero-ui.txt)** | HeroUI v3 컴포넌트 API (UI 작업 시 단일 출처) |
+| **[docs/admin-heroui.md](../../docs/admin-heroui.md)** | HeroUI v3 사용 규약 — import 형태, `shared/ui` 배치 기준, 금지 패턴 (UI 작업 전 확인) |
+| **[docs/hero-ui.txt](../../docs/hero-ui.txt)** | HeroUI v3 컴포넌트 API (props·slots 단일 출처) |
 | **[docs/admin-toast.md](../../docs/admin-toast.md)** | 토스트(`toast.success/error/info/warning`) 표준 패턴 |
 | **[docs/admin-auth.md](../../docs/admin-auth.md)** | 인증·세션·보호 라우트·API 클라이언트 계약 |
 | **[docs/admin-overlay-placement.md](../../docs/admin-overlay-placement.md)** | RAC collection 트리 안에서 오버레이 배치 규칙 |

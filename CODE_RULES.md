@@ -1,31 +1,13 @@
-# 코드 규약 및 철학 (Code Rules & Philosophy)
+# DDD 모노레포 구조 규약 (Structure Rules)
 
-## 1. 목적 및 핵심 철학
-
-- 본 문서는 프로젝트의 실행 규약이자 코드 작성 철학을 담은 문서이다.
-- 구현, 리뷰, 테스트, PR 승인 판단은 모두 본 문서를 기준으로 한다.
-
-**[ 7대 핵심 개발 철학 ]**
-
-1. **return 연산 제한**: `return`문에는 연산이나 복잡한 식을 최대한 배제하고 읽기 깔끔하게 작성한다.
-2. **코드 흐름 (Top-Down)**: 코드는 고수준(정책)에서 저수준(구현 세부사항) 순서로 읽기 쉽게 작성한다.
-3. **선언적 조건문**: 제어문(`if`)이 복잡해질 경우 가독성을 위해 맵 기반 분기 (lookup table)를 적극 활용한다.
-4. **화살표 함수 지향**: 가독성이 명백한 경우 일반 `function` 대신 `const` 화살표 함수로 개발한다.
-5. **Self-Documenting Code**: 코드를 설명하는 주석(어떻게 동작하는지)은 배제하고, 명확한 네이밍으로 표현한다. (단, 도메인 용어나 비즈니스 로직 상 영어로 설명하기 너무 어렵거나 의미가 퇴색되는 경우, 과감히 **한글 변수명이나 Enum 값**을 사용하는 것을 허용한다.)
-   - **축약어 지양**: 변수명은 의미를 알 수 없는 축약어(예: `m`, `app`, `req`) 대신 의도가 명확히 드러나는 풀네임(예: `member`, `application`, `request`)을 지향한다.
-6. **복잡한 합성 타입 배제**: `Pick`, `Omit` 등이 과도하게 얽힌 어려운 유틸리티 합성 타입 사용을 지양한다.
-7. **관심사 분리**: 각 함수/모듈/컴포넌트는 단일 책임을 가지며, 역할이 섞이지 않도록 관심사를 철저히 분리한다.
+- 본 문서는 **이 모노레포에 고유한** 구조·의존성·훅 배치 규칙만 담는다.
+- **범용 React/TypeScript 코드 컨벤션**(함수 선언 스타일·네이밍·조건문·타입·스타일링·테스트 등)은 `seokit-frontend:seokit-rules` 스킬이 단일 출처다. `.tsx`/`.ts` 작성·수정 시 자동 로드된다.
+  - 참고: 선언 스타일은 seokit 규약(**named `function` 지향**)을 따른다. 과거 이 문서의 "화살표 함수 지향" 규칙은 폐기.
+- 구현·리뷰·리팩터링 판단: 구조는 본 문서, 컨벤션은 seokit-rules 를 기준으로 한다.
 
 ---
 
-## 2. 규칙 레벨
-
-- `MUST`: 반드시 준수
-- `SHOULD`: 특별한 이유가 없으면 준수
-
-## 3. MUST 규칙
-
-### 3.1 프로젝트 구조
+## 1. 프로젝트 구조 `MUST`
 
 1. **패키지 의존성**: 의존 방향은 앱에서 패키지로만 허용한다. (`apps/*` → `packages/*`)
 2. **공통 컴포넌트**: 여러 앱에서 사용하는 컴포넌트는 `@ddd/ui`에 작성한다.
@@ -45,175 +27,79 @@
    - 페이지 slice 이름(`pages/{feature}/`)은 도메인명과 단/복수 표기가 달라도 무방하다 (예: `pages/applications/` ↔ `entities/application/`). 페이지는 화면 단위라 복수형이 자연스러운 경우가 있고, 도메인은 단일 모델 단위라 단수가 자연스럽다.
    - `entities/{domain}` 내부는 FSD 표준에 따라 `model/`(훅·상수·타입), `ui/`(도메인 전용 UI), `lib/`(도메인 유틸) 등 하위 폴더로 분류한다. 처음에는 `model/`만 두고 필요할 때 점진 확장한다.
 
-### 3.2 React 컴포넌트
+---
 
-1. **컴포넌트 분리 기준**: 컴포넌트는 재사용 가능성, 복잡도, 관심사에 따라 적절히 분리한다.
-2. **Props 타입 정의**: 컴포넌트 Props는 `interface`로 정의하고, 컴포넌트명 + `Props` 형식을 따른다.
-   ```tsx
-   interface ButtonProps {
-     variant: "primary" | "secondary";
-     children: React.ReactNode;
-   }
-   ```
-3. **컴포넌트 선언**: 화살표 함수로 선언하고, `export`는 named export를 기본으로 한다.
-   ```tsx
-   export const Button = ({ variant, children }: ButtonProps) => {
-     return <button className={cn(buttonVariants({ variant }))}>{children}</button>;
-   };
-   ```
+## 2. 커스텀 훅 위치 & 데이터 접근 `MUST`
 
-### 3.3 커스텀 훅
+훅 기본 규약(네이밍 `use*`, 단일 책임, 객체 반환)은 seokit-rules 를 따른다. 여기서는 **위치 분류**와 **서버 상태 접근 패턴**만 규정한다.
 
-1. **네이밍**: 커스텀 훅은 `use` 접두사를 사용한다. (예: `useAuth`, `useMember`)
-2. **단일 책임**: 하나의 훅은 하나의 관심사만 다룬다.
-3. **반환값**: 객체 구조 분해가 가능하도록 객체로 반환한다.
+### 2.1 훅 위치 분류
 
-   ```tsx
-   const useAuth = () => {
-     const [user, setUser] = useState<User | null>(null);
-     const isAuthenticated = user !== null;
+| 분류                                                                      | 위치                                                              | 예시                                                              |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **쿼리/뮤테이션 팩토리** (`queryOptions` / `mutationOptions`)             | `packages/api/src/{domain}/queries.ts`                            | `applicationQueries.getAdminApplications`, `authMutations.logout` |
+| **쿼리키 팩토리**                                                         | `packages/api/src/{domain}/queryKeys.ts`                          | `applicationKeys.adminList`, `cohortKeys.detail`                  |
+| **비즈니스 흐름 훅** (API 호출 + 부수효과: toast, 라우팅, 캐시 정리 등)   | `apps/{app}/src/entities/{domain}/model/`                         | `useLogoutFlow`, `useApplicationsBoard`                           |
+| **UI/플랫폼 훅** (도메인 무관)                                            | `apps/{app}/src/shared/hooks/`                                    | `useIsMobile`, `useTheme`                                         |
 
-     return { user, isAuthenticated, setUser };
-   };
-   ```
+- `packages/api`는 앱-agnostic을 유지한다. UI 라이브러리(`@heroui/react`), 라우터(`react-router`), 앱 전용 상수(`paths`)에 의존하는 훅은 packages에 둘 수 없다.
 
-4. **훅 위치 분류**: 훅의 책임 범위에 따라 위치를 구분한다.
+### 2.2 컴포넌트의 데이터 접근 패턴 (3단계)
 
-   | 분류                                                                      | 위치                                                              | 예시                                                              |
-   | ------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-   | **쿼리/뮤테이션 팩토리** (`queryOptions` / `mutationOptions`)             | `packages/api/src/{domain}/queries.ts`                            | `applicationQueries.getAdminApplications`, `authMutations.logout` |
-   | **쿼리키 팩토리**                                                         | `packages/api/src/{domain}/queryKeys.ts`                          | `applicationKeys.adminList`, `cohortKeys.detail`                  |
-   | **비즈니스 흐름 훅** (API 호출 + 부수효과: toast, 라우팅, 캐시 정리 등)   | `apps/{app}/src/entities/{domain}/model/`                         | `useLogoutFlow`, `useApplicationsBoard`                           |
-   | **UI/플랫폼 훅** (도메인 무관)                                            | `apps/{app}/src/shared/hooks/`                                    | `useIsMobile`, `useTheme`                                         |
+| 단계                                                                                                      | 패턴                                                                                                                                                | 위치                                       |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **(a) 옵션 팩토리만으로 충분**                                                                            | `useQuery(xxxQueries.method({ params }))` / `useMutation(xxxMutations.method())` / `useSuspenseQuery(...)` 결과를 그대로 구조 분해해 사용             | 컴포넌트 인라인                            |
+| **(b) 추가 비즈니스 로직** (toast / 라우팅 / 캐시 무효화 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) | 흐름 훅으로 추출 (`useXxxFlow`, `useXxxBoard`, `useXxxForm` 등). 흐름 훅 내부에서도 옵션 팩토리만 사용한다.                                          | `apps/{app}/src/entities/{domain}/model/`  |
+| **(c) 단일 페이지 1회용 + 도메인성 약함**                                                                  | 페이지 slice 내부의 임시 훅. 두 곳 이상에서 반복 등장하면 (b) `entities` 흐름 훅으로 승격한다 (YAGNI).                                                | `apps/{app}/src/pages/{feature}/hooks/`    |
 
-   - `packages/api`는 앱-agnostic을 유지한다. UI 라이브러리(`@heroui/react`), 라우터(`react-router`), 앱 전용 상수(`paths`)에 의존하는 훅은 packages에 둘 수 없다.
+**금지 패턴**:
+- `packages/api` 의 wrapper hook (`useAdminApplications`, `useDeleteCohort` 등) 을 컴포넌트·흐름 훅에서 직접 import 하는 것. 옵션 팩토리(`xxxQueries` / `xxxMutations`)를 `useQuery` / `useMutation` 에 전달한다.
 
-5. **컴포넌트의 데이터 접근 패턴 (3단계)**: 컴포넌트가 서버 상태를 다룰 때는 단계적으로 위치를 정한다.
+  ```tsx
+  // ❌ wrapper hook
+  const { data } = useAdminApplications({ params: { cohortId: 1 } })
 
-   | 단계                                                                                                      | 패턴                                                                                                                                                | 위치                                       |
-   | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-   | **(a) 옵션 팩토리만으로 충분**                                                                            | `useQuery(xxxQueries.method({ params }))` / `useMutation(xxxMutations.method())` / `useSuspenseQuery(...)` 결과를 그대로 구조 분해해 사용             | 컴포넌트 인라인                            |
-   | **(b) 추가 비즈니스 로직** (toast / 라우팅 / 캐시 무효화 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) | 흐름 훅으로 추출 (`useXxxFlow`, `useXxxBoard`, `useXxxForm` 등). 흐름 훅 내부에서도 옵션 팩토리만 사용한다.                                          | `apps/{app}/src/entities/{domain}/model/`  |
-   | **(c) 단일 페이지 1회용 + 도메인성 약함**                                                                  | 페이지 slice 내부의 임시 훅. 두 곳 이상에서 반복 등장하면 (b) `entities` 흐름 훅으로 승격한다 (YAGNI).                                                | `apps/{app}/src/pages/{feature}/hooks/`    |
+  // ✅ 옵션 팩토리 + 표준 훅
+  const { data } = useQuery(
+    applicationQueries.getAdminApplications({ params: { cohortId: 1 } })
+  )
+  ```
 
-   **금지 패턴**:
-   - `packages/api` 의 wrapper hook (`useAdminApplications`, `useDeleteCohort` 등) 을 컴포넌트·흐름 훅에서 직접 import 하는 것. 옵션 팩토리(`xxxQueries` / `xxxMutations`)를 `useQuery` / `useMutation` 에 전달한다.
+- 동일 컴포넌트가 같은 옵션 팩토리를 의미가 다른 params 로 N번 호출하고 그 결과를 컴포넌트 내부에서 추가 가공하는 경우 — 두 호출을 하나의 의미 단위로 묶어 (b) 흐름 훅으로 추출한다.
 
-     ```tsx
-     // ❌ wrapper hook
-     const { data } = useAdminApplications({ params: { cohortId: 1 } })
+  ```tsx
+  // ❌ 페이지가 두 쿼리 + 가공까지 끌어안음
+  const { data: cardApplications } = useAdminApplications({ params: { cohortId } })
+  const { data: tableApplications } = useAdminApplications({ params: { cohortId, status } })
+  const counts = useMemo(...)
+  const filteredApplications = useMemo(...)
 
-     // ✅ 옵션 팩토리 + 표준 훅
-     const { data } = useQuery(
-       applicationQueries.getAdminApplications({ params: { cohortId: 1 } })
-     )
-     ```
+  // ✅ 흐름 훅 한 번으로 데이터 조립
+  const { cards, tableRows, counts, contextLabel } = useApplicationsBoard({
+    cohortId,
+    cohortPartId,
+    status,
+    searchText,
+  })
+  ```
 
-   - 동일 컴포넌트가 같은 옵션 팩토리를 의미가 다른 params 로 N번 호출하고 그 결과를 컴포넌트 내부에서 추가 가공하는 경우 — 두 호출을 하나의 의미 단위로 묶어 (b) 흐름 훅으로 추출한다.
-
-     ```tsx
-     // ❌ 페이지가 두 쿼리 + 가공까지 끌어안음
-     const { data: cardApplications } = useAdminApplications({ params: { cohortId } })
-     const { data: tableApplications } = useAdminApplications({ params: { cohortId, status } })
-     const counts = useMemo(...)
-     const filteredApplications = useMemo(...)
-
-     // ✅ 흐름 훅 한 번으로 데이터 조립
-     const { cards, tableRows, counts, contextLabel } = useApplicationsBoard({
-       cohortId,
-       cohortPartId,
-       status,
-       searchText,
-     })
-     ```
-
-   **흐름 훅 작성 규약**:
-   - 흐름 훅도 wrapper hook 을 사용하지 않는다. `useQuery(xxxQueries.method)` / `useMutation(xxxMutations.method)` 만 사용한다.
-   - 반환은 객체 구조 분해가 가능하도록 객체로 반환한다 (§3.3 #3 재확인).
-   - 쿼리키는 `{domain}Keys` 팩토리를 그대로 사용한다 (캐시 무효화 · prefetch 등).
-   - `entities` 끼리 import 금지 (§3.1 #4 재확인). 두 도메인을 묶는 흐름은 `widgets` 또는 `pages` 책임이다.
-
-### 3.4 상태 관리
-
-1. **로컬 상태 우선**: 가능한 컴포넌트 로컬 상태(`useState`)를 우선 사용한다.
-2. **Props Drilling 회피**: 3단계 이상 props가 전달되면 Context 또는 상태 관리 라이브러리 도입을 검토한다.
-3. **서버 상태 분리**: API 응답 데이터(서버 상태)와 UI 상태는 명확히 구분한다.
-
-### 3.5 스타일링 (Tailwind CSS)
-
-1. **클래스 병합**: 조건부 클래스 조합은 `cn()` 유틸리티(`clsx` + `tailwind-merge`)를 사용한다.
-2. **컴포넌트 변형**: 복수의 variant가 있는 컴포넌트는 `cva()`(class-variance-authority)로 정의한다.
-3. **디자인 토큰**: 색상, 타이포그래피, 스페이싱은 `@ddd/ui/tokens`에 정의된 Tailwind 테마 값을 사용한다. 임의의 하드코딩 값(`text-[13px]`, `bg-[#fff]`) 사용을 지양한다.
-4. **임의값(Arbitrary Values) 지양**: 너비·높이·간격·폰트 크기 등은 Tailwind의 정의된 스케일 값을 사용하고, `w-[400px]`, `h-[24px]`, `p-[12px]` 같은 대괄호 임의값 표기를 지양한다.
-
-   ```tsx
-   // ❌ 임의값
-   <div className="w-[400px] h-[24px] mt-[12px]" />
-
-   // ✅ Tailwind 스케일
-   <div className="w-100 h-6 mt-3" />
-   ```
-
-   디자인 시스템에 정의되지 않아 임의값이 반드시 필요한 경우에만 예외적으로 허용한다.
-
-   ```tsx
-   const buttonVariants = cva("rounded font-medium", {
-     variants: {
-       variant: {
-         primary: "bg-primary text-primary-foreground",
-         secondary: "bg-secondary text-secondary-foreground",
-       },
-     },
-   });
-
-   export const Button = ({ variant, className, ...props }: ButtonProps) => {
-     return <button className={cn(buttonVariants({ variant }), className)} {...props} />;
-   };
-   ```
-
-### 3.6 API 통신
-
-1. **타입 정의**: API 요청/응답 타입은 명시적으로 정의한다.
-2. **에러 처리**: API 호출 시 에러 상황을 반드시 처리한다.
-3. **로딩 상태**: 비동기 작업 시 로딩 상태를 사용자에게 표시한다.
-
-### 3.7 코드 작성 (TypeScript)
-
-1. **타입 안정성**: `any`는 금지하고 `unknown` + 타입 가드로 타입을 안전하게 좁힌다.
-2. **매직 넘버/스트링**: 의미를 알 수 없는 숫자나 문자열은 상수 또는 Enum으로 분리한다.
-3. **Null 체크**: Optional Chaining(`?.`)과 Nullish Coalescing(`??`)을 적절히 활용한다.
-
-### 3.8 테스트
-
-1. **컴포넌트 테스트**: 사용자 상호작용 중심으로 테스트를 작성한다.
-2. **훅 테스트**: 커스텀 훅은 `@testing-library/react`의 `renderHook`을 사용한다.
-3. **버그 수정 시**: 해당 버그를 재현하고 검증하는 회귀 테스트를 추가한다.
+**흐름 훅 작성 규약**:
+- 흐름 훅도 wrapper hook 을 사용하지 않는다. `useQuery(xxxQueries.method)` / `useMutation(xxxMutations.method)` 만 사용한다.
+- 반환은 객체 구조 분해가 가능하도록 객체로 반환한다.
+- 쿼리키는 `{domain}Keys` 팩토리를 그대로 사용한다 (캐시 무효화 · prefetch 등).
+- `entities` 끼리 import 금지 (§1 #4 재확인). 두 도메인을 묶는 흐름은 `widgets` 또는 `pages` 책임이다.
 
 ---
 
-## 4. SHOULD 규칙
+## 3. PR 체크리스트
 
-### 4.1 성능
-
-1. **메모이제이션**: `useMemo`, `useCallback`은 실제 성능 문제가 있을 때만 사용한다.
-2. **번들 크기**: 불필요한 의존성 추가를 지양하고, tree-shaking을 고려한다.
-
-### 4.2 접근성
-
-1. **시맨틱 HTML**: 적절한 HTML 요소를 사용한다. (`<button>`, `<nav>`, `<main>` 등)
-2. **키보드 접근성**: 인터랙티브 요소는 키보드로 접근 가능해야 한다.
-3. **대체 텍스트**: 이미지에는 의미 있는 `alt` 텍스트를 제공한다.
-
----
-
-## 5. PR 체크리스트
+> 범용 컨벤션(선언 스타일·`any` 금지·주석·타입·스타일 토큰 등)은 seokit-rules + lint 가 강제한다. 아래는 **구조 규약** 확인 항목.
 
 - [ ] 컴포넌트가 단일 책임 원칙을 따르는가? (관심사 분리)
 - [ ] 공통으로 사용될 컴포넌트가 `@ddd/ui`에 있는가?
-- [ ] `any`, 어려운 `Pick/Omit` 합성 구조, 코드를 설명(번역)하는 주석이 없는가?
-- [ ] `return` 문 안에 복잡한 연산이 숨어있진 않은가?
-- [ ] 하드코딩된 스타일 값 없이 디자인 토큰을 사용했는가?
-- [ ] API 에러 상황과 로딩 상태를 적절히 처리했는가?
-- [ ] 컴포넌트·흐름 훅이 `@ddd/api` 의 wrapper hook (`useXxx`) 을 직접 import 하지 않고, `xxxQueries` / `xxxMutations` 옵션 팩토리를 `useQuery` / `useMutation` 에 전달하는가? (§3.3 #5)
-- [ ] 비즈니스 로직(toast / 라우팅 / 캐시 정리 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) 이 컴포넌트가 아니라 `entities/{domain}/model/` 흐름 훅으로 분리되어 있는가? (§3.3 #5)
-- [ ] `entities/{domain}` 명명이 백엔드 표준 도메인명과 1:1로 일치하는가? (§3.1 #4)
+- [ ] 앱/패키지 의존 방향이 `apps/* → packages/*` 단방향인가?
+- [ ] FSD 레이어 의존성(`app → pages → widgets → entities → shared`, `entities → packages/api`)을 지켰는가?
+- [ ] `entities` 끼리 서로 import 하지 않는가? (도메인 결합 차단)
+- [ ] 컴포넌트·흐름 훅이 `@ddd/api` 의 wrapper hook (`useXxx`) 을 직접 import 하지 않고, `xxxQueries` / `xxxMutations` 옵션 팩토리를 `useQuery` / `useMutation` 에 전달하는가? (§2.2)
+- [ ] 비즈니스 로직(toast / 라우팅 / 캐시 정리 / 다중 쿼리 조합 / 응답 가공 / 클라이언트 필터·집계) 이 컴포넌트가 아니라 `entities/{domain}/model/` 흐름 훅으로 분리되어 있는가? (§2.2)
+- [ ] `entities/{domain}` 명명이 백엔드 표준 도메인명과 1:1로 일치하는가? (§1 #4)

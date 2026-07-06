@@ -50,7 +50,7 @@ src/
 
 ## 레이어 규칙
 
-의존성 방향은 **단방향**으로 강제한다. (자세한 정의: 루트 [CODE_RULES.md §3.1](../CODE_RULES.md))
+의존성 방향은 **단방향**으로 강제한다. (자세한 정의: 루트 [CODE_RULES.md §1](../CODE_RULES.md))
 
 ```
 app → pages → widgets → entities → shared
@@ -68,7 +68,7 @@ app → pages → widgets → entities → shared
 
 ## 훅 위치 결정 가이드
 
-새 훅을 추가할 때는 [CODE_RULES.md §3.3](../CODE_RULES.md) 의 분류 표를 따른다.
+새 훅을 추가할 때는 [CODE_RULES.md §2](../CODE_RULES.md) 의 분류 표를 따른다.
 
 | 유형 | 예시 | 위치 |
 | ---- | ---- | ---- |

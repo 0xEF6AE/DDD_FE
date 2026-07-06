@@ -11,13 +11,12 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 
 > **코드 작성·수정·리뷰 전 절차**
 >
-> 1. **[CODE_RULES.md](./CODE_RULES.md) 를 먼저 검토한다.** 특히 다음 두 섹션은 새 모듈/훅을 추가할 때 위치 결정에 직결되므로 반드시 확인한다.
->    - `§3.1 프로젝트 구조` — 패키지 의존성 + FSD 레이어 의존성(`app → pages → widgets → entities → shared`, `entities → packages/api`).
->    - `§3.3 커스텀 훅` — 훅 위치 분류 (쿼리/뮤테이션 팩토리 = `packages/api`, 비즈니스 흐름 훅 = `entities/{domain}/model/`, UI/플랫폼 훅 = `shared/hooks/`).
-> 2. 작업이 위 규칙을 위반하지 않는지 확인하고, 위반이 발견되면 그 자리에서 수정하거나 사용자와 합의 후 진행한다.
-> 3. PR 직전 `§5 PR 체크리스트` 를 다시 한 번 검토한다.
->
-> 코드 구현, 리뷰, 리팩터링, 테스트 판단은 모두 [CODE_RULES.md](./CODE_RULES.md) 를 기준으로 한다.
+> - **범용 React/TypeScript 컨벤션**(선언 스타일·네이밍·조건문·타입·스타일링·테스트)은 `seokit-frontend:seokit-rules` 스킬이 단일 출처다. `.tsx`/`.ts` 작업 시 자동 로드된다.
+> - **이 모노레포 고유 구조 규약**은 **[CODE_RULES.md](./CODE_RULES.md)** 를 기준으로 한다. 새 모듈/훅 추가 시 위치 결정에 직결되므로 반드시 확인한다.
+>   1. `§1 프로젝트 구조` — 패키지 의존성 + FSD 레이어 의존성(`app → pages → widgets → entities → shared`, `entities → packages/api`).
+>   2. `§2 커스텀 훅 위치 & 데이터 접근` — 훅 위치 분류 (쿼리/뮤테이션 팩토리 = `packages/api`, 비즈니스 흐름 훅 = `entities/{domain}/model/`, UI/플랫폼 훅 = `shared/hooks/`) + wrapper hook 금지 패턴.
+> - 작업이 위 규칙을 위반하지 않는지 확인하고, 위반이 발견되면 그 자리에서 수정하거나 사용자와 합의 후 진행한다.
+> - PR 직전 CODE_RULES.md `§3 PR 체크리스트` 를 다시 한 번 검토한다.
 
 ---
 
@@ -31,7 +30,7 @@ IT 사이드 프로젝트 동아리(DDD) 운영을 위한 프론트엔드 모노
 >
 > 어드민 기획 명세 + 백/프론트 구현 현황은 **[docs/admin-implementation-status.md](./docs/admin-implementation-status.md)** 를 참조한다. `/progress` 커맨드를 실행하면 이 문서와 `progress.md`, 핵심 코드 파일을 교차 분석하여 영역별 완료율 + 다음 작업 Top 3를 리포트한다.
 >
-> admin 프로젝트의 UI 컴포넌트를 생성 / 수정 / 삭제하는 작업 전에는 **[docs/hero-ui.txt](./docs/hero-ui.txt)** 를 먼저 참조하여 사용 가능한 HeroUI v3 컴포넌트와 사용법을 확인한다.
+> admin 프로젝트의 UI 컴포넌트를 생성 / 수정 / 삭제하는 작업 전에는 **[docs/admin-heroui.md](./docs/admin-heroui.md)** (사용 규약·배치 기준·금지 패턴) 와 **[docs/hero-ui.txt](./docs/hero-ui.txt)** (컴포넌트 props·slots 단일 출처) 를 먼저 참조한다.
 >
 > 기수(cohort)의 **파트별 지원서 양식(`formSchema` / `parts`)** 또는 `cohort.applicationForm` 관련 작업 전에는 **[docs/admin-cohort-parts-policy.md](./docs/admin-cohort-parts-policy.md)** 를 먼저 검토한다. (`applicationForm` 는 dead 필드이며, 단일 source 는 `PUT /admin/cohorts/{id}/parts`)
 
