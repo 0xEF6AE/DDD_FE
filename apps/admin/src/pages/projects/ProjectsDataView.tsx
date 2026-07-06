@@ -24,6 +24,7 @@ type ProjectsDataViewProps = {
 
 export const ProjectsDataView = ({
   searchText,
+  platform,
   cohortId,
   cohorts,
   onEdit,
@@ -43,9 +44,11 @@ export const ProjectsDataView = ({
       const matchesSearch =
         searchText.length === 0 || project.name.includes(searchText)
       const matchesCohort = cohortId === "ALL" || project.cohortId === cohortId
-      return matchesSearch && matchesCohort
+      const matchesPlatform =
+        platform === "ALL" || project.platforms.includes(platform)
+      return matchesSearch && matchesCohort && matchesPlatform
     })
-  }, [allProjects, searchText, cohortId])
+  }, [allProjects, searchText, cohortId, platform])
 
   if (filteredProjects.length === 0) {
     return (
