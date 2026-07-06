@@ -8,7 +8,13 @@ export interface PartsRecruitingViolation {
 const hasQuestion = (part: CohortPartConfigDto): boolean => {
   const raw = (part.applicationSchema as Record<string, unknown> | undefined)
     ?.questions
-  return Array.isArray(raw) && raw.length > 0
+  if (!Array.isArray(raw)) return false
+  // 질문이 존재하는 것만으로는 부족하고, label 이 채워진 질문이 하나 이상 있어야 한다.
+  // (Drawer 저장 게이트 validateFormParts 의 빈 label 차단과 기준을 일치시킨다.)
+  return raw.some((q) => {
+    const label = (q as { label?: unknown })?.label
+    return typeof label === "string" && label.trim() !== ""
+  })
 }
 
 /**
