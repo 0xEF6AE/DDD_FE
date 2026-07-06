@@ -98,24 +98,10 @@ export const projectQueries = {
    * @example
    * const query = useInfiniteQuery(projectQueries.getAdminInfiniteProjects({ params: { limit: 20 } }))
    */
-  getAdminInfiniteProjects: ({
-    params,
-  }: {
-    params: GetInfiniteProjectsParams;
-  }) =>
-    infiniteQueryOptions({
-      queryKey: projectKeys.adminInfiniteList(params),
-      queryFn: () => projectAPI.getAdminProjects(),
-      initialPageParam: undefined as string | undefined,
-      getNextPageParam: (last) =>
-        last.hasMore ? last.nextCursor : undefined,
-    }),
-
   /**
-   * 어드민 프로젝트 전체 목록 조회 쿼리 (GET /admin/projects, non-infinite)
+   * 어드민 프로젝트 전체 목록 조회 쿼리 (GET /admin/projects)
    *
-   * 단일 호출로 모든 프로젝트를 받아온다. cursor 페이지네이션이 필요한 화면은
-   * getAdminInfiniteProjects 를 사용한다.
+   * BE 가 envelope 없이 전체 배열을 반환하므로 단일 호출로 받아온다.
    *
    * @returns {QueryOptions} TanStack Query 옵션 객체
    */

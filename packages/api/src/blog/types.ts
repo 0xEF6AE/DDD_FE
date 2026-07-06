@@ -12,8 +12,8 @@ export type GetBlogPostsResponse = BlogPostListDto;
 // 무한 스크롤용 (cursor 는 useInfiniteQuery pageParam 이 관리)
 export type GetInfiniteBlogPostsParams = Omit<NonNullable<GetBlogPostsParams>, "cursor">;
 
-// GET /api/v1/admin/blog-posts - 어드민 전체 목록
-export type GetAdminBlogPostsResponse = BlogPostListDto;
+// GET /api/v1/admin/blog-posts - 어드민 전체 목록 (BE 는 envelope 없이 배열을 반환)
+export type GetAdminBlogPostsResponse = BlogPostDto[];
 
 // GET /api/v1/admin/blog-posts/{id} - 어드민 단건
 export type GetAdminBlogPostParams = { id: number };

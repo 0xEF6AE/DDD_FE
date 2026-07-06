@@ -17,8 +17,8 @@ export type GetInfiniteProjectsParams = Omit<NonNullable<GetProjectsParams>, "cu
 export type GetProjectParams = { id: number };
 export type GetProjectResponse = ProjectDto;
 
-// GET /api/v1/admin/projects - 어드민 전체 목록
-export type GetAdminProjectsResponse = ProjectListDto;
+// GET /api/v1/admin/projects - 어드민 전체 목록 (BE 는 envelope 없이 배열을 반환)
+export type GetAdminProjectsResponse = ProjectDto[];
 
 // GET /api/v1/admin/projects/{id} - 어드민 단건
 export type GetAdminProjectParams = { id: number };

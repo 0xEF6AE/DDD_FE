@@ -59,25 +59,19 @@ export const blogQueries = {
     }),
 
   /**
-   * 어드민 블로그 무한 스크롤 목록 조회 쿼리 (GET /admin/blog-posts)
+   * 어드민 블로그 전체 목록 조회 쿼리 (GET /admin/blog-posts)
    *
-   * 어드민 페이지에서 사용. cursor는 useInfiniteQuery의 pageParam으로 관리.
+   * BE 가 envelope 없이 전체 배열을 반환하므로 단일 호출로 받아온다.
    *
-   * @param {GetInfiniteBlogPostsParams} params - 조회 파라미터 (cursor 제외)
-   * @param {number} [params.limit] - 페이지 크기 (선택)
-   *
-   * @returns {InfiniteQueryOptions} TanStack Query Infinite 옵션 객체
+   * @returns {QueryOptions} TanStack Query 옵션 객체
    *
    * @example
-   * const query = useInfiniteQuery(blogQueries.getAdminInfiniteBlogPosts({ params: { limit: 20 } }))
+   * const query = useQuery(blogQueries.getAdminBlogPosts())
    */
-  getAdminInfiniteBlogPosts: ({ params }: { params: GetInfiniteBlogPostsParams }) =>
-    infiniteQueryOptions({
-      queryKey: blogKeys.adminInfiniteList(params),
+  getAdminBlogPosts: () =>
+    queryOptions({
+      queryKey: blogKeys.adminLists(),
       queryFn: () => blogAPI.getAdminBlogPosts(),
-      initialPageParam: undefined as string | undefined,
-      getNextPageParam: (last) =>
-        last.hasMore ? last.nextCursor : undefined,
     }),
 
   /**
