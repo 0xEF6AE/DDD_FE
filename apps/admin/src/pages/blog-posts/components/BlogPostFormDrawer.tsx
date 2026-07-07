@@ -138,7 +138,6 @@ export const BlogPostFormDrawer = ({
   })
 
   const thumbnailUrl = useWatch({ control, name: "thumbnail" })
-  console.log("thumbnailUrl", thumbnailUrl)
 
   return (
     <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>

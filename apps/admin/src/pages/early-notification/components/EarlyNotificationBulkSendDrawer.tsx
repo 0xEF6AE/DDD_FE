@@ -1,11 +1,15 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Button, Drawer, Input, TextArea, toast } from "@heroui/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { AlertDialog, Button, Drawer, Input, TextArea, toast } from "@heroui/react"
 
-import { earlyNotificationKeys, earlyNotificationMutations } from "@ddd/api"
+import {
+  earlyNotificationKeys,
+  earlyNotificationMutations,
+  earlyNotificationQueries,
+} from "@ddd/api"
 
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { FormField } from "@/shared/ui/FormField"
@@ -61,6 +65,18 @@ export const EarlyNotificationBulkSendDrawer = ({
     earlyNotificationMutations.sendBulkEarlyNotification(),
   )
 
+  // 발송 대상 수 — 0명 발송 차단 + 확인 문구용 (StatsSection 과 같은 쿼리, 캐시 공유)
+  const { data: recipients } = useQuery(
+    earlyNotificationQueries.getAdminEarlyNotifications({
+      params: { cohortId },
+    }),
+  )
+  const recipientCount = recipients?.length ?? 0
+
+  const [confirmValues, setConfirmValues] = useState<BulkSendFormValues | null>(
+    null,
+  )
+
   const {
     register,
     handleSubmit,
@@ -77,18 +93,28 @@ export const EarlyNotificationBulkSendDrawer = ({
     }
   }, [isOpen, reset])
 
-  const onSubmit = handleSubmit(async (values) => {
+  // 드로어가 닫힐 때 확인 다이얼로그 상태도 함께 정리 (CloseTrigger·백드롭·ESC 모두 경유)
+  const handleDrawerOpenChange = (open: boolean) => {
+    if (!open) setConfirmValues(null)
+    onOpenChange(open)
+  }
+
+  // 발송 버튼 → 폼 검증 통과 시 확인 다이얼로그를 연다 (즉시 발송하지 않음).
+  const requestSend = handleSubmit((values) => setConfirmValues(values))
+
+  const doSend = async () => {
+    if (!confirmValues) return
     const { html, text } = buildEmailTemplate({
-      message: values.message,
-      ctaLabel: values.ctaLabel,
-      ctaUrl: values.ctaUrl,
+      message: confirmValues.message,
+      ctaLabel: confirmValues.ctaLabel,
+      ctaUrl: confirmValues.ctaUrl,
     })
 
     try {
       await mutateAsync({
         payload: {
           cohortId,
-          subject: values.subject,
+          subject: confirmValues.subject,
           html,
           text,
         },
@@ -99,18 +125,20 @@ export const EarlyNotificationBulkSendDrawer = ({
       toast.success("알림 발송이 완료되었습니다", {
         description: `${cohortName}에 등록된 신청자에게 발송했습니다.`,
       })
+      setConfirmValues(null)
       onOpenChange(false)
     } catch (error) {
       toast.danger("발송에 실패했습니다", {
         description: (error as Error).message ?? "잠시 후 다시 시도해 주세요.",
       })
     }
-  })
+  }
 
   const isBusy = isSubmitting || isPending
 
   return (
-    <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+    <>
+    <Drawer.Backdrop isOpen={isOpen} onOpenChange={handleDrawerOpenChange}>
       <Drawer.Content placement={isMobile ? "bottom" : "right"}>
         <Drawer.Dialog
           className={!isMobile ? "w-full max-w-1/2 bg-gray-50" : ""}
@@ -120,7 +148,7 @@ export const EarlyNotificationBulkSendDrawer = ({
               사전 알림 발송
             </Drawer.Heading>
             <p className="text-muted-foreground text-sm">
-              {cohortName}에 등록된 모든 신청자에게 일괄 발송됩니다.
+              {cohortName}에 등록된 신청자 {recipientCount}명에게 일괄 발송됩니다.
             </p>
           </Drawer.Header>
 
@@ -161,13 +189,47 @@ export const EarlyNotificationBulkSendDrawer = ({
 
           <Drawer.Footer className="gap-2">
             <Drawer.CloseTrigger />
-            <Button onPress={() => onSubmit()} isDisabled={isBusy}>
-              {isBusy ? "발송 중..." : "발송"}
+            <Button
+              onPress={() => requestSend()}
+              isDisabled={isBusy || recipientCount === 0}
+            >
+              {recipientCount === 0 ? "발송 대상 없음" : "발송"}
             </Button>
           </Drawer.Footer>
         </Drawer.Dialog>
       </Drawer.Content>
     </Drawer.Backdrop>
+
+    <AlertDialog.Backdrop
+      isOpen={confirmValues !== null}
+      onOpenChange={(open) => !open && setConfirmValues(null)}
+    >
+      <AlertDialog.Container>
+        <AlertDialog.Dialog className="sm:max-w-100">
+          <AlertDialog.CloseTrigger />
+          <AlertDialog.Header>
+            <AlertDialog.Icon status="warning" />
+            <AlertDialog.Heading>알림을 발송하시겠습니까?</AlertDialog.Heading>
+          </AlertDialog.Header>
+          <AlertDialog.Body>
+            <p>
+              <strong>{cohortName}</strong>에 등록된 신청자{" "}
+              <strong>{recipientCount}명</strong>에게 즉시 발송됩니다. 이 작업은
+              되돌릴 수 없습니다.
+            </p>
+          </AlertDialog.Body>
+          <AlertDialog.Footer>
+            <Button slot="close" variant="tertiary">
+              취소
+            </Button>
+            <Button isDisabled={isBusy} onPress={doSend}>
+              {isBusy ? "발송 중..." : "발송"}
+            </Button>
+          </AlertDialog.Footer>
+        </AlertDialog.Dialog>
+      </AlertDialog.Container>
+    </AlertDialog.Backdrop>
+    </>
   )
 }
 

@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react"
 import { Button, Drawer, toast } from "@heroui/react"
 import { FormProvider, useForm } from "react-hook-form"
+import { useQuery } from "@tanstack/react-query"
 
-import { ApiError, CreateCohortRequestDtoStatus } from "@ddd/api"
+import { ApiError, CreateCohortRequestDtoStatus, cohortQueries } from "@ddd/api"
 
 import { PartsSaveAfterCreateError, useCreateOrUpdateCohortFlow } from "@/pages/semesters/hooks/useCreateOrUpdateCohortFlow"
 import { SEMESTER_PARTS } from "@/pages/semesters/constants"
+import { buildName } from "@/pages/semesters/lib/serialize"
 import { validateFormParts } from "@/pages/semesters/lib/validateParts"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 
@@ -111,7 +113,25 @@ export function SemesterRegisterDrawer({
     targetId,
   })
 
+  const { data: cohorts = [] } = useQuery(cohortQueries.getCohorts())
+
   const onSubmit = handleSubmit(async (values) => {
+    const trimmedNumber = values.cohortNumber.trim()
+    if (trimmedNumber === "") {
+      toast.danger("기수 번호를 입력해주세요")
+      return
+    }
+    const newName = buildName(trimmedNumber)
+    const isDuplicate = cohorts.some(
+      (c) => c.id !== targetId && c.name === newName,
+    )
+    if (isDuplicate) {
+      toast.danger("이미 존재하는 기수 번호입니다", {
+        description: `${newName} 은(는) 이미 등록되어 있습니다.`,
+      })
+      return
+    }
+
     const validationError = validateFormParts(values)
     if (validationError) {
       toast.danger(validationError.message)

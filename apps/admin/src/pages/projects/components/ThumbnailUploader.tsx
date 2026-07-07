@@ -41,6 +41,13 @@ export const ThumbnailUploader = () => {
             src={url}
             alt="썸네일 미리보기"
             className="h-24 w-24 rounded-md border border-gray-200 object-cover"
+            onError={(e) => {
+              e.currentTarget.src =
+                "data:image/svg+xml;utf8," +
+                encodeURIComponent(
+                  '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#f3f4f6"/><text x="48" y="52" font-size="11" fill="#9ca3af" text-anchor="middle">이미지 오류</text></svg>',
+                )
+            }}
           />
           <Button
             size="sm"
@@ -66,6 +73,7 @@ export const ThumbnailUploader = () => {
             onChange={(e) => {
               const file = e.target.files?.[0]
               if (file) handleSelect(file)
+              e.target.value = "" // 실패 후 같은 파일 재선택 허용
             }}
           />
           <div className="space-y-1">
