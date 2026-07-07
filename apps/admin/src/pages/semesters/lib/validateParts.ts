@@ -22,6 +22,9 @@ const findEmptyLabel = (
   form: SemesterRegisterForm
 ): PartsValidationError | null => {
   for (const part of SEMESTER_PARTS) {
+    // 모집 off 파트는 지원서에 안 쓰이므로 검증하지 않는다 (모집중 전환 가드가
+    // isOpen 파트만 보는 것과 대칭). 나중에 열어 전환할 때 그 가드가 다시 잡는다.
+    if (!form.parts[part].isOpen) continue
     const questions = form.parts[part].questions
     for (let i = 0; i < questions.length; i++) {
       if (questions[i].label.trim() === "") {
@@ -39,6 +42,7 @@ const findDuplicateKey = (
   form: SemesterRegisterForm
 ): PartsValidationError | null => {
   for (const part of SEMESTER_PARTS) {
+    if (!form.parts[part].isOpen) continue
     const questions = form.parts[part].questions
     const groups = new Map<string, number[]>()
     questions.forEach((q, i) => {

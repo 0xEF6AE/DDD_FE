@@ -27,7 +27,7 @@ const PARTS: CohortPartName[] = [
 ]
 
 /** form.cohortNumber("16") → DTO.name("16기"). cohort.name 가 "기" 로 끝나면 그대로 둔다 */
-const buildName = (cohortNumber: string): string => {
+export const buildName = (cohortNumber: string): string => {
   const trimmed = cohortNumber.trim()
   if (!trimmed) return ""
   return trimmed.endsWith("기") ? trimmed : `${trimmed}기`
