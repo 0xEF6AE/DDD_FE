@@ -30,7 +30,7 @@ export function ProcessSection() {
   return (
     <Section title="프로세스 일정">
       <GridBox className="grid-cols-2 gap-5">
-        <FormField label="모집 기간">
+        <FormField label="모집 기간 (서류접수 기간)">
           <DateRangePicker
             className="w-full"
             value={toDateRangeValue(recruitStart, recruitEnd)}
