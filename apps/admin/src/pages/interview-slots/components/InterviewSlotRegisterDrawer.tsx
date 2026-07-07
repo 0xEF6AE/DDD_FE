@@ -9,7 +9,6 @@ import {
   ListBox,
   Select,
   TextArea,
-  TimeField,
 } from "@heroui/react"
 import { Controller, FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -263,21 +262,13 @@ export function InterviewSlotRegisterDrawer({
                       name="startTime"
                       render={({ field, fieldState }) => (
                         <>
-                          <TimeField
+                          <Input
+                            type="time"
                             aria-label="시작 시각"
+                            value={field.value?.slice(0, 5) ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                             className="w-full"
-                            name="startTime"
-                            //value={field.value ? parseTime(field.value) : null}
-                            onChange={(t) =>
-                              field.onChange(t?.toString() ?? "")
-                            }
-                          >
-                            <TimeField.Group>
-                              <TimeField.Input>
-                                {(seg) => <TimeField.Segment segment={seg} />}
-                              </TimeField.Input>
-                            </TimeField.Group>
-                          </TimeField>
+                          />
                           {fieldState.error && (
                             <p className="mt-1 text-xs text-danger">
                               {fieldState.error.message}
@@ -294,20 +285,13 @@ export function InterviewSlotRegisterDrawer({
                       name="endTime"
                       render={({ field, fieldState }) => (
                         <>
-                          <TimeField
+                          <Input
+                            type="time"
                             aria-label="종료 시각"
+                            value={field.value?.slice(0, 5) ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                             className="w-full"
-                            //value={field.value ? parseTime(field.value) : null}
-                            onChange={(t) =>
-                              field.onChange(t?.toString() ?? "")
-                            }
-                          >
-                            <TimeField.Group>
-                              <TimeField.Input>
-                                {(seg) => <TimeField.Segment segment={seg} />}
-                              </TimeField.Input>
-                            </TimeField.Group>
-                          </TimeField>
+                          />
                           {fieldState.error && (
                             <p className="mt-1 text-xs text-danger">
                               {fieldState.error.message}
