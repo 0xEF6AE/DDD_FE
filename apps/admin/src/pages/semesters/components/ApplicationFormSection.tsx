@@ -109,10 +109,10 @@ export function ApplicationFormSection({ invalidCells }: Props) {
                 onChange={(isSelected) => setPartIsOpen(part, isSelected)}
                 aria-label={`${part} 모집 오픈`}
               >
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
                 <Switch.Content>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
                   <span className="text-sm font-medium">모집 오픈</span>
                 </Switch.Content>
               </Switch>
@@ -169,10 +169,10 @@ export function ApplicationFormSection({ invalidCells }: Props) {
                       }
                       aria-label="필수 응답"
                     >
-                      <Switch.Control>
-                        <Switch.Thumb />
-                      </Switch.Control>
                       <Switch.Content>
+                        <Switch.Control>
+                          <Switch.Thumb />
+                        </Switch.Control>
                         <span className="text-sm font-medium">필수 응답</span>
                       </Switch.Content>
                     </Switch>
