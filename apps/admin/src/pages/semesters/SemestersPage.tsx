@@ -87,21 +87,25 @@ export default function SemestersPage() {
           title="기수 관리"
           description="DDD 활동 기수를 등록하고 상태를 관리합니다."
         />
-        <Button
-          isDisabled={Boolean(blockingCohort)}
+        <div
+          className="inline-block"
           title={
             blockingCohort
               ? `${blockingCohort.name}이(가) ${STATUS_LABEL[blockingCohort.status]} 상태입니다. 모집중·모집예정 기수는 동시에 하나만 둘 수 있습니다.`
               : undefined
           }
-          onPress={() => {
-            setEditTarget(null)
-            setIsDrawerOpen(true)
-          }}
         >
-          <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
-          {registration.buttonLabel}
-        </Button>
+          <Button
+            isDisabled={Boolean(blockingCohort)}
+            onPress={() => {
+              setEditTarget(null)
+              setIsDrawerOpen(true)
+            }}
+          >
+            <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
+            {registration.buttonLabel}
+          </Button>
+        </div>
       </FlexBox>
 
       <CardSection summary={summary} />
