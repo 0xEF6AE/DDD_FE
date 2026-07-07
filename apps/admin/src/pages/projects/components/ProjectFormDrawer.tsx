@@ -22,6 +22,7 @@ import { FormField } from "@/shared/ui/FormField"
 import { Section } from "@/shared/ui/Section"
 
 import { MemberRow } from "./MemberRow"
+import { PdfUploader } from "./PdfUploader"
 import { ThumbnailUploader } from "./ThumbnailUploader"
 
 export type ProjectFormDrawerMode = "create" | "edit"
@@ -106,6 +107,10 @@ export const ProjectFormDrawer = ({
                 <Section title="프로젝트 정보">
                   <FormField label="썸네일 이미지">
                     <ThumbnailUploader />
+                  </FormField>
+
+                  <FormField label="최종 발표 PDF">
+                    <PdfUploader />
                   </FormField>
 
                   <FormField label="서비스명" error={errors.name?.message}>
@@ -197,7 +202,7 @@ export const ProjectFormDrawer = ({
                     variant="outline"
                     type="button"
                     onPress={() =>
-                      appendMember({ name: "", part: "PM", review: "" })
+                      appendMember({ name: "", part: "PM" })
                     }
                     className="mt-3"
                   >

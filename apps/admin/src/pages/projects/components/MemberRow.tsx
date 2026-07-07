@@ -1,4 +1,4 @@
-import { Button, Input, ListBox, Select, TextArea } from "@heroui/react"
+import { Button, Input, ListBox, Select } from "@heroui/react"
 import { Delete02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Controller, useFormContext } from "react-hook-form"
@@ -68,13 +68,6 @@ export const MemberRow = ({ index, onRemove }: MemberRowProps) => {
           </Button>
         </div>
       </div>
-      <FormField label="후기" error={memberErrors?.review?.message}>
-        <TextArea
-          {...register(`members.${index}.review`)}
-          placeholder="참여 후기 (선택)"
-          className="w-full"
-        />
-      </FormField>
     </div>
   )
 }

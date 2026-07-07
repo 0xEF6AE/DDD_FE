@@ -7,7 +7,6 @@ import { PART_OPTIONS, type ProjectPart } from "../constants"
 const memberSchema = z.object({
   name: z.string().min(1, "이름을 입력해 주세요."),
   part: z.enum(PART_OPTIONS),
-  review: z.string().optional(),
 })
 
 export const projectFormSchema = z.object({
@@ -28,6 +27,11 @@ export const projectFormSchema = z.object({
     .url("URL 형식이 아닙니다.")
     .optional()
     .or(z.literal("")),
+  pdfUrl: z
+    .string()
+    .url("URL 형식이 아닙니다.")
+    .optional()
+    .or(z.literal("")),
   members: z.array(memberSchema),
 })
 
@@ -41,12 +45,12 @@ export const buildProjectFormDefaults = (
   name: project?.name ?? "",
   description: project?.description ?? "",
   thumbnailUrl: project?.thumbnailUrl ?? "",
+  pdfUrl: project?.pdfUrl ?? "",
   members:
     project?.members?.map((m) => ({
       name: m.name,
       part: (PART_OPTIONS.includes(m.part as ProjectPart)
         ? m.part
         : "PM") as ProjectPart,
-      review: undefined,
     })) ?? [],
 })
