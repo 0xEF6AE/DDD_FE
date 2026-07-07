@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Button, Drawer, toast } from "@heroui/react"
 import { FormProvider, useForm } from "react-hook-form"
 
-import { CreateCohortRequestDtoStatus } from "@ddd/api"
+import { ApiError, CreateCohortRequestDtoStatus } from "@ddd/api"
 
 import { PartsSaveAfterCreateError, useCreateOrUpdateCohortFlow } from "@/pages/semesters/hooks/useCreateOrUpdateCohortFlow"
 import { SEMESTER_PARTS } from "@/pages/semesters/constants"
@@ -138,6 +138,12 @@ export function SemesterRegisterDrawer({
             "수정 화면에서 다시 저장해주세요. (기수는 이미 등록되었습니다)",
         })
         onSwitchToEdit?.(error.newCohortId)
+        return
+      }
+      if (error instanceof ApiError && error.code === "COHORT_ALREADY_EXISTS") {
+        toast.danger("이미 모집중·모집예정 기수가 있습니다", {
+          description: "모집 라이프사이클 기수는 동시에 하나만 둘 수 있습니다.",
+        })
         return
       }
       toast.danger(

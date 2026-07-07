@@ -9,6 +9,7 @@ export const ErrorMessage = {
   USER_NOT_FOUND: "사용자를 찾을 수 없습니다.",
 
   COHORT_NOT_FOUND: "기수를 찾을 수 없습니다.",
+  COHORT_ALREADY_EXISTS: "이미 모집중·모집예정 기수가 있습니다.",
 
   APPLICATION_FORM_NOT_FOUND: "지원서를 찾을 수 없습니다.",
 

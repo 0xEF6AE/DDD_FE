@@ -2,6 +2,7 @@ import { toast } from "@heroui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import {
+  ApiError,
   CreateCohortRequestDtoStatus,
   cohortKeys,
   cohortMutations,
@@ -56,9 +57,15 @@ export const useTransitionCohortStatusFlow = () => {
       )
       return { status: "success" }
     } catch (error) {
-      toast.danger("상태 변경에 실패했습니다", {
-        description: (error as Error)?.message,
-      })
+      if (error instanceof ApiError && error.code === "COHORT_ALREADY_EXISTS") {
+        toast.danger("이미 모집중·모집예정 기수가 있습니다", {
+          description: "모집 라이프사이클 기수는 동시에 하나만 둘 수 있습니다.",
+        })
+      } else {
+        toast.danger("상태 변경에 실패했습니다", {
+          description: (error as Error)?.message,
+        })
+      }
       return { status: "error" }
     }
   }

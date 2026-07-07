@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Button } from "@heroui/react"
 
-import type { CohortDto } from "@ddd/api"
+import { cohortQueries, type CohortDto } from "@ddd/api"
 
 import { serializeCohortToForm } from "@/pages/semesters/lib/serialize"
+import { findActiveRecruitingCohort } from "@/pages/semesters/lib/activeRecruitingCohort"
+import { STATUS_LABEL } from "@/pages/semesters/lib/statusFlow"
 import { useTransitionCohortStatusFlow } from "@/pages/semesters/hooks/useTransitionCohortStatusFlow"
 import { type PartsRecruitingViolation } from "@/pages/semesters/lib/validateCohortPartsForRecruiting"
 import { FlexBox } from "@/shared/ui/FlexBox"
@@ -25,6 +28,14 @@ export default function SemestersPage() {
   const { tableRows, summary, isError, refetch } = useSemestersTableData()
   const registration = useSemesterRegistrationMode()
   const { transition } = useTransitionCohortStatusFlow()
+
+  // "모집중·모집예정 기수는 동시에 1개" 제약을 새 기수 등록 전 사전 차단.
+  // (resume 모드는 기존 미완성 기수를 이어서 편집하는 것이라 제외)
+  const { data: cohorts = [] } = useQuery(cohortQueries.getCohorts())
+  const blockingCohort =
+    registration.mode === "create"
+      ? findActiveRecruitingCohort(cohorts)
+      : undefined
 
   // 행 "수정" 클릭 시 채워지는 edit 타겟. registration 모드를 오버라이드.
   const [editTarget, setEditTarget] = useState<CohortDto | null>(null)
@@ -77,6 +88,12 @@ export default function SemestersPage() {
           description="DDD 활동 기수를 등록하고 상태를 관리합니다."
         />
         <Button
+          isDisabled={Boolean(blockingCohort)}
+          title={
+            blockingCohort
+              ? `${blockingCohort.name}이(가) ${STATUS_LABEL[blockingCohort.status]} 상태입니다. 모집중·모집예정 기수는 동시에 하나만 둘 수 있습니다.`
+              : undefined
+          }
           onPress={() => {
             setEditTarget(null)
             setIsDrawerOpen(true)
