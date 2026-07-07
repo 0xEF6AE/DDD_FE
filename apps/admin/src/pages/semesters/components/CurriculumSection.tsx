@@ -1,8 +1,7 @@
-import { Calendar, DateField, DatePicker, Input } from "@heroui/react"
+import { Input } from "@heroui/react"
 import { Controller, useFormContext } from "react-hook-form"
 
 import { Section } from "@/shared/ui/Section"
-import { toCalendarDate } from "@/shared/lib/toDateValue"
 
 import { CURRICULUM_WEEK_COUNT } from "../constants"
 import type { SemesterRegisterForm } from "../types"
@@ -21,45 +20,13 @@ export function CurriculumSection() {
               control={control}
               name={`curriculum.${index}.date`}
               render={({ field }) => (
-                <DatePicker
+                <Input
+                  type="date"
                   aria-label={`${index + 1}주차 날짜`}
                   className="w-1/2"
-                  value={toCalendarDate(field.value)}
-                  onChange={(date) => field.onChange(date?.toString() ?? "")}
-                >
-                  <DateField.Group fullWidth>
-                    <DateField.Input>
-                      {(segment) => <DateField.Segment segment={segment} />}
-                    </DateField.Input>
-                    <DateField.Suffix>
-                      <DatePicker.Trigger>
-                        <DatePicker.TriggerIndicator />
-                      </DatePicker.Trigger>
-                    </DateField.Suffix>
-                  </DateField.Group>
-                  <DatePicker.Popover placement="bottom start">
-                    <Calendar aria-label={`${index + 1}주차 날짜`}>
-                      <Calendar.Header>
-                        <Calendar.YearPickerTrigger>
-                          <Calendar.YearPickerTriggerHeading />
-                          <Calendar.YearPickerTriggerIndicator />
-                        </Calendar.YearPickerTrigger>
-                        <Calendar.NavButton slot="previous" />
-                        <Calendar.NavButton slot="next" />
-                      </Calendar.Header>
-                      <Calendar.Grid>
-                        <Calendar.GridHeader>
-                          {(day) => (
-                            <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
-                          )}
-                        </Calendar.GridHeader>
-                        <Calendar.GridBody>
-                          {(date) => <Calendar.Cell date={date} />}
-                        </Calendar.GridBody>
-                      </Calendar.Grid>
-                    </Calendar>
-                  </DatePicker.Popover>
-                </DatePicker>
+                  value={field.value?.slice(0, 10) ?? ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
               )}
             />
             <Input

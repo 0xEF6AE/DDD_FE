@@ -1,8 +1,7 @@
 import {
-  Calendar,
   DateField,
-  DatePicker,
   DateRangePicker,
+  Input,
   RangeCalendar,
 } from "@heroui/react"
 import { Controller, useFormContext, useWatch } from "react-hook-form"
@@ -10,7 +9,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form"
 import { FormField } from "@/shared/ui/FormField"
 import { GridBox } from "@/shared/ui/GridBox"
 import { Section } from "@/shared/ui/Section"
-import { toCalendarDate, toDateRangeValue } from "@/shared/lib/toDateValue"
+import { toDateRangeValue } from "@/shared/lib/toDateValue"
 
 import type { SemesterRegisterForm } from "../types"
 
@@ -88,45 +87,13 @@ export function ProcessSection() {
             control={control}
             name="process.documentResultDate"
             render={({ field }) => (
-              <DatePicker
+              <Input
+                type="date"
                 aria-label="서류 발표"
                 className="w-full"
-                value={toCalendarDate(field.value)}
-                onChange={(date) => field.onChange(date?.toString() ?? "")}
-              >
-                <DateField.Group fullWidth>
-                  <DateField.Input>
-                    {(segment) => <DateField.Segment segment={segment} />}
-                  </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger>
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover placement="bottom start">
-                  <Calendar aria-label="서류 발표">
-                    <Calendar.Header>
-                      <Calendar.YearPickerTrigger>
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <Calendar.NavButton slot="previous" />
-                      <Calendar.NavButton slot="next" />
-                    </Calendar.Header>
-                    <Calendar.Grid>
-                      <Calendar.GridHeader>
-                        {(day) => (
-                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
-                        )}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>
-                        {(date) => <Calendar.Cell date={date} />}
-                      </Calendar.GridBody>
-                    </Calendar.Grid>
-                  </Calendar>
-                </DatePicker.Popover>
-              </DatePicker>
+                value={field.value?.slice(0, 10) ?? ""}
+                onChange={(e) => field.onChange(e.target.value)}
+              />
             )}
           />
         </FormField>
@@ -192,45 +159,13 @@ export function ProcessSection() {
             control={control}
             name="process.finalResultDate"
             render={({ field }) => (
-              <DatePicker
+              <Input
+                type="date"
                 aria-label="최종 발표"
                 className="w-full"
-                value={toCalendarDate(field.value)}
-                onChange={(date) => field.onChange(date?.toString() ?? "")}
-              >
-                <DateField.Group fullWidth>
-                  <DateField.Input>
-                    {(segment) => <DateField.Segment segment={segment} />}
-                  </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger>
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover placement="bottom start">
-                  <Calendar aria-label="최종 발표">
-                    <Calendar.Header>
-                      <Calendar.YearPickerTrigger>
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <Calendar.NavButton slot="previous" />
-                      <Calendar.NavButton slot="next" />
-                    </Calendar.Header>
-                    <Calendar.Grid>
-                      <Calendar.GridHeader>
-                        {(day) => (
-                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
-                        )}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>
-                        {(date) => <Calendar.Cell date={date} />}
-                      </Calendar.GridBody>
-                    </Calendar.Grid>
-                  </Calendar>
-                </DatePicker.Popover>
-              </DatePicker>
+                value={field.value?.slice(0, 10) ?? ""}
+                onChange={(e) => field.onChange(e.target.value)}
+              />
             )}
           />
         </FormField>

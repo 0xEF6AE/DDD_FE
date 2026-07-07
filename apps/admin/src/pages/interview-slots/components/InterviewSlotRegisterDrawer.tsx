@@ -1,9 +1,6 @@
 import { useEffect } from "react"
 import {
   Button,
-  Calendar,
-  DateField,
-  DatePicker,
   Drawer,
   Input,
   ListBox,
@@ -73,9 +70,12 @@ export function InterviewSlotRegisterDrawer({
     formState: { isSubmitting },
   } = methods
 
-  useEffect(function resetFormOnOpen() {
-    if (isOpen) reset(buildInterviewSlotFormDefaults(prefill))
-  }, [isOpen, mode, prefill, reset])
+  useEffect(
+    function resetFormOnOpen() {
+      if (isOpen) reset(buildInterviewSlotFormDefaults(prefill))
+    },
+    [isOpen, mode, prefill, reset]
+  )
 
   const watchedCohortId = watch("cohortId")
   const watchedPartId = watch("cohortPartId")
@@ -205,46 +205,13 @@ export function InterviewSlotRegisterDrawer({
                     name="date"
                     render={({ field, fieldState }) => (
                       <>
-                        <DatePicker
+                        <Input
+                          type="date"
                           aria-label="면접 날짜"
+                          value={field.value?.slice(0, 10) ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                           className="w-full"
-                          onChange={(d) => field.onChange(d?.toString() ?? "")}
-                        >
-                          <DateField.Group fullWidth>
-                            <DateField.Input>
-                              {(seg) => <DateField.Segment segment={seg} />}
-                            </DateField.Input>
-                            <DateField.Suffix>
-                              <DatePicker.Trigger>
-                                <DatePicker.TriggerIndicator />
-                              </DatePicker.Trigger>
-                            </DateField.Suffix>
-                          </DateField.Group>
-                          <DatePicker.Popover placement="bottom start">
-                            <Calendar aria-label="면접 날짜">
-                              <Calendar.Header>
-                                <Calendar.YearPickerTrigger>
-                                  <Calendar.YearPickerTriggerHeading />
-                                  <Calendar.YearPickerTriggerIndicator />
-                                </Calendar.YearPickerTrigger>
-                                <Calendar.NavButton slot="previous" />
-                                <Calendar.NavButton slot="next" />
-                              </Calendar.Header>
-                              <Calendar.Grid>
-                                <Calendar.GridHeader>
-                                  {(day) => (
-                                    <Calendar.HeaderCell>
-                                      {day}
-                                    </Calendar.HeaderCell>
-                                  )}
-                                </Calendar.GridHeader>
-                                <Calendar.GridBody>
-                                  {(date) => <Calendar.Cell date={date} />}
-                                </Calendar.GridBody>
-                              </Calendar.Grid>
-                            </Calendar>
-                          </DatePicker.Popover>
-                        </DatePicker>
+                        />
                         {fieldState.error && (
                           <p className="mt-1 text-xs text-danger">
                             {fieldState.error.message}
