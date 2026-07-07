@@ -84,10 +84,11 @@ export const serializeFormToUpdatePayload = (
 export const serializeFormToPartsPayload = (
   form: SemesterRegisterForm
 ): PutUpdateCohortPartsRequest => ({
+  // BE 요청 DTO 는 `name` / `formSchema` (응답의 partName / applicationSchema 아님)
   parts: PARTS.map((partName) => ({
-    partName,
+    name: partName,
     isOpen: form.parts[partName].isOpen,
-    applicationSchema: {
+    formSchema: {
       questions: form.parts[partName].questions.map(({ key, label, required }) => ({
         key: key.trim() || slugify(label),
         label,

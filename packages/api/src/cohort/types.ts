@@ -67,8 +67,18 @@ export type UpdateCohortRequestDto = Omit<
   applicationForm?: Record<string, unknown>;
 };
 
+// PUT /admin/cohorts/{id}/parts 요청 파트 shape 은 응답과 필드명이 다르다:
+// 요청은 OpenAPI 스키마대로 `{ name, isOpen, formSchema }`,
+// 응답은 `{ partName, isOpen, applicationSchema }` (위 CohortPartConfigDto).
+// 응답 기준으로 serialize 하면 BE 가 `name`/`formSchema` 를 못 읽어 검증 실패한다.
+export interface UpdateCohortPartConfig {
+  name: CohortPartName;
+  isOpen: boolean;
+  formSchema: Record<string, unknown>;
+}
+
 export type UpdateCohortPartsRequestDto = {
-  parts: CohortPartConfigDto[];
+  parts: UpdateCohortPartConfig[];
 };
 
 // ---------- 엔드포인트 시그니처 ----------
