@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react"
 import { Table } from "@heroui/react"
+import { InformationCircleIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 import type { StatusFilterValue } from "../constants"
 import type { CohortRow } from "@/pages/semesters/hooks/useSemestersTableData"
@@ -52,7 +54,21 @@ export function SemesterTableSection({
               <Table.Column>지원자 수</Table.Column>
               <Table.Column>멤버 수</Table.Column>
               <Table.Column>등록일</Table.Column>
-              <Table.Column>액션</Table.Column>
+              <Table.Column>
+                <span className="inline-flex items-center gap-1">
+                  액션
+                  {/* ponytail: native title 툴팁. 스타일 버전 필요하면 @heroui Tooltip 으로 승격 */}
+                  <span
+                    className="text-foreground-secondary cursor-help"
+                    title="상태는 '다음 단계 전환' 버튼으로만 단방향(모집예정→모집중→활동중→활동종료)으로 변경됩니다. 모집중 전환에는 파트별 지원서 양식이 필요하며, 모집중·모집예정 기수는 동시에 하나만 둘 수 있습니다."
+                  >
+                    <HugeiconsIcon
+                      icon={InformationCircleIcon}
+                      className="size-3.5"
+                    />
+                  </span>
+                </span>
+              </Table.Column>
             </Table.Header>
             <Table.Body>
               {filteredRows.map((row) => (
