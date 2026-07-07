@@ -40,14 +40,17 @@ export const isCurriculumComplete = (curriculum: unknown): boolean => {
 }
 
 /**
- * parts: 6개 파트(PM/PD/BE/FE/IOS/AND) 모두 존재하고
- * 각 파트의 formSchema.questions 에 label 이 비어있지 않은 질문이 1개 이상.
+ * parts: 6개 파트(PM/PD/BE/FE/IOS/AND) 모두 존재하고, **모집 오픈된 파트**는
+ * formSchema.questions 에 label 이 비어있지 않은 질문이 1개 이상.
+ * 닫힌 파트는 지원서에 안 쓰이므로 완성 판정에서 제외한다 (저장 검증
+ * `validateFormParts`·모집중 전환 가드 `validateCohortPartsForRecruiting` 와 정합).
  */
 const isPartsComplete = (parts: unknown): boolean => {
   if (!Array.isArray(parts) || parts.length === 0) return false
   return PARTS.every((partName) => {
     const part = (parts as CohortPartConfig[]).find((p) => p.partName === partName)
     if (!part) return false
+    if (!part.isOpen) return true
     const questions = (part.applicationSchema as Record<string, unknown>)?.questions
     if (!Array.isArray(questions)) return false
     return questions.some(
