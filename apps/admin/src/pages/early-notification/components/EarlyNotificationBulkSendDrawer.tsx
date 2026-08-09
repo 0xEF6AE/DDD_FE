@@ -2,18 +2,15 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertDialog, Button, Drawer, Input, TextArea, toast } from "@heroui/react"
+import { useQuery } from "@tanstack/react-query"
+import { AlertDialog, Button, Drawer, Input, TextArea } from "@heroui/react"
 
-import {
-  earlyNotificationKeys,
-  earlyNotificationMutations,
-  earlyNotificationQueries,
-} from "@ddd/api"
+import { earlyNotificationQueries } from "@ddd/api"
 
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { FormField } from "@/shared/ui/FormField"
 
+import { useSendBulkEarlyNotificationFlow } from "../hooks/useSendBulkEarlyNotificationFlow"
 import { buildEmailTemplate } from "../lib/buildEmailTemplate"
 
 const bulkSendSchema = z.object({
@@ -60,10 +57,7 @@ export const EarlyNotificationBulkSendDrawer = ({
   cohortName,
 }: EarlyNotificationBulkSendDrawerProps) => {
   const isMobile = useIsMobile()
-  const queryClient = useQueryClient()
-  const { mutateAsync, isPending } = useMutation(
-    earlyNotificationMutations.sendBulkEarlyNotification(),
-  )
+  const { send, isPending } = useSendBulkEarlyNotificationFlow()
 
   // 발송 대상 수 — 0명 발송 차단 + 확인 문구용 (StatsSection 과 같은 쿼리, 캐시 공유)
   const { data: recipients } = useQuery(
@@ -110,27 +104,17 @@ export const EarlyNotificationBulkSendDrawer = ({
       ctaUrl: confirmValues.ctaUrl,
     })
 
-    try {
-      await mutateAsync({
-        payload: {
-          cohortId,
-          subject: confirmValues.subject,
-          html,
-          text,
-        },
-      })
-      queryClient.invalidateQueries({
-        queryKey: earlyNotificationKeys.adminLists(),
-      })
-      toast.success("알림 발송이 완료되었습니다", {
-        description: `${cohortName}에 등록된 신청자에게 발송했습니다.`,
-      })
+    const isSent = await send({
+      cohortId,
+      cohortName,
+      subject: confirmValues.subject,
+      html,
+      text,
+    })
+
+    if (isSent) {
       setConfirmValues(null)
       onOpenChange(false)
-    } catch (error) {
-      toast.danger("발송에 실패했습니다", {
-        description: (error as Error).message ?? "잠시 후 다시 시도해 주세요.",
-      })
     }
   }
 

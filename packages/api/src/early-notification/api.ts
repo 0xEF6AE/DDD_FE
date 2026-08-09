@@ -5,6 +5,7 @@ import type {
   GetAdminEarlyNotificationsCsvParams,
   GetAdminEarlyNotificationsCsvResponse,
   PostSendBulkEarlyNotificationRequest,
+  PostSendBulkEarlyNotificationResponse,
   PostSubscribeEarlyNotificationRequest,
   PostSubscribeGeneralEarlyNotificationRequest,
 } from "./types";
@@ -39,7 +40,7 @@ export const earlyNotificationAPI = {
   }) =>
     api.post("/api/v1/admin/early-notifications/send", {
       body: payload,
-    }) as unknown as Promise<void>,
+    }) as unknown as Promise<PostSendBulkEarlyNotificationResponse>,
 
   /** 사전 알림 이메일 구독 - POST /api/v1/early-notifications */
   subscribeEarlyNotification: ({

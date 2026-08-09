@@ -13,7 +13,8 @@ export type GetAdminEarlyNotificationsCsvResponse = string;
 // POST /api/v1/admin/early-notifications/send - 사전 알림 일괄 발송
 export type PostSendBulkEarlyNotificationRequest =
   components["schemas"]["SendBulkEarlyNotificationRequestDto"];
-export type PostSendBulkEarlyNotificationResponse = void;
+export type PostSendBulkEarlyNotificationResponse =
+  components["schemas"]["SendBulkEarlyNotificationResponseDto"];
 
 // POST /api/v1/early-notifications - 사전 알림 구독
 export type PostSubscribeEarlyNotificationRequest =

@@ -1180,6 +1180,23 @@ export interface components {
              */
             email: string;
         };
+        SendBulkEarlyNotificationResponseDto: {
+            /**
+             * @description 전체 대상 수
+             * @example 100
+             */
+            total: number;
+            /**
+             * @description 발송 성공 수
+             * @example 98
+             */
+            success: number;
+            /**
+             * @description 발송 실패 수
+             * @example 2
+             */
+            failed: number;
+        };
         SendBulkEarlyNotificationRequestDto: {
             /**
              * @description 기수 ID
@@ -2180,11 +2197,36 @@ export interface operations {
             };
         };
         responses: {
+            /** @description 발송이 완료되었습니다. 부분 실패 여부는 failed 값으로 판단합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["SendBulkEarlyNotificationResponseDto"];
+                    };
+                };
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };

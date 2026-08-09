@@ -2,7 +2,7 @@ import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { useSuspenseQuery } from "@tanstack/react-query"
 
-import { cohortQueries, type CohortDto } from "@ddd/api"
+import { cohortQueries, type CohortDto, type CohortStatus } from "@ddd/api"
 
 import { EmptyState } from "@/shared/ui/EmptyState"
 import { ErrorFallback } from "@/shared/ui/ErrorFallback"
@@ -16,16 +16,29 @@ import type { StatusFilterOption } from "./constants"
 import { EarlyNotificationStatsSection } from "./components/EarlyNotificationStatsSection"
 import { NotificationCampaignSection } from "./components/NotificationCampaignSection"
 
+// 백엔드 `CohortRepository.findActive()` + `CohortService.findActiveCohort()` 와
+// 동일한 활성 기준. 종료(CLOSED)된 기수는 활성으로 보지 않는다 —
+// 예전에는 CLOSED 기수로 폴백해 "지난 기수 0명" 을 정상 화면처럼 보여줬다.
+const ACTIVE_STATUS_PRIORITY: CohortStatus[] = [
+  "RECRUITING",
+  "UPCOMING",
+  "ACTIVE",
+]
+
 const pickActiveCohortId = (cohorts: CohortDto[]): number | null => {
-  if (cohorts.length === 0) return null
-  const open = cohorts.find((c) => c.status === "RECRUITING")
-  if (open) return open.id
-  const sorted = [...cohorts].sort(
-    (a, b) =>
-      new Date(b.recruitStartAt).getTime() -
-      new Date(a.recruitStartAt).getTime()
-  )
-  return sorted[0]?.id ?? null
+  const actives = cohorts
+    .filter((c) => ACTIVE_STATUS_PRIORITY.includes(c.status))
+    .sort((a, b) => {
+      const byStatus =
+        ACTIVE_STATUS_PRIORITY.indexOf(a.status) -
+        ACTIVE_STATUS_PRIORITY.indexOf(b.status)
+      if (byStatus !== 0) return byStatus
+      return (
+        new Date(b.recruitStartAt).getTime() -
+        new Date(a.recruitStartAt).getTime()
+      )
+    })
+  return actives[0]?.id ?? null
 }
 
 type EarlyNotificationContentProps = {
@@ -54,16 +67,43 @@ export const EarlyNotificationContent = ({
   }
 
   const effectiveCohortId = overrideCohortId ?? pickActiveCohortId(cohorts)
-  // cohorts.length > 0 이므로 effectiveCohortId 는 number 보장.
-  // 타입 시스템상 null 가능성을 좁히기 위한 가드.
-  if (effectiveCohortId === null) {
-    return <EmptyState>활성 기수를 결정할 수 없습니다.</EmptyState>
+  const selectedCohort =
+    effectiveCohortId === null
+      ? undefined
+      : cohorts.find((c) => c.id === effectiveCohortId)
+
+  // 활성 기수가 없으면 지난 기수로 폴백하지 않고 상태를 그대로 알린다.
+  // 기수 선택은 남겨 두어 지난 기수 기록은 계속 열람할 수 있게 한다.
+  if (!selectedCohort) {
+    return (
+      <div className="space-y-5 rounded-lg bg-white p-5 shadow">
+        <EarlyNotificationToolbar
+          searchText={searchText}
+          onSearchChange={onSearchChange}
+          cohorts={cohorts}
+          cohortId={null}
+          onCohortChange={onCohortChange}
+          statusFilter={statusFilter}
+          onStatusFilterChange={onStatusFilterChange}
+          onOpenBulkSend={() => setIsBulkSendOpen(true)}
+          isBulkSendDisabled
+          onExportCsv={() => {}}
+          isExporting={false}
+          isExportDisabled
+        />
+        <EmptyState>
+          <p>모집 예정이거나 진행 중인 기수가 없습니다.</p>
+          <p>
+            기수를 생성하면 대기 중인 사전 알림 신청자가 해당 기수로 자동
+            등록됩니다.
+          </p>
+          <p>지난 기수 기록은 위 기수 선택에서 확인할 수 있습니다.</p>
+        </EmptyState>
+      </div>
+    )
   }
 
-  const selectedCohort = cohorts.find((c) => c.id === effectiveCohortId)
-  if (!selectedCohort) {
-    return <EmptyState>선택된 기수를 찾을 수 없습니다.</EmptyState>
-  }
+  const cohortId = selectedCohort.id
 
   return (
     <div className="space-y-5">
@@ -76,7 +116,7 @@ export const EarlyNotificationContent = ({
           searchText={searchText}
           onSearchChange={onSearchChange}
           cohorts={cohorts}
-          cohortId={effectiveCohortId}
+          cohortId={cohortId}
           onCohortChange={onCohortChange}
           statusFilter={statusFilter}
           onStatusFilterChange={onStatusFilterChange}
@@ -84,7 +124,7 @@ export const EarlyNotificationContent = ({
           isBulkSendDisabled={false}
           onExportCsv={() =>
             handleExport({
-              cohortId: effectiveCohortId,
+              cohortId,
               cohortName: selectedCohort.name,
             })
           }
@@ -94,7 +134,7 @@ export const EarlyNotificationContent = ({
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <Suspense fallback={<CohortsAreaSkeleton />}>
             <EarlyNotificationDataView
-              cohortId={effectiveCohortId}
+              cohortId={cohortId}
               cohorts={cohorts}
               searchText={searchText}
               statusFilter={statusFilter}
@@ -105,14 +145,14 @@ export const EarlyNotificationContent = ({
 
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Suspense fallback={<CohortsAreaSkeleton />}>
-          <NotificationCampaignSection cohortId={effectiveCohortId} />
+          <NotificationCampaignSection cohortId={cohortId} />
         </Suspense>
       </ErrorBoundary>
 
       <EarlyNotificationBulkSendDrawer
         isOpen={isBulkSendOpen}
         onOpenChange={setIsBulkSendOpen}
-        cohortId={effectiveCohortId}
+        cohortId={cohortId}
         cohortName={selectedCohort.name}
       />
     </div>
