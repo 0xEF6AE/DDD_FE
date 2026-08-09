@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { PlusSignIcon } from "@hugeicons/core-free-icons"
+import { PencilEdit02Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { Button } from "@heroui/react"
+import { Button, Tooltip } from "@heroui/react"
 
 import { cohortQueries, type CohortDto } from "@ddd/api"
 
 import { serializeCohortToForm } from "@/pages/semesters/lib/serialize"
 import { findActiveRecruitingCohort } from "@/pages/semesters/lib/activeRecruitingCohort"
+import { findResumableCohort } from "@/pages/semesters/lib/resumableCohort"
 import { STATUS_LABEL } from "@/pages/semesters/lib/statusFlow"
 import { useTransitionCohortStatusFlow } from "@/pages/semesters/hooks/useTransitionCohortStatusFlow"
 import { type PartsRecruitingViolation } from "@/pages/semesters/lib/validateCohortPartsForRecruiting"
@@ -20,25 +21,27 @@ import { TitleSection } from "@/shared/ui/Heading"
 import { SemesterRegisterDrawer } from "@/pages/semesters/components/SemesterRegisterDrawer"
 import { SemesterTableSection } from "@/pages/semesters/components/SemesterTableSection"
 import { TransitionBlockedDialog } from "@/pages/semesters/components/TransitionBlockedDialog"
-import { useSemesterRegistrationMode } from "@/pages/semesters/hooks/useSemesterRegistrationMode"
 import { useSemestersTableData, type SemestersSummary } from "@/pages/semesters/hooks/useSemestersTableData"
+
+/** Drawer 가 기존 기수를 대상으로 열릴 때의 타겟. null 이면 신규 등록(create). */
+type DrawerTarget = {
+  mode: "resume" | "edit"
+  cohort: CohortDto
+}
 
 /** 기수 관리 페이지 */
 export default function SemestersPage() {
   const { tableRows, summary, isError, refetch } = useSemestersTableData()
-  const registration = useSemesterRegistrationMode()
   const { transition } = useTransitionCohortStatusFlow()
 
-  // "모집중·모집예정 기수는 동시에 1개" 제약을 새 기수 등록 전 사전 차단.
-  // (resume 모드는 기존 미완성 기수를 이어서 편집하는 것이라 제외)
   const { data: cohorts = [] } = useQuery(cohortQueries.getCohorts())
-  const blockingCohort =
-    registration.mode === "create"
-      ? findActiveRecruitingCohort(cohorts)
-      : undefined
+  // "모집중·모집예정 기수는 동시에 1개" 제약을 새 기수 등록 전 사전 차단.
+  const blockingCohort = findActiveRecruitingCohort(cohorts)
+  // 미완성인 채 남아있는 최신 기수 → 별도 "작성 이어하기" 진입점으로 노출.
+  const resumableCohort = findResumableCohort(cohorts)
 
-  // 행 "수정" 클릭 시 채워지는 edit 타겟. registration 모드를 오버라이드.
-  const [editTarget, setEditTarget] = useState<CohortDto | null>(null)
+  // null 이면 신규 등록. 행 "수정"·"작성 이어하기" 가 기존 기수를 타겟으로 채운다.
+  const [drawerTarget, setDrawerTarget] = useState<DrawerTarget | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [pendingBlocked, setPendingBlocked] = useState<{
     cohort: CohortDto
@@ -46,24 +49,35 @@ export default function SemestersPage() {
   } | null>(null)
 
   const drawerProps = useMemo(() => {
-    if (editTarget) {
-      return {
-        mode: "edit" as const,
-        targetId: editTarget.id,
-        prefill: serializeCohortToForm(editTarget),
-      }
+    if (!drawerTarget) {
+      return { mode: "create" as const, targetId: null, prefill: undefined }
     }
     return {
-      mode: registration.mode,
-      targetId: registration.targetId,
-      prefill: registration.prefill,
+      mode: drawerTarget.mode,
+      targetId: drawerTarget.cohort.id,
+      prefill: serializeCohortToForm(drawerTarget.cohort),
     }
-  }, [editTarget, registration])
+  }, [drawerTarget])
+
+  const openDrawer = (target: DrawerTarget | null) => {
+    setDrawerTarget(target)
+    setIsDrawerOpen(true)
+  }
 
   const handleDrawerOpenChange = (open: boolean) => {
     setIsDrawerOpen(open)
-    if (!open) setEditTarget(null)
+    if (!open) setDrawerTarget(null)
   }
+
+  const createButton = (
+    <Button
+      isDisabled={Boolean(blockingCohort)}
+      onPress={() => openDrawer(null)}
+    >
+      <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
+      새 기수 등록
+    </Button>
+  )
 
   if (isError) {
     return (
@@ -87,25 +101,40 @@ export default function SemestersPage() {
           title="기수 관리"
           description="DDD 활동 기수를 등록하고 상태를 관리합니다."
         />
-        <div
-          className="inline-block"
-          title={
-            blockingCohort
-              ? `${blockingCohort.name}이(가) ${STATUS_LABEL[blockingCohort.status]} 상태입니다. 모집중·모집예정 기수는 동시에 하나만 둘 수 있습니다.`
-              : undefined
-          }
-        >
-          <Button
-            isDisabled={Boolean(blockingCohort)}
-            onPress={() => {
-              setEditTarget(null)
-              setIsDrawerOpen(true)
-            }}
-          >
-            <HugeiconsIcon icon={PlusSignIcon} className="mr-2" />
-            {registration.buttonLabel}
-          </Button>
-        </div>
+        <FlexBox className="gap-2">
+          {resumableCohort && (
+            <Button
+              variant="outline"
+              onPress={() =>
+                openDrawer({ mode: "resume", cohort: resumableCohort })
+              }
+            >
+              <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2" />
+              {resumableCohort.name} 작성 이어하기
+            </Button>
+          )}
+          {blockingCohort ? (
+            // 비활성 Button 은 hover 이벤트를 받지 못하므로 span 을 트리거로 감싼다.
+            <Tooltip delay={200}>
+              <Tooltip.Trigger>
+                <span tabIndex={0} className="inline-block">
+                  {createButton}
+                </span>
+              </Tooltip.Trigger>
+              <Tooltip.Content showArrow className="max-w-xs">
+                <Tooltip.Arrow />
+                <p>
+                  {blockingCohort.name}이(가){" "}
+                  {STATUS_LABEL[blockingCohort.status]} 상태입니다. 모집예정·모집중
+                  기수는 동시에 하나만 둘 수 있어요. 해당 기수를 활동중으로 전환한
+                  뒤 등록해주세요.
+                </p>
+              </Tooltip.Content>
+            </Tooltip>
+          ) : (
+            createButton
+          )}
+        </FlexBox>
       </FlexBox>
 
       <CardSection summary={summary} />
@@ -117,17 +146,17 @@ export default function SemestersPage() {
         targetId={drawerProps.targetId}
         prefill={drawerProps.prefill}
         onSwitchToEdit={(newCohortId) => {
-          setEditTarget({ id: newCohortId } as CohortDto)
+          setDrawerTarget({
+            mode: "edit",
+            cohort: { id: newCohortId } as CohortDto,
+          })
         }}
       />
 
       <div className="rounded-lg bg-white p-5 shadow">
         <SemesterTableSection
           rows={tableRows}
-          onEditRow={(row) => {
-            setEditTarget(row)
-            setIsDrawerOpen(true)
-          }}
+          onEditRow={(row) => openDrawer({ mode: "edit", cohort: row })}
           onTransitionRow={async (row) => {
             const result = await transition(row)
             if (result.status === "blocked") {
@@ -147,8 +176,7 @@ export default function SemestersPage() {
           cohortName={pendingBlocked.cohort.name}
           violation={pendingBlocked.violation}
           onOpenEditDrawer={() => {
-            setEditTarget(pendingBlocked.cohort)
-            setIsDrawerOpen(true)
+            openDrawer({ mode: "edit", cohort: pendingBlocked.cohort })
             setPendingBlocked(null)
           }}
         />

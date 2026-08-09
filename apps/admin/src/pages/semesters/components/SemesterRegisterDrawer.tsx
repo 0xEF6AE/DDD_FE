@@ -7,6 +7,12 @@ import { ApiError, CreateCohortRequestDtoStatus, cohortQueries } from "@ddd/api"
 
 import { PartsSaveAfterCreateError, useCreateOrUpdateCohortFlow } from "@/pages/semesters/hooks/useCreateOrUpdateCohortFlow"
 import { SEMESTER_PARTS } from "@/pages/semesters/constants"
+import {
+  clearFormDraft,
+  draftKeyOf,
+  readFormDraft,
+  saveFormDraft,
+} from "@/pages/semesters/lib/formDraft"
 import { buildName } from "@/pages/semesters/lib/serialize"
 import { validateFormParts } from "@/pages/semesters/lib/validateParts"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
@@ -58,9 +64,10 @@ const buildDefaults = (prefill?: SemesterRegisterForm): SemesterRegisterForm =>
     ) as SemesterRegisterForm["parts"],
   }
 
+// 진입점 버튼 라벨과 동일하게 유지한다 (기수 관리 페이지 상단 / 행 "수정").
 const TITLE_BY_MODE: Record<DrawerMode, string> = {
-  create: "신규 기수 등록",
-  resume: "기수 정보 수정",
+  create: "새 기수 등록",
+  resume: "작성 이어하기",
   edit: "기수 수정",
 }
 
@@ -88,25 +95,32 @@ export function SemesterRegisterDrawer({
   const {
     handleSubmit,
     formState: { isSubmitting },
+    getValues,
     reset,
     watch,
   } = methods
 
-  useEffect(function resetFormOnOpen() {
-    if (isOpen) reset(buildDefaults(prefill))
-  }, [isOpen, mode, prefill, reset])
+  const draftKey = draftKeyOf(targetId)
+
+  // 임시 저장본이 있으면 그것으로, 없으면 서버 값(prefill)으로 채운다.
+  useEffect(function restoreDraftOrPrefillOnOpen() {
+    if (isOpen) reset(readFormDraft(draftKey) ?? buildDefaults(prefill))
+  }, [isOpen, mode, prefill, reset, draftKey])
 
   const [invalidCells, setInvalidCells] = useState<ReadonlySet<string>>(
     () => new Set()
   )
-  useEffect(function clearInvalidCellsOnPartsChange() {
-    const subscription = watch((_, { name }) => {
+  useEffect(function syncOnFormChange() {
+    const subscription = watch((_, { name, type }) => {
       if (name?.startsWith("parts")) {
         setInvalidCells((prev) => (prev.size === 0 ? prev : new Set()))
       }
+      // 사용자 입력(type === "change")만 저장한다. reset 이 발생시키는 알림까지
+      // 저장하면 저장 성공 후의 초기화가 빈 draft 로 다시 기록된다.
+      if (type === "change") saveFormDraft(draftKey, getValues())
     })
     return () => subscription.unsubscribe()
-  }, [watch])
+  }, [watch, getValues, draftKey])
 
   const { submit, isPending: isMutating } = useCreateOrUpdateCohortFlow({
     mode,
@@ -148,6 +162,7 @@ export function SemesterRegisterDrawer({
           ? `기수 ${result.name}을(를) 등록했습니다`
           : "기수 정보를 저장했습니다"
       )
+      clearFormDraft(draftKey)
       onOpenChange(false)
       reset(buildDefaults())
       setInvalidCells(new Set())
@@ -157,6 +172,10 @@ export function SemesterRegisterDrawer({
           description:
             "수정 화면에서 다시 저장해주세요. (기수는 이미 등록되었습니다)",
         })
+        // 기수는 이미 만들어졌으므로 edit 모드(새 id)로 전환된다. 입력값을 그
+        // 새 id 의 draft 로 옮겨둬야 전환 직후 폼이 빈 값으로 초기화되지 않는다.
+        saveFormDraft(draftKeyOf(error.newCohortId), values)
+        clearFormDraft(draftKey)
         onSwitchToEdit?.(error.newCohortId)
         return
       }
