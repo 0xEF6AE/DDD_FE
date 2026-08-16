@@ -4,7 +4,7 @@ import Link from "next/link";
 import styled from "@emotion/styled";
 import { openPreAlertModal } from "@/components/modals/PreAlertModal";
 import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
-import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
+import { colors, fontSizes, fontWeights } from "@/constants/tokens";
 
 const Section = styled.section({
   background: colors.background,
