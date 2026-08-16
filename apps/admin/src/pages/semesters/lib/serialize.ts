@@ -53,7 +53,7 @@ const emptyForm = (): SemesterRegisterForm => ({
       name,
       {
         isOpen: true,
-        questions: [{ key: "", label: "", required: true }],
+        questions: [{ key: "", label: "", required: true, type: "text" }],
       },
     ])
   ) as SemesterRegisterForm["parts"],
@@ -89,11 +89,15 @@ export const serializeFormToPartsPayload = (
     name: partName,
     isOpen: form.parts[partName].isOpen,
     formSchema: {
-      questions: form.parts[partName].questions.map(({ key, label, required }) => ({
-        key: key.trim() || slugify(label),
-        label,
-        required,
-      })),
+      questions: form.parts[partName].questions.map(
+        ({ key, label, required, type }) => ({
+          key: key.trim() || slugify(label),
+          label,
+          required,
+          // BE 는 required 만 검사한다 — type 은 지원서 화면이 입력 UI 를 고르는 힌트.
+          type,
+        })
+      ),
     },
   })),
 })
@@ -158,7 +162,7 @@ const extractCurriculum = (
 
 const defaultPartState = (): CohortPartFormState => ({
   isOpen: true,
-  questions: [{ key: "", label: "", required: true }],
+  questions: [{ key: "", label: "", required: true, type: "text" }],
 })
 
 const extractParts = (
@@ -183,6 +187,8 @@ const extractParts = (
             key: typeof q.key === "string" ? q.key : "",
             label: typeof q.label === "string" ? q.label : "",
             required: typeof q.required === "boolean" ? q.required : true,
+            // type 도입 전에 저장된 질문에는 필드가 없다 → 서술형으로 본다.
+            type: q.type === "file" ? "file" : "text",
           }))
       : []
     result[part] = {
@@ -190,7 +196,7 @@ const extractParts = (
       questions:
         questions.length > 0
           ? questions
-          : [{ key: "", label: "", required: true }],
+          : [{ key: "", label: "", required: true, type: "text" }],
     }
   }
   return result

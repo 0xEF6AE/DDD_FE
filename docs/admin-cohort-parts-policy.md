@@ -36,11 +36,49 @@ BE `ApplicationAnswerValidator` 가 읽는 형태:
 ```json
 {
   "questions": [
-    { "key": "motivation", "label": "지원 동기를 작성해주세요.", "required": true },
-    { "key": "experience", "label": "관련 경험을 작성해주세요.",  "required": false }
+    { "key": "motivation",  "label": "지원 동기를 작성해주세요.", "required": true,  "type": "text" },
+    { "key": "experience",  "label": "관련 경험을 작성해주세요.",  "required": false, "type": "text" },
+    { "key": "portfolio",   "label": "포트폴리오를 첨부해주세요.", "required": true,  "type": "file" }
   ]
 }
 ```
+
+### type — 입력 유형 (2026-08-16 추가)
+
+`formSchema` 는 자유 형식(jsonb)이고 BE 는 `required` 만 검사한다. 즉 `type` 은 **순수 FE 렌더 힌트**로, 지원서 화면이 어떤 입력 UI 를 띄울지 고르는 데만 쓰인다.
+
+| type | 지원서 UI | `answers[key]` 값 |
+| --- | --- | --- |
+| `"text"` (기본) | TextArea | 문자열 |
+| `"file"` | PDF 업로드 | `{ path, originalName, size }` (업로드 응답 객체 그대로) |
+
+- `type` 이 **없는** 기존 질문은 `"text"` 로 본다. admin `serialize.ts`·web `buildApplyQuestions` 둘 다 `"file"` 이 아닌 값을 전부 `"text"` 로 떨어뜨린다.
+- 상수·타입 단일 출처는 `packages/api` 의 `APPLICATION_QUESTION_TYPES` / `ApplicationQuestionType`.
+
+### file 질문의 제출 흐름
+
+첨부는 개인정보라 **다운로드 URL 이 응답에 없다**. `path` 만 오가고, 열람이 필요할 때마다 서명 URL 을 발급받는다(10분 만료 — 캐싱·저장 금지).
+
+```
+파일 선택 → POST /applications/attachments → { path, originalName, size }
+          → 상태로 보관, 화면엔 originalName 표시
+          → 제출/임시저장 시 answers[질문키] = 보관한 객체
+열람      → GET /applications/attachments/signed-url?path=... → 새 URL 로 열기
+```
+
+- PDF 만 · 최대 20MB · 파일명에 `.pdf` 확장자 필수. FE 도 같은 규칙으로 선업로드 전에 거른다.
+- 필수 첨부인데 `path` 가 빈 문자열이면 400 `INVALID_APPLICATION_ANSWERS`. FE 는 첨부가 없으면 키를 아예 싣지 않는다.
+- 타인의 `path` 를 넣으면 403 `ATTACHMENT_NOT_OWNED` (중첩 깊이 무관).
+- 용량 초과는 400 `FILE_SIZE_EXCEEDED` 와 413 `BAD_REQUEST` 두 갈래로 온다 — `fetchClient` 가 status 413 을 먼저 보고 `FILE_SIZE_EXCEEDED` 로 정규화한다.
+- 업로드 즉시 저장되므로 파일을 교체해도 이전 파일은 남는다. 최종 `answers` 에 담긴 것만 유효하다. 첨부는 180일 후 자동 삭제.
+
+### 어드민 열람 경로
+
+지원자용 `GET /applications/attachments/signed-url` 은 업로더 본인에게만 발급되므로 운영진은 쓸 수 없다. 어드민은 기존 스토리지 창구인 **`POST /admin/files/signed-url`** (`action: "read"`) 을 쓴다 — `AttachmentAnswer.tsx` 가 이 경로로 발급받아 새 탭으로 연다.
+
+> **BE 확인 필요**
+> `POST /admin/files/signed-url` 의 `path` 는 "카테고리 prefix 로 시작해야 함" 제약이 있고, 현재 카테고리는 `project-thumbnail` / `project-pdf` / `blog-thumbnail` 뿐이다. 첨부 경로(`applications/attachments/...`)가 허용 목록에 없으면 발급이 거부된다.
+> BE 에 해당 prefix 허용(+ 운영진 권한 검사)을 요청해둔 상태이며, 허용되면 FE 는 수정 없이 그대로 동작한다.
 
 ### key 보존 규칙
 

@@ -1,4 +1,8 @@
-import type { CohortPartName, CohortStatus } from "@ddd/api"
+import type {
+  ApplicationQuestionType,
+  CohortPartName,
+  CohortStatus,
+} from "@ddd/api"
 
 export type ProcessSchedule = {
   documentResultDate: string
@@ -16,6 +20,8 @@ export type CohortPartQuestion = {
   key: string
   label: string
   required: boolean
+  /** "text" = 서술형, "file" = PDF 첨부. 저장된 질문에 없으면 "text" 로 복원한다. */
+  type: ApplicationQuestionType
 }
 
 export type CohortPartFormState = {
