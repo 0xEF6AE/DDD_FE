@@ -9,6 +9,7 @@ import type {
   PostSaveApplicationDraftRequest,
   GetApplicationDraftParams,
   PostSubmitApplicationRequest,
+  GetApplicationAttachmentSignedUrlParams,
 } from "./types";
 
 export const applicationQueries = {
@@ -96,5 +97,39 @@ export const applicationMutations = {
     mutationOptions({
       mutationFn: ({ payload }: { payload: PostSubmitApplicationRequest }) =>
         applicationAPI.submitApplication({ payload }),
+    }),
+
+  /**
+   * 지원서 첨부 PDF 업로드 mutation
+   *
+   * @example
+   * const mutation = useMutation(applicationMutations.uploadApplicationAttachment())
+   * const formData = new FormData()
+   * formData.append('file', file)
+   * const attachment = await mutation.mutateAsync({ payload: formData })
+   */
+  uploadApplicationAttachment: () =>
+    mutationOptions({
+      mutationFn: ({ payload }: { payload: FormData }) =>
+        applicationAPI.uploadApplicationAttachment({ payload }),
+    }),
+
+  /**
+   * 첨부 열람 URL 발급 mutation
+   *
+   * 발급된 URL 은 10분 만료라 캐싱하면 안 된다. query 가 아니라 mutation 으로 두어
+   * 열람 버튼을 누른 시점에만 발급받는다.
+   *
+   * @example
+   * const mutation = useMutation(applicationMutations.getApplicationAttachmentSignedUrl())
+   * const { url } = await mutation.mutateAsync({ params: { path } })
+   */
+  getApplicationAttachmentSignedUrl: () =>
+    mutationOptions({
+      mutationFn: ({
+        params,
+      }: {
+        params: GetApplicationAttachmentSignedUrlParams;
+      }) => applicationAPI.getApplicationAttachmentSignedUrl({ params }),
     }),
 };

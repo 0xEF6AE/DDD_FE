@@ -1,8 +1,19 @@
 import type { Metadata } from 'next';
 import { PreAlertModal } from '@/components/modals/PreAlertModal';
 import { RecruitStatusProvider } from "@/components/providers/RecruitStatusProvider";
-import { fetchRecruitStatus } from "@/lib/api/cohort";
+import { getActiveCohort } from "@/lib/api/activeCohort.server";
+import { parseRecruitStatus } from "@/lib/mappers/cohort";
 import './globals.css';
+
+/**
+ * 모집 상태는 요청 시점에 조회한다.
+ *
+ * 루트 레이아웃이 렌더하는 Navigation CTA 가 모집 상태에 따라 바뀌므로, 이 레이아웃이
+ * 정적으로 프리렌더되면 빌드 시점의 모집 상태가 모든 페이지 HTML 에 박제된다.
+ * 실제로 어드민에서 14기를 "모집중" 으로 전환해도 배포 전까지 홈페이지가 계속
+ * "사전 알림 신청" 을 노출하던 원인이 이것이다.
+ */
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
@@ -14,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const recruitStatus = await fetchRecruitStatus();
+  const recruitStatus = parseRecruitStatus(await getActiveCohort());
 
   return (
     <html lang="ko">

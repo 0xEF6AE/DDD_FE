@@ -3,7 +3,7 @@
 import styled from "@emotion/styled";
 import { assets } from "@/constants/assets";
 import { colors, fontWeights } from "@/constants/tokens";
-import { recruitCurriculum } from "@/constants/recruit";
+import type { RecruitCurriculumItem } from "@/lib/mappers/recruit";
 
 const Section = styled.section({
   background: colors.background,
@@ -134,19 +134,29 @@ const Floating3D = styled.img({
   "@media (max-width: 375px)": { width: "220px", top: "56%" },
 });
 
-export const RecruitCurriculumSection = () => {
+export const RecruitCurriculumSection = ({
+  cohortName,
+  curriculum,
+}: {
+  cohortName: string | null;
+  curriculum: RecruitCurriculumItem[];
+}) => {
+  // 일정 섹션과 같은 이유로, 커리큘럼이 비어 있으면 지난 기수 내용 대신 아무것도
+  // 노출하지 않는다.
+  if (curriculum.length === 0) return null;
+
   return (
     <Section>
       <Inner>
-        <Title>13기 커리큘럼</Title>
+        <Title>{cohortName ? `${cohortName} 커리큘럼` : "커리큘럼"}</Title>
         <Floating3D src={assets.recruit3d} alt="" />
         <Grid>
-          {recruitCurriculum.map((item) => (
-            <Item key={`${item.week}-${item.title}`}>
+          {curriculum.map((item) => (
+            <Item key={item.week}>
               <ItemBody>
                 <DateText>{item.date}</DateText>
                 <ItemTitle>{item.title}</ItemTitle>
-                <Description>{item.description}</Description>
+                {item.description ? <Description>{item.description}</Description> : null}
               </ItemBody>
               <Week>{item.week}</Week>
             </Item>

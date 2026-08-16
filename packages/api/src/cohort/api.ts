@@ -26,8 +26,7 @@ export const cohortAPI = {
     }) as unknown as Promise<PostCreateCohortResponse>,
 
   /** 기수 전체 목록 - GET /api/v1/admin/cohorts */
-  getCohorts: () =>
-    api.get("/api/v1/admin/cohorts") as unknown as Promise<GetCohortsResponse>,
+  getCohorts: () => api.get("/api/v1/admin/cohorts") as unknown as Promise<GetCohortsResponse>,
 
   /** 기수 단건 - GET /api/v1/admin/cohorts/{id} */
   getCohort: ({ params }: { params: GetCohortParams }) =>
@@ -68,15 +67,20 @@ export const cohortAPI = {
     }) as unknown as Promise<PutUpdateCohortPartsResponse>,
 };
 
-/** 퍼블릭 기수 API */
+/**
+ * 퍼블릭 기수 API
+ *
+ * 두 엔드포인트 모두 OpenAPI 에 응답 schema 가 노출되어 있어 `as unknown as` 로
+ * 계약을 덮지 않는다. 자유 JSON 필드(process/curriculum/applicationSchema)만
+ * types.ts 에서 실사용 형태로 좁히고, 나머지는 generated 타입 그대로 검증받는다.
+ */
 export const cohortPublicAPI = {
   /** 현재 활성 기수 조회 - GET /api/v1/cohorts/active */
-  getActiveCohort: () =>
-    api.get("/api/v1/cohorts/active") as unknown as Promise<GetActiveCohortResponse>,
+  getActiveCohort: (): Promise<GetActiveCohortResponse> => api.get("/api/v1/cohorts/active"),
 
   /** 모집 파트 상세 조회 - GET /api/v1/cohorts/parts/{id} */
-  getCohortPart: ({ params }: { params: GetCohortPartParams }) =>
+  getCohortPart: ({ params }: { params: GetCohortPartParams }): Promise<GetCohortPartResponse> =>
     api.get("/api/v1/cohorts/parts/{id}", {
       params: { path: { id: params.id } },
-    }) as unknown as Promise<GetCohortPartResponse>,
+    }),
 };

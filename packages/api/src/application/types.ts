@@ -43,6 +43,59 @@ export type GetApplicationDraftResponse = void;
 export type PostSubmitApplicationRequest = SubmitApplicationRequestDto;
 export type PostSubmitApplicationResponse = void;
 
+// ---------- 지원서 첨부 (PDF) ----------
+//
+// 2026-08-16 배포분. BE OpenAPI 에 아직 두 경로가 없어 generated `paths` 로 좁힐 수
+// 없다. `pnpm gen:api` 로 스펙이 갱신되면 아래 수동 정의를 generated 타입으로 교체한다.
+
+/** 파일 업로드 제약 — BE 규칙과 동일 (PDF · 20MB) */
+export const APPLICATION_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024;
+export const APPLICATION_ATTACHMENT_MIME = "application/pdf";
+
+/**
+ * 업로드 응답이자 `answers` 에 그대로 싣는 값.
+ *
+ * 다운로드 URL 은 응답에 없다 — 첨부는 개인정보라 공개 URL 을 저장하지 않고,
+ * 열람이 필요할 때마다 signed-url 을 발급받는다. 서버가 실제로 쓰는 값은 `path` 이고
+ * `originalName` 은 화면 표시용이다.
+ */
+export interface ApplicationAttachmentDto {
+  path: string;
+  originalName: string;
+  size: number;
+}
+
+// POST /api/v1/applications/attachments - PDF 업로드
+export type PostApplicationAttachmentResponse = ApplicationAttachmentDto;
+
+// GET /api/v1/applications/attachments/signed-url - 본인 첨부 열람용 임시 URL
+export type GetApplicationAttachmentSignedUrlParams = { path: string };
+export interface ApplicationAttachmentSignedUrlDto {
+  url: string;
+  /** ISO 8601. 발급 후 10분 — 상태·DB 에 담지 말고 필요할 때 재발급한다. */
+  expiresAt: string;
+}
+export type GetApplicationAttachmentSignedUrlResponse =
+  ApplicationAttachmentSignedUrlDto;
+
+/**
+ * answers 의 값이 첨부 객체인지 판별한다.
+ *
+ * answers 는 자유 폼(`Record<string, unknown>`)이라 텍스트 답변과 첨부가 같은 맵에
+ * 섞인다. 렌더·복원 시 이 가드로 분기한다.
+ */
+export function isApplicationAttachment(
+  value: unknown,
+): value is ApplicationAttachmentDto {
+  if (typeof value !== "object" || value === null) return false;
+  const o = value as Record<string, unknown>;
+  return (
+    typeof o.path === "string" &&
+    typeof o.originalName === "string" &&
+    typeof o.size === "number"
+  );
+}
+
 // 엔티티 타입 (BE 응답 schema 미정의 → 수동 정의)
 export type ApplicationStatus =
   NonNullable<ApplicationGetAdminListParams>["status"];

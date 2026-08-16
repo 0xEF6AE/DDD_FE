@@ -2,7 +2,7 @@
 
 import styled from "@emotion/styled";
 import { colors, fontWeights } from "@/constants/tokens";
-import { recruitSchedules } from "@/constants/recruit";
+import type { RecruitScheduleItem } from "@/lib/mappers/recruit";
 
 const Section = styled.section({
   background: colors.background,
@@ -93,13 +93,23 @@ const DateText = styled.p({
   "@media (max-width: 575px)": { fontSize: "20px", lineHeight: "25px", marginTop: "6px" },
 });
 
-export const RecruitScheduleSection = () => {
+export const RecruitScheduleSection = ({
+  cohortName,
+  schedules,
+}: {
+  cohortName: string | null;
+  schedules: RecruitScheduleItem[];
+}) => {
+  // 활성 기수가 없거나 운영진이 일정을 아직 입력하지 않은 경우 — 지난 기수 일정을
+  // 노출하느니 섹션 자체를 감춘다.
+  if (schedules.length === 0) return null;
+
   return (
     <Section>
       <Inner>
-        <Title>13기 모집 일정</Title>
+        <Title>{cohortName ? `${cohortName} 모집 일정` : "모집 일정"}</Title>
         <List>
-          {recruitSchedules.map((item) => (
+          {schedules.map((item) => (
             <Item key={item.step}>
               <Step>{item.step}</Step>
               <div>
