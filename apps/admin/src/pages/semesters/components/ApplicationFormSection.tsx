@@ -1,10 +1,13 @@
 import { useId, useState } from "react"
-import { Button, Switch, Tabs, TextArea } from "@heroui/react"
+import { Button, ListBox, Select, Switch, Tabs, TextArea } from "@heroui/react"
 import { PlusSignIcon, X } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useFormContext, useWatch } from "react-hook-form"
 
-import type { CohortPartName } from "@ddd/api"
+import { APPLICATION_QUESTION_TYPES } from "@ddd/api"
+
+import type { ApplicationQuestionType, CohortPartName } from "@ddd/api"
+
 
 import { SEMESTER_PARTS } from "@/pages/semesters/constants"
 import { cn } from "@/shared/lib/cn"
@@ -14,6 +17,16 @@ import type { CohortPartQuestion, SemesterRegisterForm } from "../types"
 
 interface Props {
   invalidCells: ReadonlySet<string>
+}
+
+const QUESTION_TYPE_LABEL: Record<ApplicationQuestionType, string> = {
+  text: "서술형",
+  file: "PDF 첨부",
+}
+
+const QUESTION_TYPE_PLACEHOLDER: Record<ApplicationQuestionType, string> = {
+  text: "질문을 입력하세요",
+  file: "첨부 요청 문구를 입력하세요 (예: 포트폴리오를 PDF 로 첨부해주세요)",
 }
 
 export function ApplicationFormSection({ invalidCells }: Props) {
@@ -55,7 +68,7 @@ export function ApplicationFormSection({ invalidCells }: Props) {
           ...parts[part],
           questions: [
             ...parts[part].questions,
-            { key: "", label: "", required: true },
+            { key: "", label: "", required: true, type: "text" },
           ],
         },
       },
@@ -138,21 +151,51 @@ export function ApplicationFormSection({ invalidCells }: Props) {
                     >
                       질문 {qIndex + 1}
                     </label>
-                    {parts[part].questions.length > 0 && (
-                      <Button
-                        isIconOnly
-                        variant="outline"
-                        size="sm"
-                        onPress={() => removeQuestion(part, qIndex)}
+                    <div className="flex items-center gap-2">
+                      <Select
+                        variant="secondary"
+                        className="w-32"
+                        aria-label={`질문 ${qIndex + 1} 유형`}
                       >
-                        <HugeiconsIcon icon={X} />
-                      </Button>
-                    )}
+                        <Select.Trigger>
+                          <Select.Value>
+                            {QUESTION_TYPE_LABEL[question.type]}
+                          </Select.Value>
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {APPLICATION_QUESTION_TYPES.map((type) => (
+                              <ListBox.Item
+                                key={type}
+                                id={type}
+                                textValue={QUESTION_TYPE_LABEL[type]}
+                                onClick={() =>
+                                  updateQuestion(part, qIndex, { type })
+                                }
+                              >
+                                {QUESTION_TYPE_LABEL[type]}
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                      {parts[part].questions.length > 0 && (
+                        <Button
+                          isIconOnly
+                          variant="outline"
+                          size="sm"
+                          onPress={() => removeQuestion(part, qIndex)}
+                        >
+                          <HugeiconsIcon icon={X} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <TextArea
                     aria-labelledby={labelId}
-                    placeholder="질문을 입력하세요"
+                    placeholder={QUESTION_TYPE_PLACEHOLDER[question.type]}
                     className="w-full resize-none"
                     value={question.label}
                     readOnly={isLocked}
@@ -160,6 +203,12 @@ export function ApplicationFormSection({ invalidCells }: Props) {
                       updateQuestion(part, qIndex, { label: e.target.value })
                     }
                   />
+
+                  {question.type === "file" && (
+                    <p className="text-foreground-secondary text-xs">
+                      지원자는 PDF 파일 1개(최대 20MB)를 업로드합니다.
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-between">
                     <Switch

@@ -177,12 +177,13 @@ const useCountUpOnView = (target: number, enabled: boolean) => {
     if (!enabled) {
       // 섹션이 화면에서 벗어났다가 다시 들어올 때
       // 동일한 “지금처럼” 애니메이션을 매번 재생하기 위해 리셋합니다.
-      setValue(0);
-      return;
+      //
+      // effect 안에서 곧바로 setState 하면 렌더가 연쇄되므로(react-hooks/set-state-in-effect)
+      // 리셋도 프레임에 맡긴다. 다시 enabled 가 되는 시점엔 이미 0 이라
+      // 카운트업 시작 전 별도 리셋이 필요 없다.
+      const resetRaf = requestAnimationFrame(() => setValue(0));
+      return () => cancelAnimationFrame(resetRaf);
     }
-
-    // enabled 전환 시 항상 0부터 카운트업 시작
-    setValue(0);
 
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
     if (reduceMotion) {

@@ -8,12 +8,6 @@ export type ProjectCursorPage = {
   nextCursor: string | null;
 };
 
-export async function fetchPublicProjects(): Promise<ProjectItem[]> {
-  ensureApiConfigured();
-  const response = await projectAPI.getProjects({ params: { limit: 100 } });
-  return response.items.map(mapProject);
-}
-
 export async function fetchPublicProjectsPage(options?: {
   cursor?: string;
   limit?: number;

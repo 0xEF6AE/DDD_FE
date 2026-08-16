@@ -7,11 +7,16 @@ import { BlogSection } from '@/components/sections/BlogSection';
 import { FaqSection } from '@/components/sections/FaqSection';
 import { SponsorSection } from '@/components/sections/SponsorSection';
 import { CtaSection } from '@/components/sections/CtaSection';
-import { fetchPublicArticles } from '@/lib/api/blog';
-import { fetchPublicProjects } from '@/lib/api/project';
+import { fetchPublicArticlesPage } from '@/lib/api/blog';
+import { fetchPublicProjectsPage } from '@/lib/api/project';
+
+const HOME_PREVIEW_LIMIT = 3;
 
 export default async function HomePage() {
-  const [projects, articles] = await Promise.all([fetchPublicProjects(), fetchPublicArticles()]);
+  const [projectsPage, articlesPage] = await Promise.all([
+    fetchPublicProjectsPage({ limit: HOME_PREVIEW_LIMIT }),
+    fetchPublicArticlesPage({ limit: HOME_PREVIEW_LIMIT }),
+  ]);
 
   return (
     <>
@@ -19,8 +24,8 @@ export default async function HomePage() {
       <main>
         <HeroSection />
         <AboutSection />
-        <ProjectsSection items={projects.slice(0, 6)} />
-        <BlogSection items={articles.slice(0, 5)} />
+        <ProjectsSection items={projectsPage.items} />
+        <BlogSection items={articlesPage.items} />
         <FaqSection />
         <SponsorSection />
         <CtaSection />

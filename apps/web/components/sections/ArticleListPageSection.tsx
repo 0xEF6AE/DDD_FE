@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import styled from "@emotion/styled";
-import { fontWeights } from "@/constants/tokens";
+import { colors, fontWeights } from "@/constants/tokens";
 import type { ArticleItem } from "@/constants/articles";
 import { fetchPublicArticlesPage } from "@/lib/api/blog";
 
@@ -73,13 +73,15 @@ const List = styled.div({
   flexDirection: "column",
 });
 
-const Row = styled.article({
+const Row = styled.a({
   display: "grid",
   gridTemplateColumns: "410px 1fr",
   alignItems: "center",
   gap: "24px",
   padding: "40px 0",
   borderBottom: "1px solid #c9c9c9",
+  color: "inherit",
+  textDecoration: "none",
 
   "@media (max-width: 1024px)": {
     gridTemplateColumns: "340px 1fr",
@@ -97,6 +99,7 @@ const Thumbnail = styled.img({
   objectFit: "cover",
   borderRadius: "30px",
   display: "block",
+  background: colors.categoryBg,
 
   "@media (max-width: 1024px)": {
     height: "260px",
@@ -110,6 +113,8 @@ const Thumbnail = styled.img({
     borderRadius: "25px",
   },
 });
+
+const ThumbnailPlaceholder = Thumbnail.withComponent("div");
 
 const TextWrap = styled.div({
   display: "flex",
@@ -238,11 +243,20 @@ export const ArticleListPageSection = ({
         <Body>
           <List>
             {articleItems.map((article) => (
-              <Row key={article.id}>
-                <Thumbnail src={article.thumbnail} alt={article.title} />
+              <Row
+                key={article.id}
+                {...(article.externalUrl
+                  ? { href: article.externalUrl, target: "_blank", rel: "noopener noreferrer" }
+                  : { as: "article" as const })}
+              >
+                {article.thumbnail ? (
+                  <Thumbnail src={article.thumbnail} alt={article.title} />
+                ) : (
+                  <ThumbnailPlaceholder />
+                )}
                 <TextWrap>
                   <Title>{article.title}</Title>
-                  <Description>{article.description}</Description>
+                  {article.description ? <Description>{article.description}</Description> : null}
                 </TextWrap>
               </Row>
             ))}

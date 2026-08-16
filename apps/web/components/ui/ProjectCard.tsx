@@ -27,6 +27,7 @@ const Thumbnail = styled.div({
   width: "100%",
   aspectRatio: "1 / 1",
   flexShrink: 0,
+  background: colors.categoryBg,
 
   "& img": {
     width: "100%",
@@ -172,9 +173,7 @@ const ProjectCardBody = ({
   generation,
 }: Omit<ProjectCardProps, "href">) => (
   <Card>
-    <Thumbnail>
-      <img src={thumbnail} alt={title} />
-    </Thumbnail>
+    <Thumbnail>{thumbnail ? <img src={thumbnail} alt={title} /> : null}</Thumbnail>
     <CardBody>
       <CardTexts>
         <CardTitle>{title}</CardTitle>

@@ -3,23 +3,40 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import styled from "@emotion/styled";
-import { ApiError } from "@ddd/api";
+import { ApiError, isApplicationAttachment } from "@ddd/api";
+import type { ApplicationAttachmentDto } from "@ddd/api";
 import { colors, fontWeights } from "@/constants/tokens";
 import successIcon from "@/public/images/success.png";
+import { fetchApplyParts, fetchApplyQuestions } from "@/lib/api/cohort";
 import {
-  APPLY_PART_OPTIONS,
-  fetchApplyPartIdMap,
+  type ApplyPart,
   type ApplyPartOption,
-} from "@/lib/api/cohort";
+  type ApplyQuestion,
+} from "@/lib/mappers/cohort";
 import {
   fetchApplicationDraftAnswers,
+  openApplicationAttachment,
   saveRecruitApplicationDraft,
   submitRecruitApplication,
+  uploadApplicationAttachment,
 } from "@/lib/api/application";
-import { birthInputToApiDate, formatApplicantPhoneKorea } from "@/lib/format";
+import {
+  birthInputToApiDate,
+  formatApplicantPhoneKorea,
+  formatBirthInput,
+  formatPhoneInput,
+} from "@/lib/format";
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4;
 type BasicField = "name" | "email" | "phone" | "birth" | "region";
+
+/**
+ * 답변 1건.
+ *
+ * 서술형은 문자열, PDF 첨부 질문은 업로드 응답 객체 그대로다. 첨부는 개인정보라
+ * 다운로드 URL 이 응답에 없고 `path` 만 오간다.
+ */
+type ApplyAnswer = string | ApplicationAttachmentDto;
 
 type FormValues = {
   name: string;
@@ -29,21 +46,9 @@ type FormValues = {
   region: string;
   agreedToPrivacy: boolean;
   part: string | null;
-  essay: string;
-  portfolioLink: string;
-  portfolioFile: File | null;
-  channels: string[];
+  /** 지원서 답변 — 키는 파트별 applicationSchema 질문의 `key` 다. */
+  answers: Record<string, ApplyAnswer>;
 };
-
-const CHANNEL_OPTIONS = [
-  "지인 추천",
-  "인스타그램",
-  "링크드인",
-  "블로그",
-  "아티클",
-  "이전 기수 활동",
-  "기타",
-] as const;
 
 const PART_DESCRIPTIONS: Record<ApplyPartOption, string> = {
   iOS: "Apple 생태계에 맞춰 안정적인 앱을 만들어요. 섬세한 디테일로 완성도 높은 경험을 설계해요.",
@@ -54,31 +59,87 @@ const PART_DESCRIPTIONS: Record<ApplyPartOption, string> = {
   PD: "사용자의 니즈를 반영한 최상의 UI/UX를 만들어요. 여러 툴을 활용해 협업하며, 더 나은 사용자 경험을 고민해요.",
 };
 
-function parseDraftToFormValues(draft: Record<string, unknown>): Partial<FormValues> {
+/**
+ * 임시저장 응답 → 폼 값.
+ *
+ * 기본 정보는 고정 키로 저장되고, 지원서 답변은 파트 질문의 `key` 로 저장된다.
+ * 답변은 현재 파트의 질문 목록에 있는 키만 복원한다 — 파트를 바꿔 질문이 달라졌을 때
+ * 이전 파트의 답변이 섞여 들어가지 않게 하기 위함이다.
+ */
+function parseDraftToFormValues(
+  draft: Record<string, unknown>,
+  questions: ApplyQuestion[],
+): Partial<FormValues> {
   const patch: Partial<FormValues> = {};
   if (typeof draft.email === "string") patch.email = draft.email;
   if (typeof draft.name === "string") patch.name = draft.name;
   if (typeof draft.phone === "string") patch.phone = draft.phone;
   if (typeof draft.birth === "string") patch.birth = draft.birth;
   if (typeof draft.region === "string") patch.region = draft.region;
-  if (typeof draft.essay === "string") patch.essay = draft.essay;
-  if (typeof draft.portfolioLink === "string") patch.portfolioLink = draft.portfolioLink;
   if ("agreedToPrivacy" in draft && typeof draft.agreedToPrivacy === "boolean") {
     patch.agreedToPrivacy = draft.agreedToPrivacy;
   }
-  if (Array.isArray(draft.channels)) {
-    patch.channels = draft.channels.filter(
-      (c): c is string =>
-        typeof c === "string" && (CHANNEL_OPTIONS as readonly string[]).includes(c),
-    );
+  // `part` 는 복원하지 않는다. 임시저장은 cohortPartId 별로 조회하므로 방금 고른
+  // 파트가 곧 정답이고, 저장본에 담긴 part 로 덮어쓰면 사용자가 막 선택한 파트가
+  // 되돌아간다. (파트 A 에서 저장한 뒤 B 를 고르면 화면이 A 로 튀는 문제)
+
+  // 첨부는 질문 유형이 file 인 것만 복원한다 — 질문이 서술형으로 바뀌었는데 예전
+  // 첨부 객체가 남아 있으면 TextArea 에 객체가 들어가 렌더가 깨진다.
+  const answers: Record<string, ApplyAnswer> = {};
+  for (const question of questions) {
+    const saved = draft[question.key];
+    if (question.type === "file") {
+      if (isApplicationAttachment(saved)) answers[question.key] = saved;
+      continue;
+    }
+    if (typeof saved === "string") answers[question.key] = saved;
   }
-  if (
-    typeof draft.part === "string" &&
-    (APPLY_PART_OPTIONS as readonly string[]).includes(draft.part)
-  ) {
-    patch.part = draft.part as FormValues["part"];
-  }
+  if (Object.keys(answers).length > 0) patch.answers = answers;
+
   return patch;
+}
+
+/** 첨부 질문의 답변이면 첨부 객체를, 아니면 null 을 돌려준다. */
+function attachmentOf(answer: ApplyAnswer | undefined): ApplicationAttachmentDto | null {
+  return isApplicationAttachment(answer) ? answer : null;
+}
+
+/** 서술형 질문의 답변 문자열. 첨부 객체가 들어와 있으면 빈 문자열로 본다. */
+function textOf(answer: ApplyAnswer | undefined): string {
+  return typeof answer === "string" ? answer : "";
+}
+
+/**
+ * 미입력 필수 질문 1건을 찾는다.
+ *
+ * BE 검증 규칙과 동일하게 빈 문자열·공백만 있는 값은 미입력으로 본다.
+ * 첨부 질문은 `path` 가 비어 있으면 서버가 400 으로 되돌려주므로 같은 기준을 쓴다.
+ */
+function findMissingRequiredAnswer(
+  questions: ApplyQuestion[],
+  answers: Record<string, ApplyAnswer>,
+): ApplyQuestion | null {
+  return (
+    questions.find((q) => {
+      if (!q.required) return false;
+      const answer = answers[q.key];
+      if (q.type === "file") return !attachmentOf(answer)?.path.trim();
+      return !textOf(answer).trim();
+    }) ?? null
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(1)} ${units[unitIndex]}`;
 }
 
 const BANNER_TEXT = "함께 성장할 PM, 디자이너, 개발자를 기다리고 있어요.";
@@ -91,10 +152,7 @@ const initialValues: FormValues = {
   region: "",
   agreedToPrivacy: false,
   part: null,
-  essay: "",
-  portfolioLink: "",
-  portfolioFile: null,
-  channels: [],
+  answers: {},
 };
 
 const PageSection = styled.section({
@@ -187,7 +245,7 @@ const FormDescription = styled.p({
 const StepWrap = styled.div({
   position: "relative",
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: "20px",
   marginTop: "50px",
   paddingTop: "10px",
@@ -197,20 +255,20 @@ const StepWrap = styled.div({
 
 const StepLine = styled.div({
   position: "absolute",
-  left: "calc(12.5% + 20px)",
-  right: "calc(12.5% + 20px)",
+  left: "calc(16.667% + 20px)",
+  right: "calc(16.667% + 20px)",
   top: "50px",
   height: "2px",
   background: "#62748e",
   "@media (max-width: 768px)": {
     top: "40px",
-    left: "calc(12.5% + 16px)",
-    right: "calc(12.5% + 16px)",
+    left: "calc(16.667% + 16px)",
+    right: "calc(16.667% + 16px)",
   },
   "@media (max-width: 375px)": {
     top: "34px",
-    left: "calc(12.5% + 12px)",
-    right: "calc(12.5% + 12px)",
+    left: "calc(16.667% + 12px)",
+    right: "calc(16.667% + 12px)",
   },
 });
 
@@ -361,6 +419,80 @@ const TextArea = styled.textarea({
   "@media (max-width: 375px)": { minHeight: "280px", fontSize: "16px", lineHeight: "24px" },
 });
 
+const FileDropLabel = styled.label<{ disabled?: boolean }>(({ disabled }) => ({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "6px",
+  width: "100%",
+  minHeight: "140px",
+  borderRadius: "10px",
+  border: "2px dashed #d9e2ef",
+  background: "#ffffff",
+  color: colors.textSecondary,
+  padding: "20px",
+  textAlign: "center" as const,
+  cursor: disabled ? "default" : "pointer",
+  opacity: disabled ? 0.6 : 1,
+  pointerEvents: disabled ? ("none" as const) : ("auto" as const),
+  transition: "border-color 0.15s ease",
+  "&:hover": { borderColor: colors.primary },
+}));
+
+const FileDropTitle = styled.span({
+  fontSize: "20px",
+  lineHeight: "28px",
+  fontWeight: fontWeights.medium,
+  color: colors.textPrimary,
+  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "24px" },
+});
+
+const FileCard = styled.div({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "12px",
+  width: "100%",
+  borderRadius: "10px",
+  background: "#ffffff",
+  padding: "20px",
+  "@media (max-width: 375px)": { padding: "14px", gap: "8px" },
+});
+
+const FileName = styled.p({
+  margin: 0,
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  fontSize: "20px",
+  lineHeight: "28px",
+  fontWeight: fontWeights.medium,
+  color: colors.textPrimary,
+  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "24px" },
+});
+
+const FileMeta = styled.p({
+  margin: 0,
+  fontSize: "14px",
+  lineHeight: "18px",
+  color: colors.textSecondary,
+});
+
+const FileAction = styled.button({
+  flexShrink: 0,
+  border: "none",
+  background: "transparent",
+  color: colors.primary,
+  fontSize: "16px",
+  lineHeight: "20px",
+  fontWeight: fontWeights.semiBold,
+  cursor: "pointer",
+  padding: "6px 4px",
+  "&:disabled": { color: colors.slate500, cursor: "default" },
+});
+
 const PrivacyBox = styled.div({
   marginTop: "24px",
   borderRadius: "10px",
@@ -491,27 +623,6 @@ const AnswerBody = styled.div({
   "@media (max-width: 768px)": { padding: "20px" },
 });
 
-const UploadBox = styled.label({
-  width: "100%",
-  borderRadius: "10px",
-  background: "#ffffff",
-  padding: "40px 20px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexDirection: "column",
-  gap: "12px",
-  color: colors.textSecondary,
-  fontSize: "20px",
-  lineHeight: "28px",
-  fontWeight: fontWeights.medium,
-  cursor: "pointer",
-  textAlign: "center",
-  "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "24px" },
-});
-
-const HiddenFile = styled.input({ display: "none" });
-
 const ButtonRow = styled.div({
   marginTop: "56px",
   display: "flex",
@@ -589,6 +700,27 @@ const ErrorText = styled.p({
   fontWeight: fontWeights.medium,
 });
 
+const ConfigErrorWrap = styled.div({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "12px",
+  marginTop: "16px",
+});
+
+const RetryButton = styled.button({
+  padding: "8px 20px",
+  borderRadius: "999px",
+  border: "1px solid #62748e",
+  background: "transparent",
+  color: colors.slate300,
+  fontSize: "14px",
+  lineHeight: "18px",
+  fontWeight: fontWeights.medium,
+  cursor: "pointer",
+  "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
+});
+
 const FieldError = styled.p({
   margin: "6px 0 0",
   color: "#ff7d7d",
@@ -596,6 +728,27 @@ const FieldError = styled.p({
   lineHeight: "18px",
   fontWeight: fontWeights.medium,
 });
+
+const BIRTH_MIN_YEAR = 1900;
+
+/**
+ * 부트스트랩 실패 사유를 구분한다.
+ *
+ * fetch 는 네트워크 단절·CORS 차단 시 응답 없이 TypeError 로 reject 하므로,
+ * 서버가 내려준 에러(ApiError)와 애초에 서버에 닿지 못한 경우를 나눠 안내한다.
+ */
+const resolveBootstrapErrorMessage = (error: unknown): string => {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof TypeError) {
+    return "서버에 연결하지 못했어요. 네트워크 상태를 확인한 뒤 다시 시도해주세요.";
+  }
+  return "모집 파트 정보를 불러오지 못했어요. 다시 시도해주세요.";
+};
+
+const BASIC_FIELD_FORMATTERS: Partial<Record<BasicField, (value: string) => string>> = {
+  phone: formatPhoneInput,
+  birth: formatBirthInput,
+};
 
 const validateBasicField = (field: BasicField, value: string) => {
   const trimmed = value.trim();
@@ -617,7 +770,7 @@ const validateBasicField = (field: BasicField, value: string) => {
   if (field === "phone") {
     if (!trimmed) return "휴대폰 번호를 입력해주세요.";
     const digits = trimmed.replace(/\D/g, "");
-    if (digits.length < 10 || digits.length > 11) return "올바른 휴대폰 번호를 입력해주세요.";
+    if (!/^01[016789]\d{7,8}$/.test(digits)) return "올바른 휴대폰 번호를 입력해주세요.";
     return null;
   }
 
@@ -626,22 +779,94 @@ const validateBasicField = (field: BasicField, value: string) => {
     return null;
   }
 
-  const normalized = trimmed.replace(/\s+/g, "");
-  const match = normalized.match(/^(\d{4})[/.-]?(\d{2})[/.-]?(\d{2})$/);
-
   if (!trimmed) return "생년월일을 입력해주세요.";
-  if (!match) return "생년월일은 YYYY/MM/DD 형식으로 입력해주세요.";
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length !== 8) return "생년월일은 YYYY / MM / DD 형식으로 입력해주세요.";
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
   const date = new Date(year, month - 1, day);
-  const validDate =
+  const isRealDate =
     date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 
-  if (!validDate) return "유효한 생년월일을 입력해주세요.";
+  if (!isRealDate) return "유효한 생년월일을 입력해주세요.";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date.getTime() > today.getTime()) return "생년월일은 오늘 이전 날짜로 입력해주세요.";
+  if (year < BIRTH_MIN_YEAR) return "생년월일을 다시 확인해주세요.";
+
   return null;
 };
+
+type AttachmentFieldProps = {
+  question: ApplyQuestion;
+  attachment: ApplicationAttachmentDto | null;
+  isUploading: boolean;
+  error: string | null;
+  onSelect: (file: File) => void;
+  onOpen: (path: string) => void;
+  onRemove: () => void;
+};
+
+/**
+ * PDF 첨부 질문의 입력 UI.
+ *
+ * 파일을 고르면 즉시 업로드되고, 화면에는 `originalName` 을 보여준다. 열람은 서명
+ * URL 을 그때그때 발급받아 새 탭으로 연다(10분 만료라 미리 받아둘 수 없다).
+ */
+function AttachmentField({
+  question,
+  attachment,
+  isUploading,
+  error,
+  onSelect,
+  onOpen,
+  onRemove,
+}: AttachmentFieldProps) {
+  return (
+    <div>
+      {attachment ? (
+        <FileCard>
+          <div style={{ minWidth: 0 }}>
+            <FileName title={attachment.originalName}>{attachment.originalName}</FileName>
+            <FileMeta>PDF · {formatBytes(attachment.size)}</FileMeta>
+          </div>
+          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+            <FileAction type="button" onClick={() => onOpen(attachment.path)}>
+              열기
+            </FileAction>
+            <FileAction type="button" onClick={onRemove}>
+              삭제
+            </FileAction>
+          </div>
+        </FileCard>
+      ) : (
+        <FileDropLabel disabled={isUploading}>
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            style={{ display: "none" }}
+            disabled={isUploading}
+            aria-label={question.label}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onSelect(file);
+              event.target.value = ""; // 같은 파일 재선택 허용
+            }}
+          />
+          <FileDropTitle>
+            {isUploading ? "업로드 중이에요..." : "클릭해서 PDF 파일을 첨부해주세요"}
+          </FileDropTitle>
+          <Hint>PDF 형식 · 최대 20MB</Hint>
+        </FileDropLabel>
+      )}
+      {error ? <ErrorText>{error}</ErrorText> : null}
+    </div>
+  );
+}
 
 export const RecruitApplySection = () => {
   const [step, setStep] = useState<Step>(1);
@@ -650,94 +875,141 @@ export const RecruitApplySection = () => {
   const [basicErrors, setBasicErrors] = useState<Partial<Record<BasicField, string>>>({});
   const [basicTouched, setBasicTouched] = useState<Partial<Record<BasicField, boolean>>>({});
   const [focusedField, setFocusedField] = useState<BasicField | null>(null);
-  const [partIdByOption, setPartIdByOption] = useState<Partial<Record<ApplyPartOption, number>>>(
-    {},
-  );
+  const [applyParts, setApplyParts] = useState<ApplyPart[]>([]);
+  const [questions, setQuestions] = useState<ApplyQuestion[]>([]);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
   const [isBootstrapLoading, setIsBootstrapLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
+  // 첨부 질문별 업로드 상태 — 키는 질문의 `key`
+  const [uploadingKeys, setUploadingKeys] = useState<Record<string, boolean>>({});
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
 
-  const stepLabels = useMemo(() => ["기본 정보", "지원 파트", "지원서", "기타 정보"], []);
+  const stepLabels = useMemo(() => ["기본 정보", "지원 파트", "지원서"], []);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setIsBootstrapLoading(true);
-      setConfigError(null);
-      try {
-        const map = await fetchApplyPartIdMap();
-        if (!mounted) return;
-        setPartIdByOption(map);
-        if (Object.keys(map).length === 0) {
-          setConfigError(
-            "현재 모집 중인 지원 파트 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.",
-          );
-        }
-      } catch (e) {
-        if (!mounted) return;
-        setConfigError(e instanceof ApiError ? e.message : "모집 정보를 불러오지 못했습니다.");
-      } finally {
-        if (mounted) setIsBootstrapLoading(false);
+  // 업로드가 끝나기 전에 제출하면 answers 에 첨부가 빠진 채로 나간다.
+  const isUploadingAttachment = Object.values(uploadingKeys).some(Boolean);
+
+  const cohortPartIdByOption = useMemo(
+    () => new Map(applyParts.map((part) => [part.option, part.cohortPartId])),
+    [applyParts],
+  );
+
+  const loadApplyParts = useCallback(async () => {
+    setIsBootstrapLoading(true);
+    setConfigError(null);
+    try {
+      const parts = await fetchApplyParts();
+      setApplyParts(parts);
+      if (parts.length === 0) {
+        setConfigError("현재 지원을 받고 있는 파트가 없어요. 모집 일정을 다시 확인해주세요.");
       }
-    })();
-    return () => {
-      mounted = false;
-    };
+    } catch (e) {
+      setApplyParts([]);
+      console.error("[recruit/apply] 모집 파트 조회 실패", e);
+      setConfigError(resolveBootstrapErrorMessage(e));
+    } finally {
+      setIsBootstrapLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (!values.part) return;
-    const cohortPartId = partIdByOption[values.part as ApplyPartOption];
-    if (typeof cohortPartId !== "number") return;
+    void loadApplyParts();
+  }, [loadApplyParts]);
+
+  // 선택해둔 파트가 모집 목록에서 빠지면(마감·설정 변경) 선택을 비워 제출 단계에서 막히지 않게 한다.
+  useEffect(() => {
+    if (isBootstrapLoading || !values.part) return;
+    if (cohortPartIdByOption.has(values.part as ApplyPartOption)) return;
+    setValues((prev) => ({ ...prev, part: null }));
+  }, [isBootstrapLoading, values.part, cohortPartIdByOption]);
+
+  const selectedCohortPartId = values.part
+    ? (cohortPartIdByOption.get(values.part as ApplyPartOption) ?? null)
+    : null;
+
+  /**
+   * 파트를 고르면 그 파트의 지원서 질문과 임시저장을 함께 불러온다.
+   *
+   * 질문 목록은 제출 계약 그 자체다 — answers 의 키가 여기서 온 `key` 와 다르면
+   * 400 INVALID_APPLICATION_ANSWERS 가 나므로, 질문을 못 받으면 3단계를 열지 않는다.
+   */
+  useEffect(() => {
+    // 파트가 바뀌면 질문 목록이 통째로 갈리므로 이전 파트의 업로드 상태도 버린다.
+    setUploadingKeys({});
+    setUploadErrors({});
+    // 이전 파트의 질문도 즉시 버린다. 남겨두면 새 질문이 도착하기 전까지 3단계가
+    // 이전 파트 질문을 그대로 보여주고, 그 사이 제출하면 cohortPartId 는 새 파트인데
+    // answers 키는 이전 파트 것이라 400 INVALID_APPLICATION_ANSWERS 가 난다.
+    setQuestions([]);
+    setQuestionsError(null);
+
+    if (selectedCohortPartId === null) return;
 
     let cancelled = false;
     (async () => {
-      setIsLoadingDraft(true);
+      setIsLoadingQuestions(true);
+      setQuestionsError(null);
       try {
-        const draft = await fetchApplicationDraftAnswers(cohortPartId);
-        if (cancelled || !draft) return;
-        const patch = parseDraftToFormValues(draft);
-        setValues((prev) => {
-          const next: FormValues = { ...prev };
-          if (patch.email !== undefined) next.email = patch.email;
-          if (patch.name !== undefined) next.name = patch.name;
-          if (patch.phone !== undefined) next.phone = patch.phone;
-          if (patch.birth !== undefined) next.birth = patch.birth;
-          if (patch.region !== undefined) next.region = patch.region;
-          if (patch.agreedToPrivacy !== undefined) next.agreedToPrivacy = patch.agreedToPrivacy;
-          if (patch.part !== undefined) next.part = patch.part;
-          if (patch.essay !== undefined) next.essay = patch.essay;
-          if (patch.portfolioLink !== undefined) next.portfolioLink = patch.portfolioLink;
-          if (patch.channels !== undefined) next.channels = patch.channels;
-          return next;
-        });
+        const loaded = await fetchApplyQuestions(selectedCohortPartId);
+        if (cancelled) return;
+        setQuestions(loaded);
+        if (loaded.length === 0) {
+          setQuestionsError("이 파트의 지원서 양식이 아직 등록되지 않았어요.");
+          return;
+        }
+
+        setIsLoadingDraft(true);
+        try {
+          const draft = await fetchApplicationDraftAnswers(selectedCohortPartId);
+          if (cancelled || !draft) return;
+          const patch = parseDraftToFormValues(draft, loaded);
+          setValues((prev) => ({ ...prev, ...patch }));
+        } finally {
+          if (!cancelled) setIsLoadingDraft(false);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setQuestions([]);
+        setQuestionsError(
+          e instanceof ApiError ? e.message : "지원서 양식을 불러오지 못했어요. 다시 시도해주세요.",
+        );
       } finally {
-        if (!cancelled) setIsLoadingDraft(false);
+        if (!cancelled) setIsLoadingQuestions(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [values.part, partIdByOption]);
+  }, [selectedCohortPartId]);
 
-  const buildDraftAnswers = useCallback((): Record<string, unknown> => {
-    return {
-      email: values.email,
-      name: values.name,
-      phone: formatApplicantPhoneKorea(values.phone),
-      birth: values.birth,
-      region: values.region,
-      agreedToPrivacy: values.agreedToPrivacy,
-      part: values.part,
-      essay: values.essay,
-      portfolioLink: values.portfolioLink,
-      portfolioFileName: values.portfolioFile?.name ?? "",
-      channels: values.channels,
-    };
-  }, [values]);
+  /**
+   * 제출·임시저장에 쓰는 answers.
+   *
+   * 키는 반드시 질문의 `key` 여야 한다. 어드민에서 key 는 편집할 수 없고 label 을
+   * slugify 한 값이 자동 저장되므로(한글 라벨 → 한글 key) 프론트가 임의로 만들면 안 된다.
+   *
+   * 첨부 질문은 업로드 응답 객체를 그대로 싣는다. 아직 올리지 않았으면 키를 아예
+   * 빼는데, 빈 문자열을 넣으면 서버가 미응답이 아니라 잘못된 경로로 볼 여지가 있고
+   * 선택 첨부에서는 굳이 보낼 값이 없기 때문이다.
+   */
+  const buildAnswers = useCallback((): Record<string, unknown> => {
+    const entries: Array<[string, unknown]> = [];
+    for (const question of questions) {
+      const answer = values.answers[question.key];
+      if (question.type === "file") {
+        const attachment = attachmentOf(answer);
+        if (attachment) entries.push([question.key, attachment]);
+        continue;
+      }
+      entries.push([question.key, textOf(answer)]);
+    }
+    return Object.fromEntries(entries);
+  }, [questions, values.answers]);
 
   const validateCurrentStep = () => {
     if (step === 1) {
@@ -777,14 +1049,12 @@ export const RecruitApplySection = () => {
       return false;
     }
 
-    if (step === 3 && !values.essay.trim()) {
-      setError("지원서를 입력해주세요.");
-      return false;
-    }
-
-    if (step === 4 && values.channels.length === 0) {
-      setError("DDD를 알게 된 경로를 1개 이상 선택해주세요.");
-      return false;
+    if (step === 3) {
+      const missing = findMissingRequiredAnswer(questions, values.answers);
+      if (missing) {
+        setError(`"${missing.label}" 항목을 입력해주세요.`);
+        return false;
+      }
     }
 
     setError(null);
@@ -825,12 +1095,13 @@ export const RecruitApplySection = () => {
       setError("지원 파트를 선택해주세요.");
       return false;
     }
-    if (!values.essay.trim()) {
-      setError("지원서를 입력해주세요.");
+    if (questions.length === 0) {
+      setError("지원서 양식을 불러오지 못해 제출할 수 없어요.");
       return false;
     }
-    if (values.channels.length === 0) {
-      setError("DDD를 알게 된 경로를 1개 이상 선택해주세요.");
+    const missing = findMissingRequiredAnswer(questions, values.answers);
+    if (missing) {
+      setError(`"${missing.label}" 항목을 입력해주세요.`);
       return false;
     }
     setError(null);
@@ -842,31 +1113,42 @@ export const RecruitApplySection = () => {
       setError("지원 파트를 선택한 뒤 임시저장할 수 있어요.");
       return;
     }
-    const cohortPartId = partIdByOption[values.part as ApplyPartOption];
-    if (typeof cohortPartId !== "number") {
+    if (selectedCohortPartId === null) {
       setError("선택한 파트의 모집 정보를 찾지 못했어요.");
       return;
     }
     setError(null);
     setIsSavingDraft(true);
     try {
-      await saveRecruitApplicationDraft(cohortPartId, buildDraftAnswers());
+      await saveRecruitApplicationDraft(selectedCohortPartId, {
+        email: values.email,
+        name: values.name,
+        phone: formatApplicantPhoneKorea(values.phone),
+        birth: values.birth,
+        region: values.region,
+        agreedToPrivacy: values.agreedToPrivacy,
+        part: values.part,
+        ...buildAnswers(),
+      });
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "임시저장에 실패했습니다.");
     } finally {
       setIsSavingDraft(false);
     }
-  }, [values.part, partIdByOption, buildDraftAnswers]);
+  }, [values, selectedCohortPartId, buildAnswers]);
 
   const handleNext = async (event: FormEvent) => {
     event.preventDefault();
     if (isSubmitting || isBootstrapLoading) return;
+    if (isUploadingAttachment) {
+      setError("첨부 파일 업로드가 끝난 뒤에 진행할 수 있어요.");
+      return;
+    }
     if (!validateCurrentStep()) return;
 
-    if (step === 4) {
+    if (step === 3) {
       if (!validateAllStepsForSubmit()) return;
-      const cohortPartId = partIdByOption[values.part as ApplyPartOption];
-      if (typeof cohortPartId !== "number") {
+      if (selectedCohortPartId === null) {
         setError("지원 파트 정보를 불러오지 못해 제출할 수 없어요.");
         return;
       }
@@ -875,15 +1157,15 @@ export const RecruitApplySection = () => {
       setError(null);
       try {
         await submitRecruitApplication({
-          cohortPartId,
+          cohortPartId: selectedCohortPartId,
           applicantName: values.name.trim(),
           applicantPhone: formatApplicantPhoneKorea(values.phone),
           applicantBirthDate: birthApi,
           applicantRegion: values.region.trim(),
-          answers: buildDraftAnswers(),
+          answers: buildAnswers(),
           privacyAgreed: values.agreedToPrivacy,
         });
-        setStep(5);
+        setStep(4);
       } catch (e) {
         setError(e instanceof ApiError ? e.message : "제출에 실패했습니다.");
       } finally {
@@ -892,7 +1174,7 @@ export const RecruitApplySection = () => {
       return;
     }
 
-    setStep((prev) => (prev < 5 ? ((prev + 1) as Step) : prev));
+    setStep((prev) => (prev < 4 ? ((prev + 1) as Step) : prev));
   };
 
   const handlePrev = () => {
@@ -900,15 +1182,65 @@ export const RecruitApplySection = () => {
     setStep((prev) => (prev > 1 ? ((prev - 1) as Step) : prev));
   };
 
-  const toggleChannel = (channel: string) => {
-    setValues((prev) => ({
-      ...prev,
-      channels: prev.channels.includes(channel)
-        ? prev.channels.filter((item) => item !== channel)
-        : [...prev.channels, channel],
-    }));
+  const handleAnswerChange = (key: string, value: string) => {
+    setValues((prev) => ({ ...prev, answers: { ...prev.answers, [key]: value } }));
   };
 
+  const setAttachment = (key: string, attachment: ApplicationAttachmentDto | null) => {
+    setValues((prev) => {
+      const nextAnswers = { ...prev.answers };
+      if (attachment) {
+        nextAnswers[key] = attachment;
+      } else {
+        delete nextAnswers[key];
+      }
+      return { ...prev, answers: nextAnswers };
+    });
+  };
+
+  /**
+   * 파일을 고르는 즉시 업로드해 `path` 를 받아둔다.
+   *
+   * 제출 시점에 한꺼번에 올리지 않는 이유는 BE 계약이 그렇기 때문이다 — answers 에는
+   * 이미 업로드된 첨부의 path 만 실을 수 있다.
+   */
+  const handleAttachmentSelect = async (key: string, file: File) => {
+    setUploadErrors((prev) => ({ ...prev, [key]: "" }));
+    setUploadingKeys((prev) => ({ ...prev, [key]: true }));
+    try {
+      const attachment = await uploadApplicationAttachment(file);
+      setAttachment(key, attachment);
+    } catch (e) {
+      setUploadErrors((prev) => ({
+        ...prev,
+        [key]: e instanceof ApiError ? e.message : "파일 업로드에 실패했어요.",
+      }));
+    } finally {
+      setUploadingKeys((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleAttachmentOpen = async (key: string, path: string) => {
+    setUploadErrors((prev) => ({ ...prev, [key]: "" }));
+    try {
+      await openApplicationAttachment(path);
+    } catch (e) {
+      setUploadErrors((prev) => ({
+        ...prev,
+        [key]: e instanceof ApiError ? e.message : "파일을 여는 데 실패했어요.",
+      }));
+    }
+  };
+
+  // 파트를 잠시 비웠다 되돌려 질문 로딩 effect 를 다시 태운다 (effect 의 단일 진입점 유지).
+  const reloadQuestions = () => {
+    const current = values.part;
+    setValues((prev) => ({ ...prev, part: null }));
+    setValues((prev) => ({ ...prev, part: current }));
+  };
+
+  // 파트 목록이 비어 있으면 파트 선택 이후 단계는 진행할 수 없다(기본 정보 입력은 계속 가능).
+  const partsUnavailable = applyParts.length === 0;
   const partTitle = values.part ? `${values.part} 파트 지원서` : "지원서";
   const handleBasicBlur = (field: BasicField) => {
     setFocusedField((prev) => (prev === field ? null : prev));
@@ -917,7 +1249,8 @@ export const RecruitApplySection = () => {
     setBasicErrors((prev) => ({ ...prev, [field]: nextError ?? "" }));
   };
 
-  const handleBasicChange = (field: BasicField, value: string) => {
+  const handleBasicChange = (field: BasicField, rawValue: string) => {
+    const value = BASIC_FIELD_FORMATTERS[field]?.(rawValue) ?? rawValue;
     setValues((prev) => ({ ...prev, [field]: value }));
     if (!basicTouched[field]) return;
     const nextError = validateBasicField(field, value);
@@ -935,12 +1268,21 @@ export const RecruitApplySection = () => {
 
       <ContainerPadding>
         <Container>
-          {step < 5 ? (
+          {step < 4 ? (
             <>
               <FormTitle>DDD 지원서</FormTitle>
               <FormDescription>{BANNER_TEXT}</FormDescription>
               {configError ? (
-                <ErrorText style={{ marginTop: "16px", textAlign: "center" }}>{configError}</ErrorText>
+                <ConfigErrorWrap>
+                  <ErrorText style={{ textAlign: "center" }}>{configError}</ErrorText>
+                  <RetryButton
+                    type="button"
+                    onClick={() => void loadApplyParts()}
+                    disabled={isBootstrapLoading}
+                  >
+                    {isBootstrapLoading ? "불러오는 중..." : "다시 시도"}
+                  </RetryButton>
+                </ConfigErrorWrap>
               ) : null}
               {isBootstrapLoading ? (
                 <p
@@ -969,7 +1311,7 @@ export const RecruitApplySection = () => {
             </>
           ) : null}
 
-          {step < 5 ? (
+          {step < 4 ? (
             <>
               <StepWrap>
                 <StepLine />
@@ -1030,6 +1372,8 @@ export const RecruitApplySection = () => {
                           </Label>
                           <Input
                             placeholder="010-0000-0000"
+                            inputMode="numeric"
+                            autoComplete="tel"
                             value={values.phone}
                             hasError={Boolean(basicErrors.phone)}
                             isFocused={focusedField === "phone"}
@@ -1046,6 +1390,8 @@ export const RecruitApplySection = () => {
                           </Label>
                           <Input
                             placeholder="YYYY / MM / DD"
+                            inputMode="numeric"
+                            autoComplete="bday"
                             value={values.birth}
                             hasError={Boolean(basicErrors.birth)}
                             isFocused={focusedField === "birth"}
@@ -1124,7 +1470,7 @@ export const RecruitApplySection = () => {
                         지원할 파트를 선택해주세요. <Required>*</Required>
                       </Label>
                       <ChipGrid>
-                        {APPLY_PART_OPTIONS.map((option) => (
+                        {applyParts.map(({ option }) => (
                           <Chip
                             type="button"
                             key={option}
@@ -1157,119 +1503,72 @@ export const RecruitApplySection = () => {
                     >
                       {partTitle}
                     </h3>
-                    <AnswerHeader>
-                      <p
-                        style={{
-                          margin: 0,
-                          color: colors.primary,
-                          fontSize: 24,
-                          lineHeight: "30px",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Q1
-                      </p>
-                      <p style={{ margin: 0, fontSize: 24, lineHeight: "30px", fontWeight: 500 }}>
-                        가장 애착이 가는 작업물을 소개해주세요. 포트폴리오 링크를 포함하거나 과정을
-                        상세히 설명해주세요.
-                      </p>
-                    </AnswerHeader>
-                    <AnswerBody>
-                      <TextArea
-                        placeholder="1,000자 이내로 입력해주세요."
-                        value={values.essay}
-                        onChange={(event) =>
-                          setValues((prev) => ({ ...prev, essay: event.target.value }))
-                        }
-                      />
-                    </AnswerBody>
 
-                    <div style={{ marginTop: 20 }}>
-                      <AnswerHeader>
-                        <p
-                          style={{
-                            margin: 0,
-                            color: colors.primary,
-                            fontSize: 24,
-                            lineHeight: "30px",
-                            fontWeight: 500,
-                          }}
+                    {isLoadingQuestions ? (
+                      <AnswerBody>지원서 양식을 불러오는 중이에요...</AnswerBody>
+                    ) : null}
+
+                    {questionsError ? (
+                      <ConfigErrorWrap>
+                        <ErrorText style={{ textAlign: "center" }}>{questionsError}</ErrorText>
+                        <RetryButton
+                          type="button"
+                          onClick={() => reloadQuestions()}
+                          disabled={isLoadingQuestions}
                         >
-                          포트폴리오 선택
-                        </p>
-                        <p style={{ margin: 0, fontSize: 24, lineHeight: "30px", fontWeight: 500 }}>
-                          PDF 파일 또는 링크를 첨부해주세요. (최대 10MB, PDF만 가능)
-                        </p>
-                      </AnswerHeader>
-                      <AnswerBody style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                        <UploadBox>
-                          <HiddenFile
-                            type="file"
-                            accept="application/pdf"
-                            onChange={(event) =>
-                              setValues((prev) => ({
-                                ...prev,
-                                portfolioFile: event.target.files?.[0] ?? null,
-                              }))
-                            }
-                          />
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="46"
-                            height="57"
-                            viewBox="0 0 46 57"
-                            fill="none"
-                          >
-                            <path
-                              d="M11.5 2H29.6L44 16.4V55H2V2H11.5Z"
-                              stroke="#CAD5E2"
-                              strokeWidth="3"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M29 2V16.5H43.5"
-                              stroke="#CAD5E2"
-                              strokeWidth="3"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          {values.portfolioFile
-                            ? values.portfolioFile.name
-                            : "PDF 파일을 첨부해주세요. (최대 10MB, PDF만 가능)"}
-                        </UploadBox>
-                        <Input
-                          placeholder="포트폴리오 링크를 입력해주세요. (https://)"
-                          value={values.portfolioLink}
-                          onChange={(event) =>
-                            setValues((prev) => ({ ...prev, portfolioLink: event.target.value }))
-                          }
-                        />
-                      </AnswerBody>
-                    </div>
-                  </>
-                ) : null}
+                          {isLoadingQuestions ? "불러오는 중..." : "다시 시도"}
+                        </RetryButton>
+                      </ConfigErrorWrap>
+                    ) : null}
 
-                {step === 4 ? (
-                  <Card>
-                    <CardTitle>기타 정보</CardTitle>
-                    <Fields style={{ maxWidth: "100%", marginTop: "28px" }}>
-                      <Label>
-                        DDD를 알게 된 경로 <Required>*</Required>
-                      </Label>
-                      <ChipGrid>
-                        {CHANNEL_OPTIONS.map((option) => (
-                          <Chip
-                            type="button"
-                            key={option}
-                            selected={values.channels.includes(option)}
-                            onClick={() => toggleChannel(option)}
+                    {questions.map((question, index) => (
+                      <div key={question.key} style={{ marginTop: index === 0 ? 0 : 20 }}>
+                        <AnswerHeader>
+                          <p
+                            style={{
+                              margin: 0,
+                              color: colors.primary,
+                              fontSize: 24,
+                              lineHeight: "30px",
+                              fontWeight: 500,
+                            }}
                           >
-                            {option}
-                          </Chip>
-                        ))}
-                      </ChipGrid>
-                    </Fields>
-                  </Card>
+                            {`Q${index + 1}`}
+                          </p>
+                          <p
+                            style={{ margin: 0, fontSize: 24, lineHeight: "30px", fontWeight: 500 }}
+                          >
+                            {question.label} {question.required ? <Required>*</Required> : null}
+                          </p>
+                        </AnswerHeader>
+                        <AnswerBody>
+                          {question.type === "file" ? (
+                            <AttachmentField
+                              question={question}
+                              attachment={attachmentOf(values.answers[question.key])}
+                              isUploading={uploadingKeys[question.key] === true}
+                              error={uploadErrors[question.key] || null}
+                              onSelect={(file) =>
+                                void handleAttachmentSelect(question.key, file)
+                              }
+                              onOpen={(path) =>
+                                void handleAttachmentOpen(question.key, path)
+                              }
+                              onRemove={() => setAttachment(question.key, null)}
+                            />
+                          ) : (
+                            <TextArea
+                              placeholder="1,000자 이내로 입력해주세요."
+                              value={textOf(values.answers[question.key])}
+                              onChange={(event) =>
+                                handleAnswerChange(question.key, event.target.value)
+                              }
+                            />
+                          )}
+                        </AnswerBody>
+                      </div>
+                    ))}
+                  </>
                 ) : null}
 
                 {error ? <ErrorText>{error}</ErrorText> : null}
@@ -1284,12 +1583,16 @@ export const RecruitApplySection = () => {
                       이전 <Arrow back />
                     </ActionButton>
                   ) : null}
-                  {step >= 2 && step <= 4 && values.part ? (
+                  {step >= 2 && step <= 3 && values.part ? (
                     <ActionButton
                       type="button"
                       onClick={() => void handleSaveDraft()}
                       disabled={
-                        isSavingDraft || isSubmitting || isBootstrapLoading || Boolean(configError)
+                        isSavingDraft ||
+                        isSubmitting ||
+                        isBootstrapLoading ||
+                        isUploadingAttachment ||
+                        partsUnavailable
                       }
                     >
                       {isSavingDraft ? "저장 중..." : "임시저장"}
@@ -1298,10 +1601,16 @@ export const RecruitApplySection = () => {
                   <ActionButton
                     type="submit"
                     primary
-                    full={step !== 4}
-                    disabled={isSubmitting || isBootstrapLoading || Boolean(configError)}
+                    full={step !== 3}
+                    disabled={
+                      isSubmitting ||
+                      isBootstrapLoading ||
+                      isUploadingAttachment ||
+                      (step >= 2 && partsUnavailable) ||
+                      (step === 3 && (isLoadingQuestions || questions.length === 0))
+                    }
                   >
-                    {step === 4 ? (
+                    {step === 3 ? (
                       isSubmitting ? (
                         "제출 중..."
                       ) : (
@@ -1342,6 +1651,8 @@ export const RecruitApplySection = () => {
                   setValues(initialValues);
                   setBasicErrors({});
                   setBasicTouched({});
+                  setUploadingKeys({});
+                  setUploadErrors({});
                   setError(null);
                   setStep(1);
                 }}

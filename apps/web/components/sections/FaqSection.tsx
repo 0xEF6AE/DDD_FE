@@ -4,35 +4,60 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
 
+interface AnswerSegment {
+  text: string;
+  emphasis?: boolean;
+}
+
 interface FaqItem {
   question: string;
-  answer: string;
+  /** 문단 배열. 각 문단은 일반 텍스트/강조 텍스트 조각으로 구성된다. */
+  answer: AnswerSegment[][];
 }
 
 const FAQ_ITEMS: FaqItem[] = [
   {
-    question: "현직자가 아니어도 지원할 수 있나요?",
-    answer: "네, 가능해요. 직군과 무관하게 함께 만들고 성장하려는 열정이 있다면 누구든 환영해요.",
+    question: "모집 및 활동 일정이 궁금해요",
+    answer: [
+      [
+        {
+          text: "DDD는 1년에 2번 운영됩니다. 구체적인 일시는 매 기수 모집 전에 안내드립니다. (봄 기수 : 2월 모집 + 3~6월 활동, 가을 기수 : 9월 모집 + 10~1월 활동)",
+        },
+      ],
+    ],
   },
   {
-    question: "사이드프로젝트 경험이 없어도 괜찮나요?",
-    answer:
-      "네, 없어도 괜찮아요. DDD는 처음 사이드프로젝트를 경험하는 분들도 함께 성장할 수 있는 환경을 제공해요.",
+    question: "지원자격은 무엇인가요?",
+    answer: [
+      [
+        {
+          text: "DDD는 대학생/취준생/직장인이며 20살 이상인 성인이라면 누구나 참여 가능합니다. 직업, 연령 등 자격 요건에 제한을 두지 않습니다.",
+        },
+      ],
+    ],
   },
   {
-    question: "팀은 어떻게 구성되나요?",
-    answer:
-      "기수별로 PM, 디자이너, 개발자(iOS, AOS, WEB)가 함께하는 팀으로 구성되며, 모집 과정에서 적절히 배정돼요.",
-  },
-  {
-    question: "정기 모임은 어떻게 진행되나요?",
-    answer:
-      "격주 토요일에 오프라인 정기 모임이 진행되며, 팀 프로젝트 진행 상황 공유 및 네트워킹 시간을 가져요.",
-  },
-  {
-    question: "한 기수 활동 기간은 얼마나 되나요?",
-    answer:
-      "한 기수는 약 6개월로 구성되며, 기수 종료 시 데모데이를 통해 팀별 프로젝트 결과물을 발표해요.",
+    question: "실력이 뛰어난 사람만 지원할 수 있나요?",
+    answer: [
+      [
+        {
+          text: "실력이 뛰어난지가 선발의 기준은 아닙니다. 다만 팀 프로젝트를 진행하는 사이드 프로젝트 특성상 ",
+        },
+        { text: "개인 프로젝트를 수행할 수 있을 정도의 기본적인 기술 숙련도", emphasis: true },
+        { text: "는 필요합니다." },
+      ],
+      [
+        { text: "DDD는 교육 중심 프로그램이 아니라 " },
+        { text: "실제 프로젝트 경험을 중심으로 운영되는 커뮤니티", emphasis: true },
+        { text: "입니다. 따라서 별도의 교육 커리큘럼은 없으며, 활동 외에도 " },
+        { text: "개인적인 학습과 노력이 필요합니다.", emphasis: true },
+      ],
+      [
+        { text: "무엇보다 DDD에서는 " },
+        { text: "4개월 동안 꾸준히 참여할 수 있는 책임감과 성장 의지", emphasis: true },
+        { text: "를 가장 중요하게 보고 있습니다." },
+      ],
+    ],
   },
 ];
 
@@ -178,6 +203,12 @@ const AccordionBodyInner = styled.div<{ isOpen: boolean }>(({ isOpen }) => ({
   paddingBottom: isOpen ? "24px" : "0",
 }));
 
+const AnswerParagraphs = styled.div({
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+});
+
 const AccordionAnswer = styled.p({
   fontFamily: "'Pretendard', sans-serif",
   fontSize: fontSizes.medium,
@@ -196,6 +227,11 @@ const AccordionAnswer = styled.p({
     fontSize: "12px",
     lineHeight: "15px",
   },
+});
+
+const AnswerEmphasis = styled.strong({
+  fontWeight: fontWeights.semiBold,
+  color: colors.textInverse,
 });
 
 export const FaqSection = () => {
@@ -240,7 +276,20 @@ export const FaqSection = () => {
                 </AccordionTrigger>
                 <AccordionBody isOpen={isOpen}>
                   <AccordionBodyInner isOpen={isOpen}>
-                    <AccordionAnswer>A. {answer}</AccordionAnswer>
+                    <AnswerParagraphs>
+                      {answer.map((paragraph, paragraphIndex) => (
+                        <AccordionAnswer key={paragraph[0].text}>
+                          {paragraphIndex === 0 && "A. "}
+                          {paragraph.map(({ text, emphasis }) =>
+                            emphasis ? (
+                              <AnswerEmphasis key={text}>{text}</AnswerEmphasis>
+                            ) : (
+                              <span key={text}>{text}</span>
+                            ),
+                          )}
+                        </AccordionAnswer>
+                      ))}
+                    </AnswerParagraphs>
                   </AccordionBodyInner>
                 </AccordionBody>
               </AccordionItem>

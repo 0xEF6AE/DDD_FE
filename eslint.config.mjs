@@ -35,6 +35,9 @@ export const baseConfig = [
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
+      // TS 컴파일러가 미정의 식별자를 잡으므로 no-undef 는 끈다.
+      // (켜두면 `React.ComponentProps` 같은 타입 네임스페이스 참조를 false positive 로 잡는다)
+      "no-undef": "off",
       // 일반 규칙
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },

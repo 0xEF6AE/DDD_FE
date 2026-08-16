@@ -1,13 +1,24 @@
-export type RecruitStatus = "open" | "closed";
-
-export const recruitStatus: RecruitStatus = "closed";
+/**
+ * 모집 CTA 상태 — BE 의 ctaStatus 3값과 1:1 대응한다.
+ *
+ * status 가 RECRUITING 이어도 모집 기간(recruitStartAt ~ recruitEndAt) 밖이면
+ * 지원이 열리지 않는다. (DDD_BE#68 모집 기간 게이트) 따라서 모집 개폐의 단일
+ * 기준은 status 가 아니라 ctaStatus 다.
+ * - preNotification: 모집 시작 전 — 사전 알림만 받는다
+ * - open: 모집 기간 중 — 지원서 진입 허용
+ * - closed: 모집 종료 후 또는 활성 기수 없음
+ */
+export type RecruitStatus = "preNotification" | "open" | "closed";
 
 export const recruitPageMetaDescriptionByStatus: Record<RecruitStatus, string> = {
+  preNotification: "DDD에서 함께할 개발자, 디자이너, 기획자를 모집합니다.",
   open: "지금 DDD 크루원을 모집하고 있어요! 함께 성장할 준비가 되셨다면 지금 바로 지원해보세요.",
   closed: "DDD에서 함께할 개발자, 디자이너, 기획자를 모집합니다.",
 };
 
 export const recruitHeroDescriptionByStatus: Record<RecruitStatus, string> = {
+  preNotification:
+    "다음 크루원 모집을 위해 DDD 운영진들이 열심히 준비 중이에요.\n크루원 모집 준비가 끝나면 그 누구보다 빠르게 연락 드릴게요!",
   open: "지금 DDD 크루원을 모집하고 있어요!\n함께 성장할 준비가 되셨다면 지금 바로 지원해보세요.",
   closed:
     "다음 크루원 모집을 위해 DDD 운영진들이 열심히 준비 중이에요.\n크루원 모집 준비가 끝나면 그 누구보다 빠르게 연락 드릴게요!",
@@ -17,6 +28,12 @@ export const recruitButtonLabelsByStatus: Record<
   RecruitStatus,
   { navigation: string; hero: string; role: string }
 > = {
+  // 모집 시작 전에는 "지원마감" 이 아니라 사전 알림으로 안내한다.
+  preNotification: {
+    navigation: "사전 알림 신청",
+    hero: "사전 알림 신청하기",
+    role: "사전 알림 신청",
+  },
   open: {
     navigation: "지원 신청",
     hero: "지원하기",
@@ -28,8 +45,6 @@ export const recruitButtonLabelsByStatus: Record<
     role: "지원마감",
   },
 };
-
-export const recruitButtonLabels = recruitButtonLabelsByStatus[recruitStatus];
 
 export const recruitParts = [
   { name: "Product Manager" },
@@ -60,69 +75,34 @@ export const recruitParts = [
   },
 ] as const;
 
-export const recruitSchedules = [
-  { step: "01", label: "서류 접수", date: "2026.02.12 (목) - 02.18 (수)" },
-  { step: "02", label: "서류 발표", date: "2026.02.12" },
-  { step: "03", label: "온라인 인터뷰", date: "2026.02.12 (목) - 02.18 (수)" },
-  { step: "04", label: "최종 발표", date: "2026.02.12 (목)" },
-] as const;
+/**
+ * 커리큘럼 활동별 안내 문구.
+ *
+ * 어드민 기수 등록 폼은 주차별로 `{ date, description }` 만 입력받고, 그 description
+ * 은 화면에서 카드 제목("오리엔테이션", "부스팅 데이" …) 으로 쓰인다. 활동 설명은
+ * BE 에 필드가 없으므로 활동명으로 매칭해 프론트에서 붙인다.
+ *
+ * 키는 공백 제거 + 소문자로 정규화한 활동명이다. 매칭되는 문구가 없으면 설명 줄은
+ * 노출하지 않는다 — 운영진이 새 활동명을 넣었을 때 엉뚱한 설명이 붙는 것보다 낫다.
+ */
+const CURRICULUM_DESCRIPTIONS: Record<string, string> = {
+  오리엔테이션: "크루원들과 처음 만나서 이야기를 나누는 날이에요",
+  orientation: "크루원들과 처음 만나서 이야기를 나누는 날이에요",
+  ot: "크루원들과 처음 만나서 이야기를 나누는 날이에요",
+  부스팅데이: "팀에서 정한 아이디어를 바탕으로 기획을 구체화하는 날이에요",
+  직군세션: "같은 직군 멤버들과 모여 각자의 경험과 고민을 나누고, 시야를 넓히는 네트워킹 데이에요",
+  ut: "구현된 서비스를 중심으로 사용성 테스트를 진행하고 완성도를 높여요",
+  ut세션: "구현된 서비스를 중심으로 사용성 테스트를 진행하고 완성도를 높여요",
+  "ut1차": "구현된 서비스를 중심으로 사용성 테스트를 진행하고 완성도를 높여요",
+  "ut2차": "구현된 서비스를 중심으로 다시 한 번 사용성 테스트를 진행하고 완성도를 높여요",
+  중간발표: "현재까지의 진행 상황과 서비스 방향을 공유하고, 피드백을 통해 방향성을 점검해요",
+  티키타카: "프로젝트를 잠시 벗어나, 전체 멤버들과 자유롭게 소통하며 관계를 다지는 날이에요",
+  티키타카데이: "프로젝트를 잠시 벗어나, 전체 멤버들과 자유롭게 소통하며 관계를 다지는 날이에요",
+  최종발표: "4개월간의 결과물을 정리해 발표하고, 프로젝트를 하나의 서비스로 마무리해요",
+  데모데이: "4개월간의 결과물을 정리해 발표하고, 프로젝트를 하나의 서비스로 마무리해요",
+};
 
-export const recruitCurriculum = [
-  {
-    week: "1주차",
-    date: "03.07",
-    title: "Orientation",
-    description: "크루원들과 처음 만나서 이야기를 나누는 날",
-  },
-  {
-    week: "2주차",
-    date: "03.21",
-    title: "부스팅 데이",
-    description: "팀에서 정한 아이디어를 바탕으로 기획을 구체화하는 날이에요",
-  },
-  {
-    week: "3주차",
-    date: "04.04",
-    title: "직군 세션",
-    description:
-      "같은 직군 멤버들과 모여 각자의 경험과 고민을 나누고, 시야를 넓히는 네트워킹 데이에요",
-  },
-  {
-    week: "4주차",
-    date: "04.18",
-    title: "UT 1차",
-    description:
-      "같은 직군 멤버들과 모여 각자의 경험과 고민을 나누고, 시야를 넓히는 네트워킹 데이에요",
-  },
-  {
-    week: "5주차",
-    date: "05.02",
-    title: "중간 발표",
-    description: "현재까지의 진행 상황과 서비스 방향을 공유하고, 피드백을 통해 방향성을 점검해요",
-  },
-  {
-    week: "6주차",
-    date: "05.16",
-    title: "티키타카",
-    description: "프로젝트를 잠시 벗어나, 전체 멤버들과 자유롭게 소통하며 관계를 다지는 날이에요",
-  },
-  {
-    week: "7주차",
-    date: "05.30",
-    title: "UT 2차",
-    description: "구현된 서비스를 중심으로 다시 한 번 사용성 테스트를 진행하고 완성도를 높여요",
-  },
-  {
-    week: "8주차",
-    date: "06.13",
-    title: "직군 세션",
-    description:
-      "프로젝트를 진행하며 쌓인 인사이트를 바탕으로, 직군별 경험을 공유하는 네트워킹 시간이에요",
-  },
-  {
-    week: "9주차",
-    date: "06.27",
-    title: "최종발표",
-    description: "4개월간의 결과물을 정리해 발표하고, 프로젝트를 하나의 서비스로 마무리해요",
-  },
-] as const;
+/** 활동명(어드민 입력값) → 안내 문구. 매칭 실패 시 빈 문자열. */
+export function findCurriculumDescription(activityName: string): string {
+  return CURRICULUM_DESCRIPTIONS[activityName.replace(/\s+/g, "").toLowerCase()] ?? "";
+}

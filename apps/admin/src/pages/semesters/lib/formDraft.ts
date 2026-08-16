@@ -1,6 +1,10 @@
 import { z } from "zod"
 
-import { CreateCohortRequestDtoStatus, type CohortPartName } from "@ddd/api"
+import {
+  APPLICATION_QUESTION_TYPES,
+  CreateCohortRequestDtoStatus,
+  type CohortPartName,
+} from "@ddd/api"
 
 import { SEMESTER_PARTS } from "@/pages/semesters/constants"
 
@@ -25,6 +29,8 @@ const questionSchema = z.object({
   key: z.string(),
   label: z.string(),
   required: z.boolean(),
+  // type 도입 전에 저장된 draft 에는 없다. 통째로 버리지 않고 서술형으로 복원한다.
+  type: z.enum(APPLICATION_QUESTION_TYPES).default("text"),
 })
 
 const partSchema = z.object({

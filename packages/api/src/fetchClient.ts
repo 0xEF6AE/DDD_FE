@@ -5,7 +5,7 @@ import createClient, {
   type MethodResponse,
 } from "openapi-fetch";
 
-import { ApiError, type ErrorMessageKey } from "./errors";
+import { ApiError, ErrorMessage, type ErrorMessageKey } from "./errors";
 import type { paths } from "./generated/api";
 
 export interface ApiConfig {
@@ -166,6 +166,12 @@ class ApiClient {
     promise: Promise<{ data?: unknown; error?: unknown; response: Response }>,
   ): Promise<R> {
     const { data, error, response } = await promise;
+
+    // 413 은 스트림 단계에서 잘려 body 가 `{ code: "BAD_REQUEST" }` 거나 JSON 이 아닐 수도
+    // 있다. code 만 보면 용량 초과를 놓치므로 status 로 먼저 분기한다.
+    if (response.status === 413) {
+      throw new ApiError("FILE_SIZE_EXCEEDED", ErrorMessage.FILE_SIZE_EXCEEDED);
+    }
 
     if (error !== undefined) {
       if (isBeWrapper(error)) {

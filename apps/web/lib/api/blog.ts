@@ -8,14 +8,6 @@ export type ArticleCursorPage = {
   nextCursor: string | null;
 };
 
-export async function fetchPublicArticles(): Promise<ArticleItem[]> {
-  ensureApiConfigured();
-  const response = await blogAPI.getBlogPosts({ params: { limit: 100 } });
-  return response.items
-    .map(mapArticle)
-    .filter((item): item is ArticleItem => Boolean(item));
-}
-
 export async function fetchPublicArticlesPage(options?: {
   cursor?: string;
   limit?: number;

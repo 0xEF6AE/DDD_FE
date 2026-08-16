@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/health/version": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 실행 중인 빌드 버전 */
+        get: operations["health_getVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/google": {
         parameters: {
             query?: never;
@@ -373,6 +390,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/early-notifications/general": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 대기열 사전 알림 목록 조회
+         * @description 기수 미지정 사전 알림 대기열(승격 전 신청자) 목록을 조회합니다.
+         */
+        get: operations["earlyNotification_getAdminGeneralList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/notification-campaigns": {
         parameters: {
             query?: never;
@@ -561,6 +598,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 지원서 첨부파일 업로드
+         * @description PDF 포트폴리오 등 지원서 첨부파일을 업로드하고 경로를 반환합니다. 반환된 path 를 answers 에 담아 제출하세요.
+         */
+        post: operations["application_uploadAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/attachments/signed-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 지원서 첨부파일 열람 URL 발급
+         * @description 본인이 업로드한 첨부파일의 만료형 서명 URL을 발급합니다. 타인의 첨부 경로는 거부됩니다.
+         */
+        get: operations["application_createAttachmentUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications": {
         parameters: {
             query?: never;
@@ -575,6 +652,90 @@ export interface paths {
          * @description 지원서를 최종 제출합니다. 제출 후 자동 안내 이메일이 발송됩니다.
          */
         post: operations["application_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/files/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 파일 업로드
+         * @description 카테고리별 파일을 업로드하고 URL을 반환합니다.
+         */
+        post: operations["storage_uploadFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 파일 목록 조회
+         * @description 카테고리별 GCS 객체 목록을 커서 기반 페이지네이션으로 조회합니다.
+         */
+        get: operations["storage_listFiles"];
+        put?: never;
+        post?: never;
+        /**
+         * 파일 삭제
+         * @description GCS 객체를 삭제합니다. 카테고리 prefix에 속한 경로만 허용됩니다.
+         */
+        delete: operations["storage_deleteFile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/files/signed-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 서명 URL 생성
+         * @description V4 서명 URL을 생성합니다. action=read 는 다운로드용, action=write 는 업로드용입니다.
+         */
+        post: operations["storage_createSignedUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/files/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 파일 다운로드
+         * @description GCS 객체를 스트림으로 다운로드합니다.
+         */
+        get: operations["storage_downloadFile"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -848,90 +1009,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/files/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 파일 업로드
-         * @description 카테고리별 파일을 업로드하고 URL을 반환합니다.
-         */
-        post: operations["storage_uploadFile"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/files": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 파일 목록 조회
-         * @description 카테고리별 GCS 객체 목록을 커서 기반 페이지네이션으로 조회합니다.
-         */
-        get: operations["storage_listFiles"];
-        put?: never;
-        post?: never;
-        /**
-         * 파일 삭제
-         * @description GCS 객체를 삭제합니다. 카테고리 prefix에 속한 경로만 허용됩니다.
-         */
-        delete: operations["storage_deleteFile"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/files/signed-url": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 서명 URL 생성
-         * @description V4 서명 URL을 생성합니다. action=read 는 다운로드용, action=write 는 업로드용입니다.
-         */
-        post: operations["storage_createSignedUrl"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/files/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 파일 다운로드
-         * @description GCS 객체를 스트림으로 다운로드합니다.
-         */
-        get: operations["storage_downloadFile"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/discord/oauth/authorize": {
         parameters: {
             query?: never;
@@ -996,6 +1073,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        VersionResponseDto: {
+            /**
+             * @description 실행 중인 빌드의 커밋 SHA. 이미지에 각인된 값을 그대로 반환한다.
+             * @example ab0974367cfcc5295df479bf59336a14a497a4b0
+             */
+            version: string;
+        };
         GoogleAuthCallbackResponseDto: {
             /**
              * @description 발급된 Access Token (JWT)
@@ -1048,13 +1132,17 @@ export interface components {
              */
             roles: ("계정관리" | "운영자" | "면접자" | "면접관")[];
         };
+        /**
+         * @description 파트명
+         * @enum {string}
+         */
+        CohortPartName: "PM" | "PD" | "BE" | "FE" | "IOS" | "AND";
         CohortPartConfigDto: {
             /**
              * @description 파트명
              * @example IOS
-             * @enum {string}
              */
-            name: "PM" | "PD" | "BE" | "FE" | "IOS" | "AND";
+            name: components["schemas"]["CohortPartName"];
             /**
              * @description 모집 오픈 여부
              * @example true
@@ -1159,6 +1247,140 @@ export interface components {
             /** @description 파트별 모집 설정 목록 */
             parts: components["schemas"]["CohortPartConfigDto"][];
         };
+        PublicCohortPartSummaryDto: {
+            /**
+             * @description 파트 ID
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description 파트명
+             * @example FE
+             */
+            partName: components["schemas"]["CohortPartName"];
+            /**
+             * @description 모집 오픈 여부
+             * @example true
+             */
+            isOpen: boolean;
+        };
+        PublicCohortResponseDto: {
+            /**
+             * @description 활성 기수 존재 여부
+             * @example true
+             */
+            hasActiveCohort: boolean;
+            /**
+             * @description ID
+             * @example 1
+             */
+            id: number | null;
+            /**
+             * @description 기수 명칭
+             * @example 15기
+             */
+            name: string | null;
+            /**
+             * Format: date-time
+             * @description 모집 시작일
+             */
+            recruitStartAt: string | null;
+            /**
+             * Format: date-time
+             * @description 모집 종료일
+             */
+            recruitEndAt: string | null;
+            /**
+             * @description 기수 상태
+             * @enum {string|null}
+             */
+            status: "UPCOMING" | "RECRUITING" | "ACTIVE" | "CLOSED" | null;
+            /**
+             * @description 모집 프로세스 일정 JSON
+             * @example {
+             *       "documentResultAt": "2026-03-20",
+             *       "interviewAt": "2026-03-25",
+             *       "finalResultAt": "2026-03-30"
+             *     }
+             */
+            process?: Record<string, never> | null;
+            /**
+             * @description 커리큘럼 배열 JSON
+             * @example [
+             *       {
+             *         "week": 1,
+             *         "date": "03.10",
+             *         "title": "오리엔테이션"
+             *       }
+             *     ]
+             */
+            curriculum?: Record<string, never>[] | null;
+            /**
+             * @description 지원 버튼 활성화 여부
+             * @example true
+             */
+            isRecruitmentOpen: boolean;
+            /**
+             * @description CTA 상태
+             * @enum {string}
+             */
+            ctaStatus: "PRE_NOTIFICATION" | "APPLY" | "CLOSED";
+            /** @description 모집 중인 파트 목록 */
+            parts: components["schemas"]["PublicCohortPartSummaryDto"][];
+        };
+        PublicCohortPartResponseDto: {
+            /**
+             * @description 파트 ID
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description 파트명
+             * @example FE
+             */
+            partName: components["schemas"]["CohortPartName"];
+            /**
+             * @description 지원서 스키마 JSON
+             * @example {
+             *       "questions": []
+             *     }
+             */
+            applicationSchema: {
+                [key: string]: unknown;
+            };
+        };
+        EarlyNotificationResponseDto: {
+            /**
+             * @description ID
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description 기수 ID
+             * @example 1
+             */
+            cohortId: number;
+            /**
+             * @description 이메일 주소
+             * @example user@example.com
+             */
+            email: string;
+            /**
+             * Format: date-time
+             * @description 생성 일시
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 알림 발송 일시
+             */
+            notifiedAt?: string | null;
+            /**
+             * @description 기존 신청 여부
+             * @example false
+             */
+            alreadySubscribed: boolean;
+        };
         SubscribeEarlyNotificationRequestDto: {
             /**
              * @description 기수 ID
@@ -1171,6 +1393,35 @@ export interface components {
              * @example user@example.com
              */
             email: string;
+        };
+        GeneralEarlyNotificationResponseDto: {
+            /**
+             * @description ID
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description 이메일 주소
+             * @example user@example.com
+             */
+            email: string;
+            /**
+             * Format: date-time
+             * @description 생성 일시
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description 승격 일시
+             */
+            promotedAt?: string | null;
+            /** @description 승격된 기수 ID */
+            promotedToCohortId?: number | null;
+            /**
+             * @description 기존 신청 여부
+             * @example false
+             */
+            alreadySubscribed: boolean;
         };
         SubscribeGeneralEarlyNotificationRequestDto: {
             /**
@@ -1308,6 +1559,24 @@ export interface components {
              * @example true
              */
             privacyAgreed: boolean;
+        };
+        SignedUrlRequestDto: {
+            /**
+             * @description GCS 객체 경로 (카테고리 prefix로 시작해야 함)
+             * @example projects/thumbnails/abc.png
+             */
+            path: string;
+            /**
+             * @description 서명 URL 동작
+             * @example read
+             * @enum {string}
+             */
+            action: "read" | "write";
+            /**
+             * @description 만료 시간(초). 기본 600초, 최대 3600초
+             * @example 600
+             */
+            expiresInSeconds?: number;
         };
         InterviewReservationResponseDto: {
             /**
@@ -1485,6 +1754,103 @@ export interface components {
              */
             externalUrl?: string;
         };
+        ProjectMemberResponseDto: {
+            /**
+             * @description 참여자 이름
+             * @example 홍길동
+             */
+            name: string;
+            /**
+             * @description 참여자 파트
+             * @example BE
+             */
+            part: string;
+        };
+        ProjectDetailResponseDto: {
+            /**
+             * @description ID
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description 기수 ID
+             * @example 1
+             */
+            cohortId: number;
+            /**
+             * @description 기수 이름
+             * @example 15기
+             */
+            cohortName?: string | null;
+            /** @description 플랫폼 목록 */
+            platforms: ("IOS" | "AOS" | "WEB")[];
+            /**
+             * @description 서비스명
+             * @example DDD 커뮤니티 앱
+             */
+            name: string;
+            /**
+             * @description 한줄 설명
+             * @example DDD 동아리 활동을 위한 커뮤니티 앱입니다.
+             */
+            description: string;
+            /** @description 썸네일 URL */
+            thumbnailUrl: string | null;
+            /**
+             * Format: date-time
+             * @description 생성 일시
+             */
+            createdAt: string;
+            /** @description PDF URL */
+            pdfUrl: string | null;
+            /** @description 참여자 목록 */
+            members: components["schemas"]["ProjectMemberResponseDto"][];
+            /**
+             * Format: date-time
+             * @description 수정 일시
+             */
+            updatedAt: string;
+        };
+        AdminProjectListResponseDto: {
+            /**
+             * @description ID
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description 기수 ID
+             * @example 1
+             */
+            cohortId: number;
+            /**
+             * @description 기수 이름
+             * @example 15기
+             */
+            cohortName?: string | null;
+            /** @description 플랫폼 목록 */
+            platforms: ("IOS" | "AOS" | "WEB")[];
+            /**
+             * @description 서비스명
+             * @example DDD 커뮤니티 앱
+             */
+            name: string;
+            /**
+             * @description 한줄 설명
+             * @example DDD 동아리 활동을 위한 커뮤니티 앱입니다.
+             */
+            description: string;
+            /** @description 썸네일 URL */
+            thumbnailUrl: string | null;
+            /**
+             * Format: date-time
+             * @description 생성 일시
+             */
+            createdAt: string;
+            /** @description PDF URL */
+            pdfUrl: string | null;
+            /** @description 참여자 목록 */
+            members: components["schemas"]["ProjectMemberResponseDto"][];
+        };
         ProjectMemberRequestDto: {
             /**
              * @description 참여자 이름
@@ -1558,23 +1924,41 @@ export interface components {
             /** @description 참여자 목록 */
             members: components["schemas"]["ProjectMemberRequestDto"][];
         };
-        SignedUrlRequestDto: {
+        ProjectListResponseDto: {
             /**
-             * @description GCS 객체 경로 (카테고리 prefix로 시작해야 함)
-             * @example projects/thumbnails/abc.png
+             * @description ID
+             * @example 1
              */
-            path: string;
+            id: number;
             /**
-             * @description 서명 URL 동작
-             * @example read
-             * @enum {string}
+             * @description 기수 ID
+             * @example 1
              */
-            action: "read" | "write";
+            cohortId: number;
             /**
-             * @description 만료 시간(초). 기본 600초, 최대 3600초
-             * @example 600
+             * @description 기수 이름
+             * @example 15기
              */
-            expiresInSeconds?: number;
+            cohortName?: string | null;
+            /** @description 플랫폼 목록 */
+            platforms: ("IOS" | "AOS" | "WEB")[];
+            /**
+             * @description 서비스명
+             * @example DDD 커뮤니티 앱
+             */
+            name: string;
+            /**
+             * @description 한줄 설명
+             * @example DDD 동아리 활동을 위한 커뮤니티 앱입니다.
+             */
+            description: string;
+            /** @description 썸네일 URL */
+            thumbnailUrl: string | null;
+            /**
+             * Format: date-time
+             * @description 생성 일시
+             */
+            createdAt: string;
         };
     };
     responses: never;
@@ -1699,6 +2083,25 @@ export interface operations {
                             };
                         };
                     };
+                };
+            };
+        };
+    };
+    health_getVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionResponseDto"];
                 };
             };
         };
@@ -2071,11 +2474,20 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 현재 활성 기수와 홈페이지 CTA 상태를 반환합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["PublicCohortResponseDto"];
+                    };
+                };
             };
         };
     };
@@ -2090,11 +2502,36 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 모집 중인 파트 상세 정보를 반환합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["PublicCohortPartResponseDto"];
+                    };
+                };
+            };
+            /** @description 모집 중인 파트를 찾을 수 없습니다. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example COHORT_PART_NOT_FOUND */
+                        code?: string;
+                        /** @example 모집 중인 파트를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -2111,11 +2548,36 @@ export interface operations {
             };
         };
         responses: {
-            201: {
+            /** @description 기수별 사전 알림 신청 결과를 반환합니다. */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["EarlyNotificationResponseDto"];
+                    };
+                };
+            };
+            /** @description 기수를 찾을 수 없습니다. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example COHORT_NOT_FOUND */
+                        code?: string;
+                        /** @example 기수를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -2132,11 +2594,20 @@ export interface operations {
             };
         };
         responses: {
-            201: {
+            /** @description 사전 알림 대기열 신청 결과를 반환합니다. */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["GeneralEarlyNotificationResponseDto"];
+                    };
+                };
             };
         };
     };
@@ -2227,6 +2698,26 @@ export interface operations {
                         data?: Record<string, never> | null;
                     };
                 };
+            };
+        };
+    };
+    earlyNotification_getAdminGeneralList: {
+        parameters: {
+            query?: {
+                /** @description 미승격 대상만 조회 */
+                onlyUnpromoted?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2459,6 +2950,43 @@ export interface operations {
             };
         };
     };
+    application_uploadAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    application_createAttachmentUrl: {
+        parameters: {
+            query: {
+                /** @description 첨부파일 경로 (업로드 응답의 path) */
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     application_submit: {
         parameters: {
             query?: never;
@@ -2473,6 +3001,111 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_uploadFile: {
+        parameters: {
+            query: {
+                /** @description 업로드 카테고리 */
+                category: "project-thumbnail" | "project-pdf" | "blog-thumbnail" | "application-attachment";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_listFiles: {
+        parameters: {
+            query: {
+                /** @description 카테고리(prefix) */
+                category: "project-thumbnail" | "project-pdf" | "blog-thumbnail" | "application-attachment";
+                /** @description 다음 페이지 커서 */
+                cursor?: string;
+                /** @description 페이지 크기 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_deleteFile: {
+        parameters: {
+            query: {
+                /** @description GCS 객체 경로 (카테고리 prefix로 시작해야 함) */
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_createSignedUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignedUrlRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_downloadFile: {
+        parameters: {
+            query: {
+                /** @description GCS 객체 경로 (카테고리 prefix로 시작해야 함) */
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2999,11 +3632,36 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 프로젝트 목록 조회 성공. 참여자와 PDF URL 을 포함합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["AdminProjectListResponseDto"][];
+                    };
+                };
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -3020,11 +3678,36 @@ export interface operations {
             };
         };
         responses: {
+            /** @description 프로젝트 생성 성공 */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["ProjectDetailResponseDto"];
+                    };
+                };
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -3039,11 +3722,52 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 프로젝트 상세 조회 성공. 참여자와 PDF URL 을 포함합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["ProjectDetailResponseDto"];
+                    };
+                };
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
+            };
+            /** @description 프로젝트를 찾을 수 없습니다. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example PROJECT_NOT_FOUND */
+                        code?: string;
+                        /** @example 프로젝트를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -3058,11 +3782,44 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 프로젝트 삭제 성공 */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
+            };
+            /** @description 프로젝트를 찾을 수 없습니다. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example PROJECT_NOT_FOUND */
+                        code?: string;
+                        /** @example 프로젝트를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -3081,11 +3838,53 @@ export interface operations {
             };
         };
         responses: {
+            /** @description 프로젝트가 수정되었습니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example 프로젝트가 수정되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
+            };
+            /** @description 프로젝트를 찾을 수 없습니다. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example PROJECT_NOT_FOUND */
+                        code?: string;
+                        /** @example 프로젝트를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -3104,11 +3903,53 @@ export interface operations {
             };
         };
         responses: {
+            /** @description 프로젝트 참여자가 수정되었습니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example 프로젝트 참여자가 수정되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
+            };
+            /** @description access_token 쿠키가 없거나 만료되었습니다. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example UNAUTHORIZED */
+                        code?: string;
+                        /** @example access_token 쿠키가 없거나 만료되었습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
+            };
+            /** @description 프로젝트를 찾을 수 없습니다. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example PROJECT_NOT_FOUND */
+                        code?: string;
+                        /** @example 프로젝트를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
+                };
             };
         };
     };
@@ -3128,11 +3969,26 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 프로젝트 목록 조회 성공. meta 에 커서 정보를 포함합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["ProjectListResponseDto"][];
+                        meta?: {
+                            /** @example null */
+                            nextCursor?: string | null;
+                            /** @example false */
+                            hasNext?: boolean;
+                        };
+                    };
+                };
             };
         };
     };
@@ -3147,116 +4003,36 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description 프로젝트 상세 조회 성공. 참여자와 PDF URL 을 포함합니다. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @example SUCCESS */
+                        code?: string;
+                        /** @example success */
+                        message?: string;
+                        data?: components["schemas"]["ProjectDetailResponseDto"];
+                    };
+                };
             };
-        };
-    };
-    storage_uploadFile: {
-        parameters: {
-            query: {
-                /** @description 업로드 카테고리 */
-                category: "project-thumbnail" | "project-pdf" | "blog-thumbnail";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            201: {
+            /** @description 프로젝트를 찾을 수 없습니다. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-        };
-    };
-    storage_listFiles: {
-        parameters: {
-            query: {
-                /** @description 카테고리(prefix) */
-                category: "project-thumbnail" | "project-pdf" | "blog-thumbnail";
-                /** @description 다음 페이지 커서 */
-                cursor?: string;
-                /** @description 페이지 크기 */
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": {
+                        /** @example PROJECT_NOT_FOUND */
+                        code?: string;
+                        /** @example 프로젝트를 찾을 수 없습니다. */
+                        message?: string;
+                        /** @example null */
+                        data?: Record<string, never> | null;
+                    };
                 };
-                content?: never;
-            };
-        };
-    };
-    storage_deleteFile: {
-        parameters: {
-            query: {
-                /** @description GCS 객체 경로 (카테고리 prefix로 시작해야 함) */
-                path: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    storage_createSignedUrl: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SignedUrlRequestDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    storage_downloadFile: {
-        parameters: {
-            query: {
-                /** @description GCS 객체 경로 (카테고리 prefix로 시작해야 함) */
-                path: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

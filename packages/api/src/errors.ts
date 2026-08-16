@@ -12,6 +12,16 @@ export const ErrorMessage = {
   COHORT_ALREADY_EXISTS: "이미 모집중·모집예정 기수가 있습니다.",
 
   APPLICATION_FORM_NOT_FOUND: "지원서를 찾을 수 없습니다.",
+  INVALID_APPLICATION_ANSWERS: "필수 항목이 입력되지 않았습니다.",
+
+  // 지원서 첨부(PDF) 관련
+  FILE_NOT_PROVIDED: "파일을 선택해주세요.",
+  FILE_TYPE_NOT_ALLOWED: "PDF 파일만 업로드할 수 있습니다.",
+  FILE_SIZE_EXCEEDED: "파일 용량은 최대 20MB 입니다.",
+  INVALID_FILE_PATH: "파일 경로가 올바르지 않습니다. 다시 업로드해주세요.",
+  ATTACHMENT_NOT_OWNED: "본인이 업로드한 첨부만 사용할 수 있습니다.",
+  FILE_NOT_FOUND: "만료되었거나 삭제된 파일입니다.",
+  STORAGE_NOT_CONFIGURED: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
 
   EVALUATION_NOT_FOUND: "평가 정보를 찾을 수 없습니다.",
 

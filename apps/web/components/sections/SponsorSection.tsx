@@ -3,7 +3,7 @@
 import Link from "next/link";
 import styled from "@emotion/styled";
 import { assets } from "@/constants/assets";
-import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
+import { colors, fontSizes, fontWeights } from "@/constants/tokens";
 
 const SPONSORS = [
   { name: "Elice", logo: assets.sponsors.elice },

@@ -1,6 +1,9 @@
 import type { components } from "../generated/api";
 
 // ---------- Runtime enum (consumers reference *.PM, *.UPCOMING 등) ----------
+//
+// 파트명은 generated `CohortPartName` 이 단일 출처다. 아래 런타임 객체는 값 참조용
+// 이며 `satisfies` 로 묶어, BE 가 파트를 추가·삭제하면 빌드에서 잡히게 한다.
 export const CohortPartConfigDtoName = {
   PM: "PM",
   PD: "PD",
@@ -8,9 +11,11 @@ export const CohortPartConfigDtoName = {
   FE: "FE",
   IOS: "IOS",
   AND: "AND",
-} as const;
-export type CohortPartConfigDtoName =
-  (typeof CohortPartConfigDtoName)[keyof typeof CohortPartConfigDtoName];
+} as const satisfies Record<
+  components["schemas"]["CohortPartName"],
+  components["schemas"]["CohortPartName"]
+>;
+export type CohortPartConfigDtoName = components["schemas"]["CohortPartName"];
 
 export const CreateCohortRequestDtoStatus = {
   UPCOMING: "UPCOMING",
@@ -26,15 +31,14 @@ export type UpdateCohortRequestDtoStatus = CreateCohortRequestDtoStatus;
 
 // ---------- 엔티티 타입 ----------
 //
-// BE 실제 응답은 `{ id, partName, isOpen, applicationSchema }` 형태이나
-// OpenAPI 스키마는 `{ name, isOpen, formSchema: Record<string, never> }` 로
-// 아직 정합되지 않았다 (commit 06b4264 「BE 스키마 필드명 정합화 (partName /
-// applicationSchema)」 이후 BE 측 schema 보강 대기 중).
-// FE 는 BE 실제 응답을 기준으로 타입을 정의하고, generated payload 타입과
-// 충돌하는 부분은 cohort/api.ts 안에서 `as never` cast 로 우회한다.
+// 퍼블릭 응답(/cohorts/active, /cohorts/parts/{id})은 2026-08-16 BE 배포로
+// OpenAPI 에 노출되어 아래 PublicCohortDto / PublicCohortPartDetail 이 generated
+// 스키마를 직접 참조한다. 어드민 응답은 아직 schema 미정의라 CohortDto 를 수동
+// 정의한 채로 두고, generated payload 타입과 충돌하는 부분만 cohort/api.ts 에서
+// `as never` cast 로 우회한다.
 //
 export type CohortStatus = CreateCohortRequestDtoStatus;
-export type CohortPartName = CohortPartConfigDtoName;
+export type CohortPartName = components["schemas"]["CohortPartName"];
 export type UpdateCohortStatus = UpdateCohortRequestDtoStatus;
 
 export interface CohortPartConfigDto {
@@ -108,12 +112,64 @@ export type PutUpdateCohortPartsParams = { id: number };
 export type PutUpdateCohortPartsRequest = UpdateCohortPartsRequestDto;
 export type PutUpdateCohortPartsResponse = CohortDto;
 
+// ---------- 지원서 양식 (applicationSchema) ----------
+//
+// generated 타입은 `applicationSchema: { [key: string]: unknown }` 이라 questions
+// 를 그대로 쓸 수 없다. BE 계약(key/label/required/type)에 맞춰 여기서 좁힌다.
+
+/**
+ * 질문 입력 유형.
+ *
+ * `formSchema` 는 자유 형식(jsonb)이고 BE 는 `required` 만 검사한다 — 즉 `type` 은
+ * 순수 FE 렌더 힌트다. `type` 이 없는 기존 질문은 `"text"` 로 본다.
+ *
+ * - `text` — answers 값이 문자열
+ * - `file` — answers 값이 `ApplicationAttachmentDto` (PDF 업로드 응답 객체)
+ */
+export const APPLICATION_QUESTION_TYPES = ["text", "file"] as const;
+export type ApplicationQuestionType = (typeof APPLICATION_QUESTION_TYPES)[number];
+
+export interface ApplicationQuestion {
+  key: string;
+  label: string;
+  required: boolean;
+  type?: ApplicationQuestionType;
+}
+
+export interface ApplicationSchema {
+  questions?: ApplicationQuestion[];
+}
+
+// ---------- 퍼블릭 응답 (어드민 CohortDto 와 별개) ----------
+//
+// 공개 응답의 parts[] 에는 applicationSchema 가 없고, 활성 기수가 없으면 404 가
+// 아니라 200 + hasActiveCohort:false 로 내려온다. 어드민 CohortDto 를 재사용하면
+// parts[].applicationSchema 접근이 타입 통과 후 런타임에 터지므로 분리한다.
+//
+// process/curriculum 은 BE 가 자유 JSON 으로 내려 generated 상 `Record<string, never>`
+// (= 어떤 키도 읽을 수 없음) 로 잡히므로 실사용 형태로 완화한다.
+export type PublicCohortPart = components["schemas"]["PublicCohortPartSummaryDto"];
+
+export type PublicCohortCtaStatus = components["schemas"]["PublicCohortResponseDto"]["ctaStatus"];
+
+export type PublicCohortDto = Omit<
+  components["schemas"]["PublicCohortResponseDto"],
+  "process" | "curriculum"
+> & {
+  process?: Record<string, unknown> | null;
+  curriculum?: Record<string, unknown>[] | null;
+};
+
 // GET /api/v1/cohorts/active - 현재 활성 기수 조회 (public)
-export type GetActiveCohortResponse = CohortDto;
+export type GetActiveCohortResponse = PublicCohortDto;
 
 // GET /api/v1/cohorts/parts/{id} - 모집 파트 상세 조회 (public)
 export type GetCohortPartParams = { id: number };
-export type GetCohortPartResponse = CohortPartConfigDto;
+export type PublicCohortPartDetail = Omit<
+  components["schemas"]["PublicCohortPartResponseDto"],
+  "applicationSchema"
+> & { applicationSchema: ApplicationSchema };
+export type GetCohortPartResponse = PublicCohortPartDetail;
 
 // ---------- CohortDto 엔티티 (BE 응답 schema 미정의 → 수동 정의) ----------
 export interface CohortDto {

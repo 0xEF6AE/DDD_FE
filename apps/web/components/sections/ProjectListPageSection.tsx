@@ -137,6 +137,7 @@ const CardThumbnail = styled.div({
   borderRadius: "30px",
   overflow: "hidden",
   width: "100%",
+  background: colors.categoryBg,
 
   "& img": {
     width: "100%",
@@ -348,7 +349,9 @@ export const ProjectListPageSection = ({
               <CardLink key={project.id} href={`/project/${project.id}`}>
                 <Card>
                   <CardThumbnail>
-                    <img src={project.thumbnail} alt={project.title} />
+                    {project.thumbnail ? (
+                      <img src={project.thumbnail} alt={project.title} />
+                    ) : null}
                   </CardThumbnail>
                   <CardBody>
                     <CardTitle>{project.title}</CardTitle>
