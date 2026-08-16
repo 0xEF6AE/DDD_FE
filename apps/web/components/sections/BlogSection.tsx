@@ -105,7 +105,7 @@ const ArticleList = styled.div({
   },
 });
 
-const ArticleCard = styled.article({
+const ArticleCard = styled.a({
   display: "flex",
   gap: "25px",
   alignItems: "center",
@@ -114,6 +114,8 @@ const ArticleCard = styled.article({
   overflow: "hidden",
   height: "324px",
   paddingRight: "25px",
+  color: "inherit",
+  textDecoration: "none",
 
   "@media (max-width: 768px)": {
     height: "189px",
@@ -129,6 +131,7 @@ const ArticleThumbnail = styled.div({
   width: "410px",
   height: "100%",
   flexShrink: 0,
+  background: colors.categoryBg,
 
   "& img": {
     width: "100%",
@@ -336,14 +339,19 @@ export const BlogSection = ({ items }: Props) => {
         </TitleArea>
         <ContentAndButton>
           <ArticleList ref={articleListRef}>
-            {sourceArticles.map(({ id, title, description, thumbnail }) => (
-              <ArticleCard key={id}>
+            {sourceArticles.map(({ id, title, description, thumbnail, externalUrl }) => (
+              <ArticleCard
+                key={id}
+                {...(externalUrl
+                  ? { href: externalUrl, target: "_blank", rel: "noopener noreferrer" }
+                  : { as: "article" as const })}
+              >
                 <ArticleThumbnail>
-                  <img src={thumbnail} alt={title} />
+                  {thumbnail ? <img src={thumbnail} alt={title} /> : null}
                 </ArticleThumbnail>
                 <ArticleContent>
                   <ArticleTitle>{title}</ArticleTitle>
-                  <ArticleDescription>{description}</ArticleDescription>
+                  {description ? <ArticleDescription>{description}</ArticleDescription> : null}
                 </ArticleContent>
               </ArticleCard>
             ))}
