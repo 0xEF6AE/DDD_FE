@@ -24,6 +24,23 @@ const INITIAL_VALUES: FormValues = {
   email: "",
 };
 
+/**
+ * 사전 알림 안내 문구 — 모집 예정 기수가 없으면 기수 번호 없이 노출한다.
+ *
+ * `cohortName` 은 활성 기수 응답의 기수명("14기")이고, 모집 예정 기수가 없거나
+ * 기수 조회에 실패하면 null 이다. 이때 특정 기수로 안내하면 어드민에 없는 기수가
+ * 홈페이지에 뜨므로("14기 모집 알림 신청") 기수를 뺀 문구로 떨어진다.
+ */
+const buildAlertTexts = (cohortName: string | null) => ({
+  title: cohortName ? `${cohortName} 모집 알림 신청` : "모집 알림 신청",
+  description: cohortName
+    ? `DDD ${cohortName} 모집이 시작되면 가장 먼저 알려드릴게요.`
+    : "DDD 신규 기수 모집이 시작되면 가장 먼저 알려드릴게요.",
+  successTitle: cohortName
+    ? `${cohortName} 모집 알림 신청이\n완료되었어요!`
+    : "모집 알림 신청이\n완료되었어요!",
+});
+
 const Overlay = styled.div<{ open: boolean }>(({ open }) => ({
   position: "fixed",
   inset: 0,
@@ -526,7 +543,7 @@ const ConfirmSecondaryButton = styled.button({
   },
 });
 
-export const PreAlertModal = () => {
+export const PreAlertModal = ({ cohortName = null }: { cohortName?: string | null }) => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<ModalStep>("form");
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
@@ -537,6 +554,8 @@ export const PreAlertModal = () => {
     () => Object.values(values).some((value) => value.trim().length > 0),
     [values],
   );
+
+  const alertTexts = useMemo(() => buildAlertTexts(cohortName), [cohortName]);
 
   useEffect(() => {
     const openHandler = () => {
@@ -659,8 +678,8 @@ export const PreAlertModal = () => {
             <>
               <Header>
                 <div>
-                  <Title>14기 모집 알림 신청</Title>
-                  <Description>DDD 14기 모집이 시작되면 가장 먼저 알려드릴게요.</Description>
+                  <Title>{alertTexts.title}</Title>
+                  <Description>{alertTexts.description}</Description>
                 </div>
                 <Decoration src={modalImageIcon.src} alt="" />
               </Header>
@@ -703,7 +722,7 @@ export const PreAlertModal = () => {
             <>
               <SuccessWrap>
                 <SuccessImage src={successIcon.src} alt="" />
-                <SuccessTitle>{"14기 모집 알림 신청이\n완료되었어요!"}</SuccessTitle>
+                <SuccessTitle>{alertTexts.successTitle}</SuccessTitle>
                 <SuccessDescription>DDD 크루 모집 시, 이메일로 알려드릴게요.</SuccessDescription>
                 <SuccessTimerText>3초 뒤에 자동으로 화면이 닫힙니다.</SuccessTimerText>
               </SuccessWrap>

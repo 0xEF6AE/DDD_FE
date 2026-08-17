@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import styled from "@emotion/styled";
 import { assets } from "@/constants/assets";
-import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
-import { openPreAlertModal } from "@/components/modals/PreAlertModal";
+import { useRecruitCtaClick, useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
 import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
 
 const NAV_LINKS = [
@@ -134,6 +133,11 @@ const CtaButton = styled(Link)({
   "&:hover": {
     background: "rgba(31, 95, 224, 0.9)",
   },
+
+  '&[aria-disabled="true"]': {
+    background: colors.disabled,
+    cursor: "default",
+  },
 });
 
 const MobileBar = styled.div({
@@ -211,11 +215,18 @@ const MobileCta = styled(Link)({
   fontWeight: fontWeights.medium,
 
   boxShadow: "0 10px 26px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35)",
+
+  '&[aria-disabled="true"]': {
+    background: colors.disabled,
+    boxShadow: "none",
+    cursor: "default",
+  },
 });
 
 export const Navigation = () => {
   const [open, setOpen] = useState(false);
-  const { isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
+  const { isRecruitOpen, isRecruitClosed, recruitButtonLabels } = useRecruitStatus();
+  const handleCtaClick = useRecruitCtaClick();
   const recruitActionHref = isRecruitOpen ? "/recruit/apply" : "/recruit";
 
   return (
@@ -255,11 +266,8 @@ export const Navigation = () => {
         </MobileBar>
         <CtaButton
           href={recruitActionHref}
-          onClick={(event) => {
-            if (isRecruitOpen) return;
-            event.preventDefault();
-            openPreAlertModal();
-          }}
+          aria-disabled={isRecruitClosed || undefined}
+          onClick={handleCtaClick}
         >
           {recruitButtonLabels.navigation}
         </CtaButton>
@@ -271,11 +279,10 @@ export const Navigation = () => {
           ))}
           <MobileCta
             href={recruitActionHref}
+            aria-disabled={isRecruitClosed || undefined}
             onClick={(event) => {
               setOpen(false);
-              if (isRecruitOpen) return;
-              event.preventDefault();
-              openPreAlertModal();
+              handleCtaClick(event);
             }}
           >
             {recruitButtonLabels.navigation}

@@ -10,6 +10,8 @@ export const colors = {
   slate500: "#90a1b9",
   mainLight: "#e7f3fe",
   border: "#c9c9c9",
+  /** 비활성 CTA(모집 종료) 배경 */
+  disabled: "#62748e",
   categoryBg: "#e9e9e9",
 } as const;
 

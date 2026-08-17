@@ -326,6 +326,7 @@ export const ProjectsSection = ({ items }: Props) => {
                 thumbnail={project.thumbnail}
                 category={project.category}
                 generation={project.generation}
+                href={`/project/${project.id}`}
               />
             ))}
           </CardGrid>

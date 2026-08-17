@@ -235,7 +235,7 @@ const AnswerEmphasis = styled.strong({
 });
 
 export const FaqSection = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const handleToggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);

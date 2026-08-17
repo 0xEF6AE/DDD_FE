@@ -4,8 +4,7 @@ import Link from "next/link";
 import styled from "@emotion/styled";
 import { assets } from "@/constants/assets";
 import { recruitHeroDescriptionByStatus } from "@/constants/recruit";
-import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
-import { openPreAlertModal } from "@/components/modals/PreAlertModal";
+import { useRecruitCtaClick, useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
 import { colors, fontWeights } from "@/constants/tokens";
 
 const Section = styled.section({
@@ -148,6 +147,11 @@ const CtaButton = styled(Link)({
 
   "&:hover": { background: "#1f5fe0" },
 
+  '&[aria-disabled="true"]': {
+    background: colors.disabled,
+    cursor: "default",
+  },
+
   "@media (max-width: 768px)": {
     height: "68px",
     padding: "16px 36px",
@@ -173,7 +177,8 @@ const Arrow = styled.span({
 });
 
 export const RecruitHeroSection = () => {
-  const { recruitStatus, isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
+  const { recruitStatus, isRecruitOpen, isRecruitClosed, recruitButtonLabels } = useRecruitStatus();
+  const handleCtaClick = useRecruitCtaClick();
   const heroTitle = recruitStatus === "open" ? "Now\nRecruiting" : "Currently Under\nRenewal";
   const recruitActionHref = isRecruitOpen ? "/recruit/apply" : "/recruit";
 
@@ -189,27 +194,26 @@ export const RecruitHeroSection = () => {
         </div>
         <CtaButton
           href={recruitActionHref}
-          onClick={(event) => {
-            if (isRecruitOpen) return;
-            event.preventDefault();
-            openPreAlertModal();
-          }}
+          aria-disabled={isRecruitClosed || undefined}
+          onClick={handleCtaClick}
         >
           {recruitButtonLabels.hero}
-          <Arrow aria-hidden>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M16.0032 9.41421L7.39663 18.0208L5.98242 16.6066L14.589 8H7.00324V6H18.0032V17H16.0032V9.41421Z"
-                fill="white"
-              />
-            </svg>
-          </Arrow>
+          {isRecruitClosed ? null : (
+            <Arrow aria-hidden>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M16.0032 9.41421L7.39663 18.0208L5.98242 16.6066L14.589 8H7.00324V6H18.0032V17H16.0032V9.41421Z"
+                  fill="white"
+                />
+              </svg>
+            </Arrow>
+          )}
         </CtaButton>
       </Inner>
     </Section>

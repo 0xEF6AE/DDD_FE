@@ -6,7 +6,7 @@
  * 기준은 status 가 아니라 ctaStatus 다.
  * - preNotification: 모집 시작 전 — 사전 알림만 받는다
  * - open: 모집 기간 중 — 지원서 진입 허용
- * - closed: 모집 종료 후 또는 활성 기수 없음
+ * - closed: 모집 기간 종료(기수 상태 활동중/활동종료) — CTA 는 [모집 종료] 비활성
  */
 export type RecruitStatus = "preNotification" | "open" | "closed";
 
@@ -39,9 +39,11 @@ export const recruitButtonLabelsByStatus: Record<
     hero: "지원하기",
     role: "지원하기",
   },
+  // 모집 기간이 끝난 기수(활동중/활동종료)는 다음 모집 일정이 없으므로 사전 알림도
+  // 받지 않는다. 기획 3.1.1 기수 상태 정의대로 [모집 종료] 비활성으로만 노출한다.
   closed: {
-    navigation: "사전 알림 신청",
-    hero: "사전 알림 신청하기",
+    navigation: "모집 종료",
+    hero: "모집 종료",
     role: "지원마감",
   },
 };
