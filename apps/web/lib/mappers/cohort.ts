@@ -32,16 +32,39 @@ const RECRUIT_STATUS_BY_CTA: Record<NonNullable<PublicCohortDto["ctaStatus"]>, R
  * status 가 RECRUITING 이어도 모집 기간 밖이면 PRE_NOTIFICATION / CLOSED 가 오고,
  * 이때 파트 상세는 404, 지원서 제출은 400 COHORT_PART_CLOSED 가 난다.
  *
- * ctaStatus 를 못 읽으면 "closed" 로 떨어진다. 잘못 열어 404 나는 지원서로 보내는
- * 것보다 잘못 닫아 사전 알림을 노출하는 쪽이 안전하기 때문이다.
+ * 기수를 못 읽으면(조회 실패 / 활성 기수 없음) "preNotification" 으로 떨어진다.
+ * "closed" 는 이제 [모집 종료] 비활성 CTA 라서, 여기로 떨어지면 사전 알림 동선까지
+ * 같이 막힌다. 반면 사전 알림은 활성 기수가 없어도 general 신청으로 처리되므로
+ * 안전하다. 어느 쪽으로 떨어지든 지원서는 ctaStatus 가 APPLY 일 때만 열린다.
  */
 export function parseRecruitStatus(cohort: PublicCohortDto | null | undefined): RecruitStatus {
-  if (!cohort?.hasActiveCohort) return "closed";
-  return (cohort.ctaStatus && RECRUIT_STATUS_BY_CTA[cohort.ctaStatus]) || "closed";
+  if (!cohort?.hasActiveCohort) return "preNotification";
+  return (cohort.ctaStatus && RECRUIT_STATUS_BY_CTA[cohort.ctaStatus]) || "preNotification";
 }
 
 export function getActiveCohortId(cohort: PublicCohortDto | null | undefined): number | null {
   return cohort?.id ?? null;
+}
+
+/**
+ * 사전 알림 문구에 붙일 기수 명칭("14기") — 모집 예정 기수가 있을 때만 값이 있다.
+ *
+ * 모집 예정 기수가 없으면(활성 기수 없음 / 조회 실패) null 이고, 호출부는 기수 번호
+ * 없는 문구로 떨어진다. 어드민에 모집 예정 기수가 없는데도 홈페이지 사전 알림 팝업이
+ * "14기" 로 안내하던 문제가 문구를 하드코딩했기 때문이라, 기수 노출의 단일 기준을
+ * 활성 기수 응답으로 옮긴다.
+ *
+ * `ctaStatus` 가 PRE_NOTIFICATION 인 경우만 통과시킨다 — 모집 중/종료 기수는 사전 알림
+ * 대상이 아니고, 그 상태에서는 CTA 가 지원서/[모집 종료] 라 이 문구가 쓰이지 않는다.
+ * 기수명은 어드민 입력값 그대로다(`buildName` 이 "16" → "16기" 로 저장).
+ */
+export function getPreNotificationCohortName(
+  cohort: PublicCohortDto | null | undefined,
+): string | null {
+  if (!cohort?.hasActiveCohort) return null;
+  if (cohort.ctaStatus !== "PRE_NOTIFICATION") return null;
+  const name = cohort.name?.trim();
+  return name ? name : null;
 }
 
 export function getActiveCohortPartId(cohort: PublicCohortDto | null | undefined): number | null {

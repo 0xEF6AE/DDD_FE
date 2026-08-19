@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PreAlertModal } from '@/components/modals/PreAlertModal';
 import { RecruitStatusProvider } from "@/components/providers/RecruitStatusProvider";
 import { getActiveCohort } from "@/lib/api/activeCohort.server";
-import { parseRecruitStatus } from "@/lib/mappers/cohort";
+import { getPreNotificationCohortName, parseRecruitStatus } from "@/lib/mappers/cohort";
 import './globals.css';
 
 /**
@@ -25,13 +25,14 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const recruitStatus = parseRecruitStatus(await getActiveCohort());
+  const activeCohort = await getActiveCohort();
+  const recruitStatus = parseRecruitStatus(activeCohort);
 
   return (
     <html lang="ko">
       <body>
         <RecruitStatusProvider recruitStatus={recruitStatus}>{children}</RecruitStatusProvider>
-        <PreAlertModal />
+        <PreAlertModal cohortName={getPreNotificationCohortName(activeCohort)} />
       </body>
     </html>
   );

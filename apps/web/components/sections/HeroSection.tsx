@@ -3,8 +3,7 @@
 import Link from "next/link";
 import styled from "@emotion/styled";
 import { assets } from "@/constants/assets";
-import { openPreAlertModal } from "@/components/modals/PreAlertModal";
-import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
+import { useRecruitCtaClick, useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
 import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
 
 const Section = styled.section({
@@ -163,6 +162,11 @@ const CtaButton = styled(Link)({
     background: "#1f5fe0",
   },
 
+  '&[aria-disabled="true"]': {
+    background: colors.disabled,
+    cursor: "default",
+  },
+
   "@media (max-width: 1024px)": {
     fontSize: "18px",
     lineHeight: "24px",
@@ -185,7 +189,8 @@ const CtaButton = styled(Link)({
 });
 
 export const HeroSection = () => {
-  const { isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
+  const { isRecruitClosed, recruitButtonLabels } = useRecruitStatus();
+  const handleCtaClick = useRecruitCtaClick();
 
   return (
     <Section>
@@ -207,25 +212,25 @@ export const HeroSection = () => {
         </HeadlineWrapper>
         <CtaButton
           href="/recruit"
-          onClick={(event) => {
-            if (isRecruitOpen) return;
-            event.preventDefault();
-            openPreAlertModal();
-          }}
+          aria-disabled={isRecruitClosed || undefined}
+          onClick={handleCtaClick}
         >
           {recruitButtonLabels.hero}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <path
-              d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"
-              fill="white"
-            />
-          </svg>{" "}
+          {isRecruitClosed ? null : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+            >
+              <path
+                d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"
+                fill="white"
+              />
+            </svg>
+          )}
         </CtaButton>
       </Content>
     </Section>

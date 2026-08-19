@@ -15,7 +15,7 @@ import { ensureApiConfigured } from "./config";
  * 활성 기수 원본 응답 — 아래 파생 조회들의 단일 진입점.
  *
  * 활성 기수가 없거나 조회에 실패하면 null 을 돌려주고, 호출부는 각자의 안전한
- * 기본값으로 떨어진다. (모집 상태는 "closed", 일정/커리큘럼은 빈 목록)
+ * 기본값으로 떨어진다. (모집 상태는 "preNotification", 일정/커리큘럼은 빈 목록)
  */
 export async function fetchActiveCohort(): Promise<PublicCohortDto | null> {
   try {
