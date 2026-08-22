@@ -26,7 +26,7 @@ const Header = styled.header({
   "@media (max-width: 768px)": {
     padding: "16px 40px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     padding: "16px 16px",
   },
 });
@@ -90,7 +90,7 @@ const NavItem = styled(Link)({
     fontSize: "13px",
     lineHeight: "16px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "12px",
     lineHeight: "14px",
   },
@@ -126,7 +126,7 @@ const CtaButton = styled(Link)({
     lineHeight: "16px",
     display: "none",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "12px",
     lineHeight: "14px",
   },
@@ -179,7 +179,7 @@ const MobileDrawer = styled.nav<{ open: boolean }>(({ open }) => ({
   boxShadow: "0 18px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45)",
   pointerEvents: "auto",
 
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     top: "72px",
   },
 }));

@@ -172,7 +172,7 @@ const Banner = styled.section({
   backgroundPosition: "center",
   "@media (max-width: 1024px)": { padding: "160px 80px 80px" },
   "@media (max-width: 768px)": { padding: "140px 40px 50px" },
-  "@media (max-width: 375px)": { padding: "160px 16px 20px" },
+  "@media (max-width: 767px)": { padding: "160px 16px 20px" },
 });
 
 const BannerInner = styled.div({
@@ -191,7 +191,7 @@ const BannerLabel = styled.p({
   fontWeight: fontWeights.semiBold,
   "@media (max-width: 1024px)": { fontSize: "24px", lineHeight: "30px" },
   "@media (max-width: 768px)": { fontSize: "20px", lineHeight: "25px" },
-  "@media (max-width: 375px)": { fontSize: "12px", lineHeight: "15px" },
+  "@media (max-width: 767px)": { fontSize: "12px", lineHeight: "15px" },
 });
 
 const BannerTitle = styled.h1({
@@ -202,7 +202,7 @@ const BannerTitle = styled.h1({
   fontWeight: fontWeights.bold,
   "@media (max-width: 1024px)": { fontSize: "34px", lineHeight: "45px" },
   "@media (max-width: 768px)": { fontSize: "30px", lineHeight: "38px" },
-  "@media (max-width: 375px)": { fontSize: "24px", lineHeight: "30px", width: "265px" },
+  "@media (max-width: 767px)": { fontSize: "24px", lineHeight: "30px", width: "265px" },
 });
 
 const ContainerPadding = styled.div({
@@ -210,7 +210,7 @@ const ContainerPadding = styled.div({
   "@media (max-width: 768px)": {
     padding: "16px 40px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     padding: "16px 16px",
   },
 });
@@ -239,7 +239,7 @@ const FormDescription = styled.p({
   fontWeight: fontWeights.semiBold,
   "@media (max-width: 1024px)": { fontSize: "24px", lineHeight: "30px" },
   "@media (max-width: 768px)": { fontSize: "20px", lineHeight: "25px" },
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "20px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
 const StepWrap = styled.div({
@@ -250,7 +250,7 @@ const StepWrap = styled.div({
   marginTop: "50px",
   paddingTop: "10px",
   "@media (max-width: 768px)": { gap: "12px", marginTop: "36px" },
-  "@media (max-width: 375px)": { gap: "8px", marginTop: "28px" },
+  "@media (max-width: 767px)": { gap: "8px", marginTop: "28px" },
 });
 
 const StepLine = styled.div({
@@ -265,7 +265,7 @@ const StepLine = styled.div({
     left: "calc(16.667% + 16px)",
     right: "calc(16.667% + 16px)",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     top: "34px",
     left: "calc(16.667% + 12px)",
     right: "calc(16.667% + 12px)",
@@ -301,7 +301,7 @@ const StepCircle = styled.div<{ active: boolean }>(({ active }) => ({
     fontSize: "28px",
     lineHeight: "36px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     width: "48px",
     height: "48px",
     fontSize: "20px",
@@ -316,7 +316,7 @@ const StepLabel = styled.p<{ active: boolean }>(({ active }) => ({
   fontWeight: fontWeights.medium,
   color: active ? "#ffffff" : "#62748e",
   "@media (max-width: 768px)": { fontSize: "18px", lineHeight: "24px" },
-  "@media (max-width: 375px)": { fontSize: "12px", lineHeight: "16px" },
+  "@media (max-width: 767px)": { fontSize: "12px", lineHeight: "16px" },
 }));
 
 const Card = styled.section({
@@ -326,7 +326,7 @@ const Card = styled.section({
   padding: "80px",
   "@media (max-width: 1024px)": { padding: "56px 44px" },
   "@media (max-width: 768px)": { padding: "40px 24px" },
-  "@media (max-width: 375px)": { marginTop: "28px", padding: "24px 16px", borderRadius: "20px" },
+  "@media (max-width: 767px)": { marginTop: "28px", padding: "24px 16px", borderRadius: "20px" },
 });
 
 const CardTitle = styled.h3({
@@ -335,7 +335,7 @@ const CardTitle = styled.h3({
   lineHeight: "30px",
   fontWeight: fontWeights.medium,
   "@media (max-width: 768px)": { fontSize: "20px", lineHeight: "25px" },
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "20px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
 const Fields = styled.div({
@@ -344,7 +344,7 @@ const Fields = styled.div({
   display: "flex",
   flexDirection: "column",
   gap: "20px",
-  "@media (max-width: 375px)": { marginTop: "24px", gap: "14px" },
+  "@media (max-width: 767px)": { marginTop: "24px", gap: "14px" },
 });
 
 const Field = styled.label({
@@ -399,7 +399,7 @@ const Input = styled.input<{ hasError?: boolean; isFocused?: boolean; hasValue?:
         ? "0 0 0 3px rgba(255, 125, 125, 0.15)"
         : "0 0 0 3px rgba(46, 113, 255, 0.15)",
     },
-    "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "20px", height: "48px" },
+    "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px", height: "48px" },
   }),
 );
 
@@ -416,7 +416,7 @@ const TextArea = styled.textarea({
   padding: "20px",
   resize: "vertical",
   "&::placeholder": { color: colors.textSecondary },
-  "@media (max-width: 375px)": { minHeight: "280px", fontSize: "16px", lineHeight: "24px" },
+  "@media (max-width: 767px)": { minHeight: "280px", fontSize: "16px", lineHeight: "24px" },
 });
 
 const FileDropLabel = styled.label<{ disabled?: boolean }>(({ disabled }) => ({
@@ -445,7 +445,7 @@ const FileDropTitle = styled.span({
   lineHeight: "28px",
   fontWeight: fontWeights.medium,
   color: colors.textPrimary,
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "24px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "24px" },
 });
 
 const FileCard = styled.div({
@@ -457,7 +457,7 @@ const FileCard = styled.div({
   borderRadius: "10px",
   background: "#ffffff",
   padding: "20px",
-  "@media (max-width: 375px)": { padding: "14px", gap: "8px" },
+  "@media (max-width: 767px)": { padding: "14px", gap: "8px" },
 });
 
 const FileName = styled.p({
@@ -470,7 +470,7 @@ const FileName = styled.p({
   lineHeight: "28px",
   fontWeight: fontWeights.medium,
   color: colors.textPrimary,
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "24px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "24px" },
 });
 
 const FileMeta = styled.p({
@@ -504,7 +504,7 @@ const PrivacyBox = styled.div({
   fontWeight: fontWeights.medium,
   whiteSpace: "pre-line",
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "24px" },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     marginTop: "16px",
     fontSize: "12px",
     lineHeight: "18px",
@@ -527,7 +527,7 @@ const Agreement = styled.button<{ checked: boolean }>(({ checked: _checked }) =>
   lineHeight: "18px",
   fontWeight: fontWeights.semiBold,
   textAlign: "left" as const,
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     marginTop: "12px",
     fontSize: "12px",
     lineHeight: "16px",
@@ -569,7 +569,7 @@ const AgreementRequiredDot = styled.span({
   display: "inline-block",
   marginLeft: "0px",
   transform: "translateY(0px)",
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     width: "4px",
     height: "4px",
   },
@@ -580,7 +580,7 @@ const ChipGrid = styled.div({
   display: "flex",
   gap: "20px",
   flexWrap: "wrap",
-  "@media (max-width: 375px)": { gap: "10px" },
+  "@media (max-width: 767px)": { gap: "10px" },
 });
 
 const Chip = styled.button<{ selected: boolean }>(({ selected }) => ({
@@ -595,7 +595,7 @@ const Chip = styled.button<{ selected: boolean }>(({ selected }) => ({
   cursor: "pointer",
   "@media (max-width: 1024px)": { fontSize: "22px", lineHeight: "28px", padding: "16px 26px" },
   "@media (max-width: 768px)": { fontSize: "18px", lineHeight: "24px", padding: "12px 20px" },
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "20px", padding: "10px 14px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px", padding: "10px 14px" },
 }));
 
 const PartDescription = styled.p({
@@ -606,7 +606,7 @@ const PartDescription = styled.p({
   fontWeight: fontWeights.semiBold,
   "@media (max-width: 1024px)": { fontSize: "20px", lineHeight: "26px" },
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "22px" },
-  "@media (max-width: 375px)": { marginTop: "14px", fontSize: "12px", lineHeight: "18px" },
+  "@media (max-width: 767px)": { marginTop: "14px", fontSize: "12px", lineHeight: "18px" },
 });
 
 const AnswerHeader = styled.div({
@@ -628,7 +628,7 @@ const ButtonRow = styled.div({
   display: "flex",
   gap: "20px",
   "@media (max-width: 768px)": { marginTop: "40px" },
-  "@media (max-width: 375px)": { marginTop: "28px", flexDirection: "column" },
+  "@media (max-width: 767px)": { marginTop: "28px", flexDirection: "column" },
 });
 
 const ActionButton = styled.button<{ primary?: boolean; full?: boolean }>(({ primary, full }) => ({
@@ -649,7 +649,7 @@ const ActionButton = styled.button<{ primary?: boolean; full?: boolean }>(({ pri
   justifyContent: "center",
   gap: "4px",
   "@media (max-width: 768px)": { height: "68px", fontSize: "18px", minWidth: "160px" },
-  "@media (max-width: 375px)": { height: "52px", width: "100%", fontSize: "16px", minWidth: 0 },
+  "@media (max-width: 767px)": { height: "52px", width: "100%", fontSize: "16px", minWidth: 0 },
 }));
 
 const Arrow = ({ back = false }: { back?: boolean }) => (
@@ -678,7 +678,7 @@ const SuccessWrap = styled.div({
   flexDirection: "column",
   alignItems: "center",
   textAlign: "center",
-  "@media (max-width: 375px)": { paddingTop: "20px", gap: "24px" },
+  "@media (max-width: 767px)": { paddingTop: "20px", gap: "24px" },
 });
 
 const SuccessTitle = styled.h3({
@@ -689,7 +689,7 @@ const SuccessTitle = styled.h3({
   marginBottom: "20px",
   marginTop: "40px",
   "@media (max-width: 768px)": { fontSize: "44px", lineHeight: "54px" },
-  "@media (max-width: 375px)": { fontSize: "32px", lineHeight: "40px" },
+  "@media (max-width: 767px)": { fontSize: "32px", lineHeight: "40px" },
 });
 
 const ErrorText = styled.p({

@@ -25,7 +25,7 @@ const Banner = styled.div({
 
   "@media (max-width: 1024px)": { padding: "160px 80px 80px", minHeight: "323px" },
   "@media (max-width: 768px)": { padding: "140px 40px 50px", minHeight: "300px" },
-  "@media (max-width: 375px)": { padding: "160px 16px 20px", minHeight: "300px" },
+  "@media (max-width: 767px)": { padding: "160px 16px 20px", minHeight: "300px" },
 });
 
 const Heading = styled.div({
@@ -40,7 +40,7 @@ const ContentSection = styled.div({
   padding: "80px",
   "@media (max-width: 1024px)": { padding: "80px" },
   "@media (max-width: 768px)": { padding: "40px" },
-  "@media (max-width: 375px)": { padding: "40px 16px" },
+  "@media (max-width: 767px)": { padding: "40px 16px" },
 });
 
 const Body = styled.div({
@@ -56,7 +56,7 @@ const Label = styled.p({
   fontWeight: fontWeights.semiBold,
   "@media (max-width: 1024px)": { fontSize: "24px", lineHeight: "30px" },
   "@media (max-width: 768px)": { fontSize: "20px", lineHeight: "25px" },
-  "@media (max-width: 375px)": { fontSize: "12px", lineHeight: "15px" },
+  "@media (max-width: 767px)": { fontSize: "12px", lineHeight: "15px" },
 });
 
 const Title = styled.h1({
@@ -68,7 +68,7 @@ const Title = styled.h1({
 
   "@media (max-width: 1024px)": { fontSize: "34px", lineHeight: "45px" },
   "@media (max-width: 768px)": { fontSize: "30px", lineHeight: "38px" },
-  "@media (max-width: 375px)": { fontSize: "24px", lineHeight: "30px", width: "265px" },
+  "@media (max-width: 767px)": { fontSize: "24px", lineHeight: "30px", width: "265px" },
 });
 
 const TabList = styled.div({
@@ -106,7 +106,7 @@ const Tab = styled.button<{ active: boolean }>(({ active }) => ({
 
   "@media (max-width: 1024px)": { fontSize: "24px", lineHeight: "30px" },
   "@media (max-width: 768px)": { fontSize: "13px", lineHeight: "16px", padding: "6px 10px" },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "12px",
     lineHeight: "15px",
     padding: "4px 8px",
@@ -166,7 +166,7 @@ const CardTitle = styled.p({
 
   "@media (max-width: 1024px)": { fontSize: "24px", lineHeight: "30px" },
   "@media (max-width: 768px)": { fontSize: "20px", lineHeight: "25px" },
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "20px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
 const CardDescription = styled.p({
@@ -183,7 +183,7 @@ const CardDescription = styled.p({
 
   "@media (max-width: 1024px)": { fontSize: "14px", lineHeight: "18px" },
   "@media (max-width: 768px)": { fontSize: "13px", lineHeight: "18px" },
-  "@media (max-width: 375px)": { fontSize: "12px", lineHeight: "15px" },
+  "@media (max-width: 767px)": { fontSize: "12px", lineHeight: "15px" },
 });
 
 const BadgeRow = styled.div({
@@ -205,7 +205,7 @@ const Badge = styled.span<{ kind: "primary" | "gray" }>(({ kind }) => ({
   color: kind === "primary" ? colors.primary : "#525252",
   "@media (max-width: 1024px)": { fontSize: "18px", lineHeight: "23px" },
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "20px" },
-  "@media (max-width: 375px)": { fontSize: "14px", lineHeight: "18px" },
+  "@media (max-width: 767px)": { fontSize: "14px", lineHeight: "18px" },
 }));
 
 const Pagination = styled.div({

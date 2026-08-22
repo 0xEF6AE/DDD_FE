@@ -21,7 +21,7 @@ const Section = styled.section({
     minHeight: "1000px",
     paddingTop: "100px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     minHeight: "812px",
     paddingTop: "54px",
   },
@@ -78,7 +78,7 @@ const Label = styled.p({
     fontSize: "16px",
     lineHeight: "20px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "14px",
     lineHeight: "18px",
   },
@@ -123,7 +123,7 @@ const Description = styled.p({
     fontSize: "16px",
     lineHeight: "20px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "14px",
     lineHeight: "18px",
   },
@@ -157,7 +157,7 @@ const CtaButton = styled(Link)({
     padding: "16px 36px",
     fontSize: "18px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     height: "40px",
     width: "157px",
     maxWidth: "157px",

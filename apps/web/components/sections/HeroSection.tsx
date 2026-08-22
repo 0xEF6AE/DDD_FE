@@ -20,7 +20,7 @@ const Section = styled.section({
   "@media (max-width: 768px)": {
     minHeight: "820px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     minHeight: "812px",
   },
 });
@@ -69,7 +69,7 @@ const Hero3DImage = styled.img({
     width: "309px",
     height: "309px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     width: "185px",
     height: "185px",
   },
@@ -91,7 +91,7 @@ const Content = styled.div({
     gap: "28px",
     padding: "0 24px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     gap: "20px",
     padding: "0 16px",
   },
@@ -127,7 +127,7 @@ const GradientHeadline = styled.h1({
     fontSize: "clamp(45px, 14.29vw - 20px, 90px)",
     lineHeight: "clamp(50px, 15.87vw - 20px, 100px)",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "45px",
     lineHeight: "50px",
   },
@@ -177,7 +177,7 @@ const CtaButton = styled(Link)({
     fontSize: "16px",
     lineHeight: "20px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     height: "56px",
     width: "100%",
     maxWidth: "280px",

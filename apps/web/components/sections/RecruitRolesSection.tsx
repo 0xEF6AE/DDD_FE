@@ -12,7 +12,7 @@ const Section = styled.section({
 
   "@media (max-width: 1024px)": { padding: "80px 80px" },
   "@media (max-width: 768px)": { padding: "80px 40px" },
-  "@media (max-width: 375px)": { padding: "40px 16px" },
+  "@media (max-width: 767px)": { padding: "40px 16px" },
 });
 
 const Inner = styled.div({
@@ -36,7 +36,7 @@ const Title = styled.h2({
     fontSize: "30px",
     lineHeight: "38px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     fontSize: "20px",
     lineHeight: "25px",
   },
@@ -77,7 +77,7 @@ const Card = styled.article<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => (
       }
     : {}),
 
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     padding: "20px",
     borderRadius: "24px",
   },
@@ -91,7 +91,7 @@ const RoleName = styled.h3({
   fontWeight: fontWeights.semiBold,
   "@media (max-width: 1024px)": { fontSize: "24px", lineHeight: "30px" },
   "@media (max-width: 768px)": { fontSize: "20px", lineHeight: "25px" },
-  "@media (max-width: 375px)": { fontSize: "16px", lineHeight: "20px" },
+  "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
 const RoleDescription = styled.p<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => ({
@@ -118,7 +118,7 @@ const RoleDescription = styled.p<{ isRecruitOpen: boolean }>(({ isRecruitOpen })
 
   "@media (max-width: 1024px)": { fontSize: "18px", lineHeight: "23px" },
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "20px" },
-  "@media (max-width: 375px)": { fontSize: "14px", lineHeight: "18px" },
+  "@media (max-width: 767px)": { fontSize: "14px", lineHeight: "18px" },
 }));
 
 const ApplyButton = styled.button<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => ({
@@ -161,7 +161,7 @@ const ApplyButton = styled.button<{ isRecruitOpen: boolean }>(({ isRecruitOpen }
     fontSize: "16px",
     lineHeight: "22px",
   },
-  "@media (max-width: 375px)": {
+  "@media (max-width: 767px)": {
     height: "40px",
     fontSize: "14px",
     lineHeight: "18px",
