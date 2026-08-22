@@ -51,7 +51,8 @@ const Grid = styled.div({
   "@media (max-width: 768px)": {
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   },
-  "@media (max-width: 525px)": {
+  // 375 프레임은 카드가 마진(16)을 뺀 전체 폭을 쓰는 1열이다.
+  "@media (max-width: 767px)": {
     gridTemplateColumns: "1fr",
     gap: "12px",
   },
@@ -109,7 +110,9 @@ const RoleDescription = styled.p<{ isRecruitOpen: boolean }>(({ isRecruitOpen })
   ...(isRecruitOpen
     ? {
         ".role-card:hover &, .role-card:focus-within &": {
-          maxHeight: "120px",
+          // 실제 높이가 아니라 상한이다. 3단 그리드가 가장 좁아지는 1024 폭에서
+          // 가장 긴 설명이 6줄(≈138px)까지 가므로 120px 면 잘린다.
+          maxHeight: "240px",
           opacity: 1,
           marginTop: "4px",
         },
@@ -175,20 +178,18 @@ export const RecruitRolesSection = () => {
   return (
     <Section>
       <Inner>
-        <Title>6개의 직군을 모집하고있어요.</Title>
+        <Title>6개의 직군을 모집 하고 있어요.</Title>
         <Grid>
           {recruitParts.map((part) => {
-            const description = "description" in part ? part.description : undefined;
-
             return (
               <Card key={part.name} isRecruitOpen={isRecruitOpen} className="role-card">
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}
                 >
                   <RoleName>{part.name}</RoleName>
-                  {description ? (
-                    <RoleDescription isRecruitOpen={isRecruitOpen}>{description}</RoleDescription>
-                  ) : null}
+                  <RoleDescription isRecruitOpen={isRecruitOpen}>
+                    {part.description}
+                  </RoleDescription>
                 </div>
                 <ApplyButton
                   type="button"

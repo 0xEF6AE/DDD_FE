@@ -33,8 +33,9 @@ const TitleArea = styled.div({
   alignItems: "center",
   gap: "24px",
 
+  // 375 의 Gutter 토큰은 12 다.
   "@media (max-width: 767px)": {
-    gap: "16px",
+    gap: "12px",
   },
 });
 
@@ -263,8 +264,11 @@ const MoreButton = styled(Link)({
     lineHeight: "20px",
   },
   "@media (max-width: 767px)": {
+    height: "48px",
+    padding: "0 40px",
     fontSize: "14px",
     lineHeight: "18px",
+    "& svg": { width: "20px", height: "20px" },
   },
 });
 

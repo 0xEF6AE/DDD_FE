@@ -46,6 +46,9 @@ const TitleArea = styled.div({
   gap: "24px",
   textAlign: "center",
   width: "100%",
+
+  // 375 의 Gutter 토큰은 12 다.
+  "@media (max-width: 767px)": { gap: "12px" },
 });
 
 const SectionLabel = styled.p({
@@ -105,6 +108,11 @@ const StatsGrid = styled.div({
   "@media (max-width: 768px)": {
     flexDirection: "column",
   },
+  // 375 에서는 카드가 좌우 마진(16)보다 좁은 280 폭으로 가운데 정렬된다.
+  "@media (max-width: 767px)": {
+    maxWidth: "280px",
+    gap: "12px",
+  },
 });
 
 const StatCard = styled.div({
@@ -123,8 +131,8 @@ const StatCard = styled.div({
     padding: "40px 16px",
   },
   "@media (max-width: 767px)": {
-    padding: "28px 16px",
-    borderRadius: "16px",
+    padding: "30px 20px",
+    borderRadius: "20px",
   },
 });
 

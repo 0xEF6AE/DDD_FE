@@ -53,9 +53,12 @@ const Item = styled.article({
   gap: "56px",
 
   "@media (max-width: 768px)": { padding: "40px" },
+  // 375 프레임: 카드 패딩 24 / 라운드 20 / 번호-본문 간격 20, 번호는 본문 상단에 맞춘다.
   "@media (max-width: 767px)": {
     padding: "24px",
-    gap: "40px",
+    borderRadius: "20px",
+    gap: "20px",
+    alignItems: "flex-start",
   },
 });
 
@@ -90,7 +93,7 @@ const DateText = styled.p({
   fontWeight: fontWeights.bold,
   "@media (max-width: 1024px)": { fontSize: "34px", lineHeight: "45px" },
   "@media (max-width: 768px)": { fontSize: "30px", lineHeight: "38px" },
-  "@media (max-width: 575px)": { fontSize: "20px", lineHeight: "25px", marginTop: "6px" },
+  "@media (max-width: 767px)": { fontSize: "20px", lineHeight: "25px", marginTop: "10px" },
 });
 
 export const RecruitScheduleSection = ({

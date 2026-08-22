@@ -27,7 +27,7 @@ const Inner = styled.div({
   gap: "24px",
 
   "@media (max-width: 767px)": {
-    gap: "16px",
+    gap: "40px",
   },
 });
 
@@ -91,8 +91,11 @@ const CtaButton = styled(Link)({
     lineHeight: "20px",
   },
   "@media (max-width: 767px)": {
+    height: "48px",
+    padding: "0 40px",
     fontSize: "14px",
     lineHeight: "18px",
+    "& svg": { width: "20px", height: "20px" },
   },
 });
 

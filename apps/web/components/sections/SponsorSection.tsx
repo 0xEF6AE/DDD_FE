@@ -32,6 +32,8 @@ const Inner = styled.div({
   flexDirection: "column",
   alignItems: "center",
   gap: "24px",
+
+  "@media (max-width: 767px)": { gap: "12px" },
 });
 
 const TitleArea = styled.div({
@@ -41,6 +43,9 @@ const TitleArea = styled.div({
   width: "100%",
   alignItems: "center",
   textAlign: "center",
+
+  // 375 의 Gutter 토큰은 12 다.
+  "@media (max-width: 767px)": { gap: "12px" },
 });
 
 const SectionLabel = styled.p({
@@ -139,8 +144,11 @@ const ContactButton = styled(Link)({
     lineHeight: "20px",
   },
   "@media (max-width: 767px)": {
+    height: "48px",
+    padding: "0 40px",
     fontSize: "14px",
     lineHeight: "18px",
+    "& svg": { width: "20px", height: "20px" },
   },
 });
 

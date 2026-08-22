@@ -88,6 +88,9 @@ const TitleArea = styled.div({
   flexDirection: "column",
   gap: "24px",
   alignItems: "center",
+
+  // 375 의 Gutter 토큰은 12 다.
+  "@media (max-width: 767px)": { gap: "12px" },
 });
 
 const SectionLabel = styled.p({

@@ -31,6 +31,8 @@ const Inner = styled.div({
   display: "flex",
   flexDirection: "column",
   gap: "24px",
+
+  "@media (max-width: 767px)": { gap: "12px" },
 });
 
 const TitleArea = styled.div({
@@ -38,6 +40,9 @@ const TitleArea = styled.div({
   flexDirection: "column",
   alignItems: "center",
   gap: "24px",
+
+  // 375 의 Gutter 토큰은 12 다.
+  "@media (max-width: 767px)": { gap: "12px" },
 });
 
 const SectionLabel = styled.p({
@@ -122,7 +127,8 @@ const TabButton = styled.button<TabButtonProps>(({ isActive: active }) => ({
   borderBottom: `2px solid ${active ? colors.primary : "FFF"}`,
   fontSize: "16px",
   lineHeight: "20px",
-  fontWeight: fontWeights.semiBold,
+  // xl/Heading/Medium 은 전 브레이크포인트에서 Medium 이다.
+  fontWeight: fontWeights.medium,
   padding: "8px 20px",
   cursor: "pointer",
   whiteSpace: "nowrap",
@@ -218,8 +224,11 @@ const MoreButton = styled(Link)({
     lineHeight: "20px",
   },
   "@media (max-width: 767px)": {
+    height: "48px",
+    padding: "0 40px",
     fontSize: "14px",
     lineHeight: "18px",
+    "& svg": { width: "20px", height: "20px" },
   },
 });
 
