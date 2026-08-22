@@ -12,20 +12,24 @@ const Section = styled.section({
   background: "#ffffff",
 });
 
+// 피그마 Banner(1920×330)는 배경 이미지 없이 가로 그라데이션만 쓴다.
+// 이전에 쓰던 banner-bg.jpg 는 우측 3D "D" 오브젝트와 노이즈가 들어간 래스터라
+// 디자인과 달랐다.
 const Banner = styled.div({
-  padding: "160px 80px",
+  padding: "160px 80px 80px",
   position: "relative",
   overflow: "hidden",
   minHeight: "330px",
-  backgroundColor: "#02111f",
-  backgroundImage:
-    "linear-gradient(90deg, #02111f 7.926%, #072d3e 66.31%, #011924 100%), url('https://www.figma.com/api/mcp/asset/6f928e32-36e6-4c5d-886d-63789ff48cea')",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
+  background: "linear-gradient(90deg, #02111f 7.926%, #072d3e 66.31%, #011924 100%)",
 
-  "@media (max-width: 1024px)": { padding: "160px 80px 80px", minHeight: "323px" },
+  "@media (max-width: 1024px)": { minHeight: "323px" },
   "@media (max-width: 768px)": { padding: "140px 40px 50px", minHeight: "300px" },
-  "@media (max-width: 767px)": { padding: "160px 16px 20px", minHeight: "300px" },
+  // 375 프레임은 2정거장 그라데이션이 반대 방향으로 깔린다.
+  "@media (max-width: 767px)": {
+    padding: "160px 16px 20px",
+    minHeight: "300px",
+    background: "linear-gradient(270deg, #072c3d 0%, #02101e 100%)",
+  },
 });
 
 const Heading = styled.div({
@@ -251,10 +255,7 @@ const toApiPlatform = (tab: ProjectCategory): "IOS" | "AOS" | "WEB" | undefined 
   return tab;
 };
 
-export const ProjectListPageSection = ({
-  initialItems = [],
-  initialNextCursor = null,
-}: Props) => {
+export const ProjectListPageSection = ({ initialItems = [], initialNextCursor = null }: Props) => {
   const [activeTab, setActiveTab] = useState<ProjectCategory>("전체");
   const [projectItems, setProjectItems] = useState<ProjectItem[]>(initialItems);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
@@ -349,9 +350,7 @@ export const ProjectListPageSection = ({
               <CardLink key={project.id} href={`/project/${project.id}`}>
                 <Card>
                   <CardThumbnail>
-                    {project.thumbnail ? (
-                      <img src={project.thumbnail} alt={project.title} />
-                    ) : null}
+                    {project.thumbnail ? <img src={project.thumbnail} alt={project.title} /> : null}
                   </CardThumbnail>
                   <CardBody>
                     <CardTitle>{project.title}</CardTitle>

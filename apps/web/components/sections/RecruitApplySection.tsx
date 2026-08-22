@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import styled from "@emotion/styled";
+import { assets } from "@/constants/assets";
 import { ApiError, isApplicationAttachment } from "@ddd/api";
 import type { ApplicationAttachmentDto } from "@ddd/api";
 import { colors, fontWeights } from "@/constants/tokens";
@@ -166,12 +167,16 @@ const Banner = styled.section({
   position: "relative",
   overflow: "hidden",
   backgroundColor: "#02111f",
-  backgroundImage:
-    "linear-gradient(90deg, #02111f 7.926%, #072d3e 66.31%, #011924 100%), url('https://www.figma.com/api/mcp/asset/6f928e32-36e6-4c5d-886d-63789ff48cea')",
+  // 앞 레이어에 불투명 linear-gradient 가 깔려 있어서, url() 이 살아 있었더라도
+  // 이미지(우측 3D "D" 오브젝트 포함)는 통째로 가려졌다. 원본 래스터만 쓴다.
+  backgroundImage: `url('${assets.bannerBg}')`,
   backgroundSize: "cover",
-  backgroundPosition: "center",
+  // 배너 폭이 이미지 비율(1920x360)보다 좁아지면 cover 가 좌우를 잘라낸다. center 로 두면
+  // 오른쪽 끝의 3D "D" 오브젝트가 반쯤 잘리므로 오른쪽을 기준으로 붙인다.
+  // 좁은 화면에서는 D 가 화면을 다 차지해 제목과 겹쳐서, 그때만 center 로 되돌린다.
+  backgroundPosition: "right center",
   "@media (max-width: 1024px)": { padding: "160px 80px 80px" },
-  "@media (max-width: 768px)": { padding: "140px 40px 50px" },
+  "@media (max-width: 768px)": { padding: "140px 40px 50px", backgroundPosition: "center" },
   "@media (max-width: 767px)": { padding: "160px 16px 20px" },
 });
 
@@ -598,15 +603,22 @@ const Chip = styled.button<{ selected: boolean }>(({ selected }) => ({
   "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px", padding: "10px 14px" },
 }));
 
+/** 파트마다 설명이 1~2줄로 갈려 선택할 때 카드 높이가 흔들리므로 2줄 높이를 미리 확보한다. */
 const PartDescription = styled.p({
   margin: "20px 0 0",
   color: "#ffffff",
   fontSize: "24px",
   lineHeight: "30px",
+  minHeight: "60px",
   fontWeight: fontWeights.semiBold,
-  "@media (max-width: 1024px)": { fontSize: "20px", lineHeight: "26px" },
-  "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "22px" },
-  "@media (max-width: 767px)": { marginTop: "14px", fontSize: "12px", lineHeight: "18px" },
+  "@media (max-width: 1024px)": { fontSize: "20px", lineHeight: "26px", minHeight: "52px" },
+  "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "22px", minHeight: "44px" },
+  "@media (max-width: 767px)": {
+    marginTop: "14px",
+    fontSize: "12px",
+    lineHeight: "18px",
+    minHeight: "36px",
+  },
 });
 
 const AnswerHeader = styled.div({
