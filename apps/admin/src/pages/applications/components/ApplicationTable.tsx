@@ -27,10 +27,7 @@ export const ApplicationTable = ({
   onRowPress,
 }: ApplicationTableProps) => {
   const cohortNameById = new Map(cohorts.map((c) => [c.id, c.name]))
-  const allParts = cohorts.flatMap((c) => c.parts ?? []) as unknown as Array<{
-    id: number
-    name: string
-  }>
+  const allParts = cohorts.flatMap((c) => c.parts ?? [])
 
   if (applications.length === 0) {
     return <EmptyState>조건에 맞는 지원자가 없습니다.</EmptyState>
@@ -52,12 +49,12 @@ export const ApplicationTable = ({
           <Table.Body>
             {applications.map((app) => {
               const partName =
-                allParts.find((p) => p.id === app.cohortPartId)?.name ?? ""
+                allParts.find((p) => p.id === app.cohortPartId)?.partName ?? ""
               return (
                 <Table.Row
                   key={app.id}
                   className="cursor-pointer"
-                  onPress={() => onRowPress(app.id)}
+                  onAction={() => onRowPress(app.id)}
                 >
                   <Table.Cell>{app.applicantName}</Table.Cell>
                   <Table.Cell>{app.applicantPhone ?? "-"}</Table.Cell>
