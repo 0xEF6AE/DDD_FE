@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PreAlertModal } from '@/components/modals/PreAlertModal';
 import { RecruitStatusProvider } from "@/components/providers/RecruitStatusProvider";
 import { getActiveCohort } from "@/lib/api/activeCohort.server";
+import { getApiPreconnectOrigin } from "@/lib/api/config";
 import { getPreNotificationCohortName, parseRecruitStatus } from "@/lib/mappers/cohort";
 import './globals.css';
 
@@ -27,10 +28,21 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const activeCohort = await getActiveCohort();
   const recruitStatus = parseRecruitStatus(activeCohort);
+  const apiOrigin = getApiPreconnectOrigin();
 
   return (
     <html lang="ko">
       <body>
+        {/*
+          API 도메인에 미리 연결해둔다 (React 가 <head> 로 hoist 한다).
+          지원서 인증번호 발송처럼 클릭 직후 나가는 요청이 핸드셰이크부터 시작하지
+          않게 하려는 것이다. `use-credentials` 는 실제 요청(`credentials: "include"`)
+          과 자격증명 모드를 맞추려는 것으로, anonymous 로 두면 브라우저가 다른
+          커넥션 풀에 넣어 preconnect 한 소켓을 재사용하지 못한다.
+        */}
+        {apiOrigin ? (
+          <link rel="preconnect" href={apiOrigin} crossOrigin="use-credentials" />
+        ) : null}
         <RecruitStatusProvider recruitStatus={recruitStatus}>{children}</RecruitStatusProvider>
         <PreAlertModal cohortName={getPreNotificationCohortName(activeCohort)} />
       </body>
