@@ -1,10 +1,8 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { useRouter } from "next/navigation";
 import { colors, fontWeights } from "@/constants/tokens";
 import { recruitParts } from "@/constants/recruit";
-import { useRecruitStatus } from "@/components/providers/RecruitStatusProvider";
 
 const Section = styled.section({
   background: colors.background,
@@ -58,31 +56,32 @@ const Grid = styled.div({
   },
 });
 
-const Card = styled.article<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => ({
+const Card = styled.article({
   borderRadius: "30px",
   padding: "40px",
   background: colors.backgroundDark,
   display: "flex",
   flexDirection: "column",
-  justifyContent: "space-between",
+  justifyContent: "center",
   alignItems: "center",
-  gap: "20px",
   textAlign: "center",
   transition: "background 0.2s ease",
 
-  ...(isRecruitOpen
-    ? {
-        "&:hover, &:focus-within": {
-          background: colors.primary,
-        },
-      }
-    : {}),
+  // iOS Safari 는 탭 후 :hover 가 남아 카드가 파란 채로 굳는다. hover 를 실제로
+  // 지원하는 기기에서만 배경을 바꾼다.
+  "@media (hover: hover)": {
+    "&:hover": { background: colors.primary },
+  },
+
+  "&:focus-visible": {
+    background: colors.primary,
+  },
 
   "@media (max-width: 767px)": {
     padding: "20px",
     borderRadius: "24px",
   },
-}));
+});
 
 const RoleName = styled.h3({
   margin: 0,
@@ -95,7 +94,7 @@ const RoleName = styled.h3({
   "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
-const RoleDescription = styled.p<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => ({
+const RoleDescription = styled.p({
   margin: 0,
   color: colors.mainLight,
   fontSize: "20px",
@@ -107,74 +106,37 @@ const RoleDescription = styled.p<{ isRecruitOpen: boolean }>(({ isRecruitOpen })
   transition: "max-height 0.2s ease, opacity 0.15s ease, margin-top 0.2s ease",
   marginTop: 0,
 
-  ...(isRecruitOpen
-    ? {
-        ".role-card:hover &, .role-card:focus-within &": {
-          // 실제 높이가 아니라 상한이다. 3단 그리드가 가장 좁아지는 1024 폭에서
-          // 가장 긴 설명이 6줄(≈138px)까지 가므로 120px 면 잘린다.
-          maxHeight: "240px",
-          opacity: 1,
-          marginTop: "4px",
-        },
-      }
-    : {}),
+  "@media (hover: hover)": {
+    ".role-card:hover &": {
+      // 실제 높이가 아니라 상한이다. 3단 그리드가 가장 좁아지는 1024 폭에서
+      // 가장 긴 설명이 6줄(≈138px)까지 가므로 120px 면 잘린다.
+      maxHeight: "240px",
+      opacity: 1,
+      marginTop: "12px",
+    },
+  },
+
+  ".role-card:focus-visible &": {
+    maxHeight: "240px",
+    opacity: 1,
+    marginTop: "12px",
+  },
 
   "@media (max-width: 1024px)": { fontSize: "18px", lineHeight: "23px" },
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "20px" },
   "@media (max-width: 767px)": { fontSize: "14px", lineHeight: "18px" },
-}));
 
-const ApplyButton = styled.button<{ isRecruitOpen: boolean }>(({ isRecruitOpen }) => ({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "none",
-  width: "100%",
-  height: "65px",
-  borderRadius: "100px",
-  background: "#62748e",
-  color: colors.textInverse,
-  fontSize: "20px",
-  lineHeight: "25px",
-  fontWeight: fontWeights.medium,
-  cursor: isRecruitOpen ? "pointer" : "default",
-  transition: "background 0.2s ease",
-
-  ...(isRecruitOpen
-    ? {
-        ".role-card:hover &, .role-card:focus-within &": {
-          background: "#0a62bb",
-        },
-
-        "& svg": {
-          width: "24px",
-          height: "24px",
-          flexShrink: 0,
-        },
-      }
-    : {}),
-
-  "@media (max-width: 1024px)": {
-    height: "60px",
-    fontSize: "18px",
-    lineHeight: "23px",
+  // 터치 기기에는 hover 가 없어 소개를 열 방법이 없다. 폭이 아니라 hover 지원
+  // 여부로 갈라서(태블릿 포함) 항상 펼친 상태로 둔다.
+  "@media (hover: none)": {
+    maxHeight: "none",
+    opacity: 1,
+    marginTop: "12px",
+    transition: "none",
   },
-  "@media (max-width: 768px)": {
-    height: "52px",
-    fontSize: "16px",
-    lineHeight: "22px",
-  },
-  "@media (max-width: 767px)": {
-    height: "40px",
-    fontSize: "14px",
-    lineHeight: "18px",
-  },
-}));
+});
 
 export const RecruitRolesSection = () => {
-  const { isRecruitOpen, recruitButtonLabels } = useRecruitStatus();
-  const router = useRouter();
-
   return (
     <Section>
       <Inner>
@@ -182,41 +144,11 @@ export const RecruitRolesSection = () => {
         <Grid>
           {recruitParts.map((part) => {
             return (
-              <Card key={part.name} isRecruitOpen={isRecruitOpen} className="role-card">
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}
-                >
-                  <RoleName>{part.name}</RoleName>
-                  <RoleDescription isRecruitOpen={isRecruitOpen}>
-                    {part.description}
-                  </RoleDescription>
-                </div>
-                <ApplyButton
-                  type="button"
-                  isRecruitOpen={isRecruitOpen}
-                  disabled={!isRecruitOpen}
-                  onClick={() => {
-                    if (!isRecruitOpen) return;
-                    router.push("/recruit/apply");
-                  }}
-                >
-                  {recruitButtonLabels.role}
-                  {isRecruitOpen ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden
-                    >
-                      <path
-                        d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"
-                        fill="white"
-                      />
-                    </svg>
-                  ) : null}
-                </ApplyButton>
+              // 카드에 CTA 가 없어 설명은 hover 로 열린다. 키보드 사용자도 열 수
+              // 있도록 카드 자체를 포커스 대상으로 둔다. (터치는 항상 펼침)
+              <Card key={part.name} className="role-card" tabIndex={0}>
+                <RoleName>{part.name}</RoleName>
+                <RoleDescription>{part.description}</RoleDescription>
               </Card>
             );
           })}
