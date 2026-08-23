@@ -26,26 +26,23 @@ export const recruitHeroDescriptionByStatus: Record<RecruitStatus, string> = {
 
 export const recruitButtonLabelsByStatus: Record<
   RecruitStatus,
-  { navigation: string; hero: string; role: string }
+  { navigation: string; hero: string }
 > = {
-  // 모집 시작 전에는 상단 CTA(네비/히어로) 로만 사전 알림을 안내한다.
-  // 직군 카드 버튼은 지원서로 이어지지 않는 비활성 버튼이므로 [지원 마감] 으로 둔다.
+  // 모집 CTA 는 네비/히어로/최하단에만 둔다. 직군 카드에는 버튼이 없고
+  // hover 로 직군 소개만 노출한다.
   preNotification: {
     navigation: "사전 알림 신청",
     hero: "사전 알림 신청하기",
-    role: "지원 마감",
   },
   open: {
     navigation: "지원 신청",
     hero: "지원하기",
-    role: "지원하기",
   },
   // 모집 기간이 끝난 기수(활동중/활동종료)는 다음 모집 일정이 없으므로 사전 알림도
   // 받지 않는다. 기획 3.1.1 기수 상태 정의대로 [모집 종료] 비활성으로만 노출한다.
   closed: {
     navigation: "모집 종료",
     hero: "모집 종료",
-    role: "지원 마감",
   },
 };
 

@@ -90,9 +90,13 @@ const Row = styled.a({
     gridTemplateColumns: "340px 1fr",
   },
   "@media (max-width: 768px)": {
-    gridTemplateColumns: "1fr",
+    gridTemplateColumns: "316px 1fr",
     gap: "24px",
     padding: "20px 0",
+  },
+  // 375 프레임에서만 썸네일이 본문 위로 올라간다. 768 프레임은 가로 배치를 유지한다.
+  "@media (max-width: 767px)": {
+    gridTemplateColumns: "1fr",
   },
 });
 
@@ -108,7 +112,7 @@ const Thumbnail = styled.img({
     height: "260px",
   },
   "@media (max-width: 768px)": {
-    height: "220px",
+    height: "240px",
     borderRadius: "20px",
   },
   "@media (max-width: 767px)": {

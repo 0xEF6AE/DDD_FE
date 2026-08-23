@@ -172,16 +172,15 @@ const Banner = styled.section({
   position: "relative",
   overflow: "hidden",
   backgroundColor: "#02111f",
-  // 앞 레이어에 불투명 linear-gradient 가 깔려 있어서, url() 이 살아 있었더라도
-  // 이미지(우측 3D "D" 오브젝트 포함)는 통째로 가려졌다. 원본 래스터만 쓴다.
   backgroundImage: `url('${assets.bannerBg}')`,
-  backgroundSize: "cover",
-  // 배너 폭이 이미지 비율(1920x360)보다 좁아지면 cover 가 좌우를 잘라낸다. center 로 두면
-  // 오른쪽 끝의 3D "D" 오브젝트가 반쯤 잘리므로 오른쪽을 기준으로 붙인다.
-  // 좁은 화면에서는 D 가 화면을 다 차지해 제목과 겹쳐서, 그때만 center 로 되돌린다.
-  backgroundPosition: "right center",
+  // 시안의 지원서 배너에는 3D "D" 오브젝트가 없다. 원본 래스터(1920x360)는 오른쪽 끝
+  // (x≈1270 부터)에 D 가 박혀 있으므로, 가로만 160% 로 늘려 왼쪽 기준으로 붙여
+  // 보이는 영역을 x≤1200 으로 제한한다. 남는 건 그라데이션·그레인뿐이라 어떤 폭에서도 D 가 안 나온다.
+  backgroundSize: "160% 100%",
+  backgroundPosition: "left center",
+  backgroundRepeat: "no-repeat",
   "@media (max-width: 1024px)": { padding: "160px 80px 80px" },
-  "@media (max-width: 768px)": { padding: "140px 40px 50px", backgroundPosition: "center" },
+  "@media (max-width: 768px)": { padding: "140px 40px 50px" },
   "@media (max-width: 767px)": { padding: "160px 16px 20px" },
 });
 
@@ -1171,27 +1170,51 @@ export const RecruitApplySection = () => {
     );
   }, []);
 
+  /**
+   * 인증번호 발송.
+   *
+   * BE 가 메일을 다 보낸 뒤에야 응답하므로 이 왕복은 길다. 응답을 기다렸다가 입력칸을
+   * 열면 그 시간 내내 사용자는 "발송 중..." 만 보고 있어야 한다 — 정작 그동안 할 수
+   * 있는 일(메일함 열기, 번호 입력 준비)이 다 막혀 있다. 그래서 클릭 즉시 입력칸을
+   * 열어두고, 실패한 경우에만 직전 상태로 되돌린다.
+   *
+   * 만료·재발송 쿨다운 두 카운트다운은 **모두 클릭 시점**을 기준으로 센다. 서버도
+   * 요청을 받은 직후, 메일을 보내기 전에 코드와 쿨다운 시각을 함께 찍으므로 기준이
+   * 하나여야 맞다. 한쪽만 응답 시점으로 옮기면 발송에 걸린 시간(수 초)만큼 두 숫자가
+   * 어긋나 보이고 — `재발송 59초` 옆에 `09:55 남음` — 만료 쪽은 서버에서 이미 끝난
+   * 번호를 "아직 남았다" 고 보여주게 된다.
+   *
+   * 다만 발송이 끝나기 전까지는 남은 시간을 화면에 띄우지 않는다 (`isRequestingCode`).
+   * "발송 중" 옆에서 만료 카운트다운이 도는 건 앞뒤가 안 맞는다.
+   */
   const handleRequestCode = async () => {
     const emailError = validateBasicField("email", values.email);
     setBasicTouched((prev) => ({ ...prev, email: true }));
     setBasicErrors((prev) => ({ ...prev, email: emailError ?? "" }));
     if (emailError) return;
 
+    // 실패 시 되돌릴 직전 상태 — 재발송이 실패했다고 살아있던 인증번호 칸까지
+    // 닫아버리면 이미 받아둔 번호를 넣을 방법이 없어진다.
+    const previous = { isCodeSent, code, codeExpiresIn };
+
     setVerifyError(null);
-    setVerifyNotice(null);
     setIsRequestingCode(true);
+    setIsCodeSent(true);
+    setCode("");
+    setCodeExpiresIn(APPLICATION_VERIFICATION_CODE_TTL_SECONDS);
+    setResendCooldown(APPLICATION_VERIFICATION_RESEND_COOLDOWN_SECONDS);
+    setVerifyNotice(`${normalizedEmail} 으로 인증번호를 보내고 있어요. 메일함을 확인해주세요.`);
     try {
       await requestApplicationEmailVerification(normalizedEmail);
-      setIsCodeSent(true);
-      setCode("");
-      setCodeExpiresIn(APPLICATION_VERIFICATION_CODE_TTL_SECONDS);
-      setResendCooldown(APPLICATION_VERIFICATION_RESEND_COOLDOWN_SECONDS);
       setVerifyNotice(`${normalizedEmail} 으로 인증번호를 보냈어요. 메일함을 확인해주세요.`);
     } catch (e) {
+      setVerifyNotice(null);
+      setIsCodeSent(previous.isCodeSent);
+      setCode(previous.code);
+      setCodeExpiresIn(previous.codeExpiresIn);
       // 쿨다운은 서버가 판단한다 — 429 를 받으면 남은 시간만큼 버튼을 잠가 헛요청을 막는다.
-      if (e instanceof ApiError && e.code === "VERIFICATION_COOLDOWN") {
-        setResendCooldown(APPLICATION_VERIFICATION_RESEND_COOLDOWN_SECONDS);
-      }
+      const isCooldown = e instanceof ApiError && e.code === "VERIFICATION_COOLDOWN";
+      setResendCooldown(isCooldown ? APPLICATION_VERIFICATION_RESEND_COOLDOWN_SECONDS : 0);
       setVerifyError(
         resolveErrorMessage(e, "인증번호를 보내지 못했어요. 잠시 후 다시 시도해주세요."),
       );
@@ -1785,11 +1808,15 @@ export const RecruitApplySection = () => {
                               <Label>
                                 인증번호 <Required hasError={Boolean(verifyError)}>*</Required>
                               </Label>
-                              <CodeTimer>
-                                {isCodeExpired
-                                  ? "만료됨"
-                                  : `${formatCountdown(codeExpiresIn)} 남음`}
-                              </CodeTimer>
+                              {/* 발송이 끝나기 전에는 남은 시간을 띄우지 않는다 — 버튼이
+                                  "발송 중..." 인데 옆에서 만료 시간이 도는 건 앞뒤가 안 맞는다. */}
+                              {isRequestingCode ? null : (
+                                <CodeTimer>
+                                  {isCodeExpired
+                                    ? "만료됨"
+                                    : `${formatCountdown(codeExpiresIn)} 남음`}
+                                </CodeTimer>
+                              )}
                             </CodeLabelRow>
                             <InlineRow>
                               <InlineInputWrap>
@@ -1810,7 +1837,8 @@ export const RecruitApplySection = () => {
                               <VerifyButton
                                 type="button"
                                 onClick={() => void handleConfirmCode()}
-                                disabled={isConfirmingCode || isCodeExpired}
+                                // 아직 발송되지 않은 번호는 확인할 수 없다.
+                                disabled={isConfirmingCode || isCodeExpired || isRequestingCode}
                               >
                                 {isConfirmingCode ? "확인 중..." : "확인"}
                               </VerifyButton>
@@ -1865,7 +1893,7 @@ export const RecruitApplySection = () => {
                             거주지역 <Required hasError={Boolean(basicErrors.region)}>*</Required>
                           </Label>
                           <Input
-                            placeholder="선택해주세요."
+                            placeholder="ex. 서울시 강남구"
                             value={values.region}
                             hasError={Boolean(basicErrors.region)}
                             isFocused={focusedField === "region"}

@@ -1,8 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import styled from "@emotion/styled";
 import { colors, fontWeights, fontSizes, lineHeights } from "@/constants/tokens";
 import type { ProjectItem } from "@/constants/projects";
+
+// pdf.js 는 브라우저 전용이다. 서버 번들에 들어가면 webpack dev 가 vendor chunk 를
+// 참조만 하고 내보내지 않아 이 페이지 전체가 죽는다. ssr:false 로 서버 그래프에서 뺀다.
+const PdfPreview = dynamic(
+  () => import("@/components/ui/PdfPreview").then((module) => module.PdfPreview),
+  { ssr: false },
+);
 
 const Section = styled.section({
   background: "#ffffff",
@@ -151,15 +159,6 @@ const MemberRole = styled.span({
   "@media (max-width: 767px)": { fontSize: "14px", lineHeight: "18px" },
 });
 
-const Pdf = styled.img({
-  marginTop: "80px",
-  "@media (max-width: 1024px)": { marginTop: "40px" },
-  "@media (max-width: 768px)": { marginTop: "20px" },
-  width: "100%",
-  height: "auto",
-  display: "block",
-});
-
 type Props = { project: ProjectItem };
 
 function hasNonEmptySrc(src: string): boolean {
@@ -184,18 +183,22 @@ export const ProjectDetailSection = ({ project }: Props) => {
           <Title>{project.detailTitle}</Title>
           <LongDescription>{project.longDescription}</LongDescription>
 
-          <TeamTitle>팀원</TeamTitle>
-          <MemberGrid>
-            {project.participants.map((member) => (
-              <Member key={`${member.name}-${member.role}`}>
-                <MemberName>{member.name}</MemberName>
-                <MemberRole>{member.role}</MemberRole>
-              </Member>
-            ))}
-          </MemberGrid>
+          {project.participants.length > 0 ? (
+            <>
+              <TeamTitle>팀원</TeamTitle>
+              <MemberGrid>
+                {project.participants.map((member) => (
+                  <Member key={`${member.name}-${member.role}`}>
+                    <MemberName>{member.name}</MemberName>
+                    <MemberRole>{member.role}</MemberRole>
+                  </Member>
+                ))}
+              </MemberGrid>
+            </>
+          ) : null}
 
           {hasNonEmptySrc(project.pdf) ? (
-            <Pdf src={project.pdf} alt={`${project.title} 상세 소개`} />
+            <PdfPreview src={project.pdf} title={project.title} />
           ) : null}
         </Container>
       </ContentSection>

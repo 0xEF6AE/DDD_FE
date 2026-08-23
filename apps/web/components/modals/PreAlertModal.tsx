@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import { colors, fontWeights } from "@/constants/tokens";
 import { ApiError } from "@ddd/api";
@@ -63,10 +63,20 @@ const Overlay = styled.div<{ open: boolean }>(({ open }) => ({
   },
 }));
 
+/**
+ * 카드 폭은 반드시 여기(wrap)에 걸어야 한다.
+ *
+ * Overlay 의 중앙 정렬 기준도, FloatingCloseArea 의 우측 정렬 기준도 이 wrap 이다.
+ * 폭을 ModalCard 쪽에 두면 카드가 wrap 보다 좁아지는 순간 카드는 좌측으로 밀리고
+ * 닫기 버튼만 wrap 우측 끝에 남아 서로 분리된다.
+ */
 const ModalWrap = styled.div({
   position: "relative",
   width: "100%",
   maxWidth: "846px",
+
+  "@media (max-width: 1024px)": { maxWidth: "643px" },
+  "@media (max-width: 767px)": { maxWidth: "343px" },
 });
 
 const ModalCard = styled.div({
@@ -79,13 +89,12 @@ const ModalCard = styled.div({
   color: "#202325",
   position: "relative",
 
-  "@media (max-width: 768px)": {
-    maxWidth: "643px",
+  // 1024 프레임과 768 프레임의 팝업은 643x470 으로 동일하다.
+  "@media (max-width: 1024px)": {
     borderRadius: "30px",
     padding: "80px 40px 40px",
   },
   "@media (max-width: 767px)": {
-    maxWidth: "343px",
     borderRadius: "20px",
     padding: "80px 12px 40px",
   },
@@ -557,6 +566,23 @@ export const PreAlertModal = ({ cohortName = null }: { cohortName?: string | nul
 
   const alertTexts = useMemo(() => buildAlertTexts(cohortName), [cohortName]);
 
+  // 트랩 범위는 ModalCard 가 아니라 wrap 이다 — 닫기 버튼이 카드 바깥에 있다.
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  /**
+   * 모달 안의 포커스 가능한 요소 — step 마다 내용이 통째로 바뀌므로 매번 새로 조회한다.
+   * `offsetParent` 로 숨겨진 요소를 걸러야 닫힌 단계의 잔여 버튼으로 포커스가 새지 않는다.
+   */
+  const getFocusable = useCallback((): HTMLElement[] => {
+    const card = wrapRef.current;
+    if (!card) return [];
+    const selector = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    return Array.from(card.querySelectorAll<HTMLElement>(selector)).filter(
+      (element) => element.offsetParent !== null,
+    );
+  }, []);
+
   useEffect(() => {
     const openHandler = () => {
       setOpen(true);
@@ -615,6 +641,61 @@ export const PreAlertModal = ({ cohortName = null }: { cohortName?: string | nul
     };
   }, [open]);
 
+  // 열기 직전에 포커스가 있던 요소를 기억해 두었다가, 닫힐 때 그 자리로 되돌린다.
+  useEffect(() => {
+    if (!open) return;
+
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    return () => {
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
+    };
+  }, [open]);
+
+  // 열릴 때, 그리고 step 이 바뀔 때마다 새 화면의 첫 요소로 포커스를 들인다.
+  useEffect(() => {
+    if (!open) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const [first] = getFocusable();
+      first?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, step, getFocusable]);
+
+  // Tab / Shift+Tab 을 모달 경계에서 순환시킨다 — aria-modal 만으로는 포커스가 갇히지 않는다.
+  useEffect(() => {
+    if (!open) return;
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      const isOutside = !wrapRef.current?.contains(active);
+
+      if (event.shiftKey && (isOutside || active === first)) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+      if (!event.shiftKey && (isOutside || active === last)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", trapFocus);
+    return () => window.removeEventListener("keydown", trapFocus);
+  }, [open, getFocusable]);
+
   const onCloseRequest = () => {
     if (step === "success") {
       setOpen(false);
@@ -667,7 +748,7 @@ export const PreAlertModal = ({ cohortName = null }: { cohortName?: string | nul
 
   return (
     <Overlay open={open} onClick={onBackdropClick}>
-      <ModalWrap>
+      <ModalWrap ref={wrapRef}>
         <FloatingCloseArea>
           <CloseButton type="button" aria-label="닫기" onClick={onCloseRequest}>
             ×

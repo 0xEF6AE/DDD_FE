@@ -13,7 +13,6 @@ type RecruitStatusContextValue = {
   recruitButtonLabels: {
     navigation: string;
     hero: string;
-    role: string;
   };
 };
 
