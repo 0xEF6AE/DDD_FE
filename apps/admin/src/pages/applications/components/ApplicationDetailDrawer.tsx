@@ -41,14 +41,9 @@ export const ApplicationDetailDrawer = ({
   )
   const { data: cohorts } = useQuery(cohortQueries.getCohorts())
 
-  const allParts = (cohorts ?? []).flatMap(
-    (c) => c.parts ?? []
-  ) as unknown as Array<{
-    id: number
-    name: string
-  }>
+  const allParts = (cohorts ?? []).flatMap((c) => c.parts ?? [])
   const partName =
-    allParts.find((p) => p.id === application?.cohortPartId)?.name ?? ""
+    allParts.find((p) => p.id === application?.cohortPartId)?.partName ?? ""
   const partLabel = partName || "-"
 
   const branch: StatusBranch | undefined = application
