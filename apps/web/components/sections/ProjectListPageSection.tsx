@@ -122,8 +122,9 @@ const Grid = styled.div({
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: "24px",
 
-  "@media (max-width: 1024px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
-  "@media (max-width: 768px)": { gridTemplateColumns: "1fr" },
+  "@media (max-width: 1024px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "20px" },
+  "@media (max-width: 768px)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "16px" },
+  "@media (max-width: 767px)": { gridTemplateColumns: "1fr", gap: "12px" },
 });
 
 const CardLink = styled.a({

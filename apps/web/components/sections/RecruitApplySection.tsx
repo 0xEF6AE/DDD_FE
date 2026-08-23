@@ -172,16 +172,15 @@ const Banner = styled.section({
   position: "relative",
   overflow: "hidden",
   backgroundColor: "#02111f",
-  // 앞 레이어에 불투명 linear-gradient 가 깔려 있어서, url() 이 살아 있었더라도
-  // 이미지(우측 3D "D" 오브젝트 포함)는 통째로 가려졌다. 원본 래스터만 쓴다.
   backgroundImage: `url('${assets.bannerBg}')`,
-  backgroundSize: "cover",
-  // 배너 폭이 이미지 비율(1920x360)보다 좁아지면 cover 가 좌우를 잘라낸다. center 로 두면
-  // 오른쪽 끝의 3D "D" 오브젝트가 반쯤 잘리므로 오른쪽을 기준으로 붙인다.
-  // 좁은 화면에서는 D 가 화면을 다 차지해 제목과 겹쳐서, 그때만 center 로 되돌린다.
-  backgroundPosition: "right center",
+  // 시안의 지원서 배너에는 3D "D" 오브젝트가 없다. 원본 래스터(1920x360)는 오른쪽 끝
+  // (x≈1270 부터)에 D 가 박혀 있으므로, 가로만 160% 로 늘려 왼쪽 기준으로 붙여
+  // 보이는 영역을 x≤1200 으로 제한한다. 남는 건 그라데이션·그레인뿐이라 어떤 폭에서도 D 가 안 나온다.
+  backgroundSize: "160% 100%",
+  backgroundPosition: "left center",
+  backgroundRepeat: "no-repeat",
   "@media (max-width: 1024px)": { padding: "160px 80px 80px" },
-  "@media (max-width: 768px)": { padding: "140px 40px 50px", backgroundPosition: "center" },
+  "@media (max-width: 768px)": { padding: "140px 40px 50px" },
   "@media (max-width: 767px)": { padding: "160px 16px 20px" },
 });
 
@@ -1894,7 +1893,7 @@ export const RecruitApplySection = () => {
                             거주지역 <Required hasError={Boolean(basicErrors.region)}>*</Required>
                           </Label>
                           <Input
-                            placeholder="선택해주세요."
+                            placeholder="ex. 서울시 강남구"
                             value={values.region}
                             hasError={Boolean(basicErrors.region)}
                             isFocused={focusedField === "region"}

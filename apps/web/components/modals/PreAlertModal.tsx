@@ -63,10 +63,20 @@ const Overlay = styled.div<{ open: boolean }>(({ open }) => ({
   },
 }));
 
+/**
+ * 카드 폭은 반드시 여기(wrap)에 걸어야 한다.
+ *
+ * Overlay 의 중앙 정렬 기준도, FloatingCloseArea 의 우측 정렬 기준도 이 wrap 이다.
+ * 폭을 ModalCard 쪽에 두면 카드가 wrap 보다 좁아지는 순간 카드는 좌측으로 밀리고
+ * 닫기 버튼만 wrap 우측 끝에 남아 서로 분리된다.
+ */
 const ModalWrap = styled.div({
   position: "relative",
   width: "100%",
   maxWidth: "846px",
+
+  "@media (max-width: 1024px)": { maxWidth: "643px" },
+  "@media (max-width: 767px)": { maxWidth: "343px" },
 });
 
 const ModalCard = styled.div({
@@ -79,13 +89,12 @@ const ModalCard = styled.div({
   color: "#202325",
   position: "relative",
 
-  "@media (max-width: 768px)": {
-    maxWidth: "643px",
+  // 1024 프레임과 768 프레임의 팝업은 643x470 으로 동일하다.
+  "@media (max-width: 1024px)": {
     borderRadius: "30px",
     padding: "80px 40px 40px",
   },
   "@media (max-width: 767px)": {
-    maxWidth: "343px",
     borderRadius: "20px",
     padding: "80px 12px 40px",
   },

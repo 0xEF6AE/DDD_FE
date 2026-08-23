@@ -183,15 +183,19 @@ export const ProjectDetailSection = ({ project }: Props) => {
           <Title>{project.detailTitle}</Title>
           <LongDescription>{project.longDescription}</LongDescription>
 
-          <TeamTitle>팀원</TeamTitle>
-          <MemberGrid>
-            {project.participants.map((member) => (
-              <Member key={`${member.name}-${member.role}`}>
-                <MemberName>{member.name}</MemberName>
-                <MemberRole>{member.role}</MemberRole>
-              </Member>
-            ))}
-          </MemberGrid>
+          {project.participants.length > 0 ? (
+            <>
+              <TeamTitle>팀원</TeamTitle>
+              <MemberGrid>
+                {project.participants.map((member) => (
+                  <Member key={`${member.name}-${member.role}`}>
+                    <MemberName>{member.name}</MemberName>
+                    <MemberRole>{member.role}</MemberRole>
+                  </Member>
+                ))}
+              </MemberGrid>
+            </>
+          ) : null}
 
           {hasNonEmptySrc(project.pdf) ? (
             <PdfPreview src={project.pdf} title={project.title} />
