@@ -371,7 +371,9 @@ export const Navigation = () => {
           </LogoLink>
           <MobileMenuButton
             type="button"
-            aria-label="메뉴 열기"
+            aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
+            aria-expanded={open}
+            aria-controls="mobile-nav-drawer"
             onClick={() => setOpen((prev) => !prev)}
           >
             <svg
@@ -392,7 +394,7 @@ export const Navigation = () => {
         >
           {recruitButtonLabels.navigation}
         </CtaButton>
-        <MobileDrawer open={open}>
+        <MobileDrawer id="mobile-nav-drawer" open={open}>
           {NAV_LINKS.map(({ label, href }) => (
             <MobileItem key={href} href={href} onClick={() => setOpen(false)}>
               {label}
