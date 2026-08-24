@@ -2,6 +2,7 @@ import { Table } from "@heroui/react"
 import { type ApplicationDto, type CohortDto } from "@ddd/api"
 
 import { EmptyState } from "@/shared/ui/EmptyState"
+import { buildCohortPartInfoById } from "@/pages/applications/lib/cohortPart"
 
 type ApplicationTableProps = {
   applications: ApplicationDto[]
@@ -26,8 +27,7 @@ export const ApplicationTable = ({
   interviewScheduledByApplicationId,
   onRowPress,
 }: ApplicationTableProps) => {
-  const cohortNameById = new Map(cohorts.map((c) => [c.id, c.name]))
-  const allParts = cohorts.flatMap((c) => c.parts ?? [])
+  const cohortPartInfoById = buildCohortPartInfoById(cohorts)
 
   if (applications.length === 0) {
     return <EmptyState>조건에 맞는 지원자가 없습니다.</EmptyState>
@@ -48,8 +48,7 @@ export const ApplicationTable = ({
           </Table.Header>
           <Table.Body>
             {applications.map((app) => {
-              const partName =
-                allParts.find((p) => p.id === app.cohortPartId)?.partName ?? ""
+              const partInfo = cohortPartInfoById.get(app.cohortPartId)
               return (
                 <Table.Row
                   key={app.id}
@@ -58,10 +57,8 @@ export const ApplicationTable = ({
                 >
                   <Table.Cell>{app.applicantName}</Table.Cell>
                   <Table.Cell>{app.applicantPhone ?? "-"}</Table.Cell>
-                  <Table.Cell>{partName || "-"}</Table.Cell>
-                  <Table.Cell>
-                    {cohortNameById.get(app.cohortId) ?? "-"}
-                  </Table.Cell>
+                  <Table.Cell>{partInfo?.partName ?? "-"}</Table.Cell>
+                  <Table.Cell>{partInfo?.cohortName ?? "-"}</Table.Cell>
                   <Table.Cell>
                     {formatDate(app.submittedAt ?? app.createdAt)}
                   </Table.Cell>

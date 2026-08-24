@@ -9,7 +9,7 @@ interface Props {
   applicantName: string
   label: string
   partLabel: string
-  cohortId: number
+  cohortId: number | undefined
   cohortPartId: number
 }
 
@@ -46,9 +46,12 @@ export const InterviewSlotsRequiredModal = ({
               </Button>
               <Button
                 onPress={() => {
-                  navigate(
-                    `${paths.interviewSlots}?cohortId=${cohortId}&cohortPartId=${cohortPartId}`,
-                  )
+                  const search = new URLSearchParams()
+                  if (cohortId !== undefined) {
+                    search.set("cohortId", String(cohortId))
+                  }
+                  search.set("cohortPartId", String(cohortPartId))
+                  navigate(`${paths.interviewSlots}?${search}`)
                   onClose()
                 }}
               >

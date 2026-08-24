@@ -5,6 +5,7 @@ import { applicationQueries, cohortQueries } from "@ddd/api"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { Section } from "@/shared/ui/Section"
 import { STATUS_BRANCH, type ApplicationStatus, type StatusBranch } from "@/pages/applications/constants"
+import { buildCohortPartInfoById } from "@/pages/applications/lib/cohortPart"
 import { AnswerList } from "./AnswerList"
 import { StatusChangeModal } from "./StatusChangeModal"
 
@@ -41,10 +42,12 @@ export const ApplicationDetailDrawer = ({
   )
   const { data: cohorts } = useQuery(cohortQueries.getCohorts())
 
-  const allParts = (cohorts ?? []).flatMap((c) => c.parts ?? [])
-  const partName =
-    allParts.find((p) => p.id === application?.cohortPartId)?.partName ?? ""
-  const partLabel = partName || "-"
+  const cohortPartInfoById = buildCohortPartInfoById(cohorts ?? [])
+  const partInfo =
+    application === undefined
+      ? undefined
+      : cohortPartInfoById.get(application.cohortPartId)
+  const partLabel = partInfo?.partName ?? "-"
 
   const branch: StatusBranch | undefined = application
     ? STATUS_BRANCH[application.status as ApplicationStatus]
@@ -104,7 +107,7 @@ export const ApplicationDetailDrawer = ({
                       />
                       <InfoRow
                         label="개인정보 동의"
-                        value={application.privacyAgreed ? "동의" : "미동의"}
+                        value={application.privacyAgreedAt ? "동의" : "미동의"}
                       />
                       <InfoRow
                         label="동의 일자"
@@ -154,7 +157,7 @@ export const ApplicationDetailDrawer = ({
           onOpenChange={(open) => !open && setConfirmState(null)}
           applicationId={application.id}
           applicantName={application.applicantName}
-          cohortId={application.cohortId}
+          cohortId={partInfo?.cohortId}
           cohortPartId={application.cohortPartId}
           partLabel={partLabel}
           nextStatus={confirmState.nextStatus}

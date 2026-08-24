@@ -11,7 +11,7 @@ type Props = {
   onOpenChange: (open: boolean) => void
   applicationId: number
   applicantName: string
-  cohortId: number
+  cohortId: number | undefined
   cohortPartId: number
   partLabel: string
   nextStatus: ApplicationStatus

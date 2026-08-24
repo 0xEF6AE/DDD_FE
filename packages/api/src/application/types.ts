@@ -131,9 +131,15 @@ export type ApplicationStatus =
   NonNullable<ApplicationGetAdminListParams>["status"];
 export type ApplicationStatusUpdate = UpdateApplicationStatusRequestDto["status"];
 
+/**
+ * 어드민 지원서 응답 (BE `AdminApplicationFormResponseDto`).
+ *
+ * 기수 식별자는 내려오지 않는다 — application_form 은 `cohortPartId` 만 들고 있고
+ * 응답 DTO 도 이를 그대로 노출한다. 기수를 표시해야 하는 화면은 기수 목록
+ * (`GET /admin/cohorts` 의 `parts[]`) 으로 `cohortPartId → cohort` 를 역추적한다.
+ */
 export interface ApplicationDto {
   id: number;
-  cohortId: number;
   cohortPartId: number;
   applicantName: string;
   applicantPhone?: string;
@@ -141,8 +147,13 @@ export interface ApplicationDto {
   applicantRegion?: string;
   answers: Record<string, unknown>;
   status: ApplicationStatus;
-  privacyAgreed?: boolean;
-  privacyAgreedAt?: string;
+  /**
+   * 개인정보 수집 동의 일시.
+   *
+   * 제출 시점에 반드시 기록되므로(BE `application_forms.privacyAgreedAt` non-null)
+   * 이 값의 존재 자체가 동의 여부다 — 별도의 `privacyAgreed` 플래그는 내려오지 않는다.
+   */
+  privacyAgreedAt: string;
   submittedAt?: string;
   createdAt: string;
   updatedAt: string;
