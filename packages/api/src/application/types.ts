@@ -154,7 +154,7 @@ export interface ApplicationDto {
    * 이 값의 존재 자체가 동의 여부다 — 별도의 `privacyAgreed` 플래그는 내려오지 않는다.
    */
   privacyAgreedAt: string;
-  submittedAt?: string;
+  /** 제출 일시. BE 는 별도 필드 없이 레코드 생성 시각이 곧 제출 시각이다. */
   createdAt: string;
   updatedAt: string;
 }

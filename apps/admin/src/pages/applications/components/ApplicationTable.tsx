@@ -59,9 +59,7 @@ export const ApplicationTable = ({
                   <Table.Cell>{app.applicantPhone ?? "-"}</Table.Cell>
                   <Table.Cell>{partInfo?.partName ?? "-"}</Table.Cell>
                   <Table.Cell>{partInfo?.cohortName ?? "-"}</Table.Cell>
-                  <Table.Cell>
-                    {formatDate(app.submittedAt ?? app.createdAt)}
-                  </Table.Cell>
+                  <Table.Cell>{formatDate(app.createdAt)}</Table.Cell>
                   <Table.Cell>
                     {formatDateTime(interviewScheduledByApplicationId.get(app.id))}
                   </Table.Cell>

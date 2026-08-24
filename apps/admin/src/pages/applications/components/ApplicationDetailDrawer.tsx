@@ -101,9 +101,7 @@ export const ApplicationDetailDrawer = ({
                       />
                       <InfoRow
                         label="제출일"
-                        value={formatDate(
-                          application.submittedAt ?? application.createdAt
-                        )}
+                        value={formatDate(application.createdAt)}
                       />
                       <InfoRow
                         label="개인정보 동의"
