@@ -56,6 +56,17 @@ export const StatusChangeModal = ({
         setIsSlotsRequiredOpen(true)
         return
       }
+      if (error instanceof ApiError && error.is("INVALID_STATUS_TRANSITION")) {
+        toast.danger("이미 상태가 변경된 지원자예요", {
+          description: "최신 상태를 다시 불러왔어요. 확인 후 다시 시도해 주세요.",
+        })
+        await queryClient.invalidateQueries({ queryKey: applicationKeys.adminLists() })
+        await queryClient.invalidateQueries({
+          queryKey: applicationKeys.adminDetail({ id: applicationId }),
+        })
+        onOpenChange(false)
+        return
+      }
       toast.danger("상태 변경에 실패했어요", {
         description: error instanceof Error ? error.message : undefined,
       })
@@ -78,9 +89,13 @@ export const StatusChangeModal = ({
               <p>
                 <strong>{applicantName}</strong> 지원자의 상태가{" "}
                 <strong>{nextStatus}</strong>(으)로 변경됩니다.
-                {!isPass && " 불합격 이메일이 자동 발송됩니다."}
-                {nextStatus === "서류합격" && " 면접 일정 선택 링크 이메일이 발송됩니다."}
-                {nextStatus === "최종합격" && " 합격 이메일(Discord 연결 버튼 포함)이 발송됩니다."}
+                {(nextStatus === "서류불합격" || nextStatus === "최종불합격") &&
+                  " 불합격 안내 이메일이 자동 발송됩니다."}
+                {nextStatus === "서류합격" && " 서류전형 합격 안내(면접 일정 선택 링크) 이메일이 발송됩니다."}
+                {nextStatus === "면접합격" && " 면접전형 합격 안내 이메일이 발송됩니다."}
+                {nextStatus === "최종합격" && " 최종 합격 안내 이메일(Discord 연결 버튼 포함)이 발송됩니다."}
+                {["활동중", "활동완료", "활동중단"].includes(nextStatus) &&
+                  " 지원자에게 이메일은 발송되지 않습니다."}
               </p>
             </AlertDialog.Body>
             <AlertDialog.Footer>
