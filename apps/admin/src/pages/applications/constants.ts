@@ -9,17 +9,40 @@ export type ApplicationStatus =
   | "활동완료"
   | "활동중단"
 
-export type StatusBranch = {
-  pass?: ApplicationStatus
-  fail?: ApplicationStatus
+export type StatusAction = {
+  status: ApplicationStatus
+  /** 드로어 푸터 버튼 + 확인 모달 CTA */
+  label: string
+  /** 확인 모달 헤딩·성공 토스트용 서술형 문구 — label 만으로는 문장이 어색한 전이가 있어 분리 */
+  actionPhrase: string
 }
 
-/** 상태별 합격/불합격 분기 — undefined 이면 종결 상태 */
+export type StatusBranch = {
+  pass?: StatusAction
+  fail?: StatusAction
+}
+
+/**
+ * 상태별 합격/불합격 분기 — undefined 이면 어드민이 드로어에서 전환할 수 없는 상태다.
+ * 최종합격 이후는 합불 판정이 아니라 활동 전환이므로 라벨을 따로 둔다.
+ * 활동중 이후(활동완료·활동중단)는 어드민 지원자 상세에서 다루지 않는다.
+ */
 export const STATUS_BRANCH: Partial<Record<ApplicationStatus, StatusBranch>> = {
-  서류심사대기: { pass: "서류합격", fail: "서류불합격" },
-  서류합격: { pass: "최종합격", fail: "최종불합격" },
-  최종합격: { pass: "활동중" },
-  활동중: { pass: "활동완료", fail: "활동중단" },
+  서류심사대기: {
+    pass: { status: "서류합격", label: "합격", actionPhrase: "합격 처리" },
+    fail: { status: "서류불합격", label: "불합격", actionPhrase: "불합격 처리" },
+  },
+  서류합격: {
+    pass: { status: "최종합격", label: "합격", actionPhrase: "합격 처리" },
+    fail: { status: "최종불합격", label: "불합격", actionPhrase: "불합격 처리" },
+  },
+  최종합격: {
+    pass: {
+      status: "활동중",
+      label: "활동중으로 전환",
+      actionPhrase: "활동중으로 전환",
+    },
+  },
 }
 
 /** 상태 필터 / 카드 표시 순서 */

@@ -4,14 +4,14 @@ import { useQuery } from "@tanstack/react-query"
 import { applicationQueries, cohortQueries } from "@ddd/api"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { Section } from "@/shared/ui/Section"
-import { STATUS_BRANCH, type ApplicationStatus, type StatusBranch } from "@/pages/applications/constants"
+import type { StatusAction } from "@/pages/applications/constants"
 import { buildCohortPartInfoById } from "@/pages/applications/lib/cohortPart"
+import { getAvailableStatusTransitions } from "@/pages/applications/lib/statusTransition"
 import { AnswerList } from "./AnswerList"
 import { StatusChangeModal } from "./StatusChangeModal"
 
 type ConfirmState = {
-  nextStatus: ApplicationStatus
-  label: string
+  action: StatusAction
   isPass: boolean
 }
 
@@ -49,15 +49,10 @@ export const ApplicationDetailDrawer = ({
       : cohortPartInfoById.get(application.cohortPartId)
   const partLabel = partInfo?.partName ?? "-"
 
-  const branch: StatusBranch | undefined = application
-    ? STATUS_BRANCH[application.status as ApplicationStatus]
-    : undefined
+  const statusTransitions = getAvailableStatusTransitions(application?.status)
 
-  const openConfirm = (
-    nextStatus: ApplicationStatus,
-    label: string,
-    isPass: boolean
-  ) => setConfirmState({ nextStatus, label, isPass })
+  const openConfirm = (action: StatusAction, isPass: boolean) =>
+    setConfirmState({ action, isPass })
 
   return (
     <>
@@ -126,24 +121,16 @@ export const ApplicationDetailDrawer = ({
               <Button slot="close" variant="tertiary" className="flex-1">
                 닫기
               </Button>
-              {branch?.fail && (
+              {statusTransitions.map(({ action, isPass }) => (
                 <Button
-                  variant="danger"
+                  key={action.status}
+                  variant={isPass ? "primary" : "danger"}
                   className="flex-1"
-                  onPress={() => openConfirm(branch.fail!, "불합격", false)}
+                  onPress={() => openConfirm(action, isPass)}
                 >
-                  불합격
+                  {action.label}
                 </Button>
-              )}
-              {branch?.pass && (
-                <Button
-                  variant="primary"
-                  className="flex-1"
-                  onPress={() => openConfirm(branch.pass!, "합격", true)}
-                >
-                  합격
-                </Button>
-              )}
+              ))}
             </Drawer.Footer>
           </Drawer.Dialog>
         </Drawer.Content>
@@ -158,8 +145,9 @@ export const ApplicationDetailDrawer = ({
           cohortId={partInfo?.cohortId}
           cohortPartId={application.cohortPartId}
           partLabel={partLabel}
-          nextStatus={confirmState.nextStatus}
-          label={confirmState.label}
+          nextStatus={confirmState.action.status}
+          label={confirmState.action.label}
+          actionPhrase={confirmState.action.actionPhrase}
           isPass={confirmState.isPass}
         />
       )}

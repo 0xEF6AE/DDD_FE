@@ -16,6 +16,7 @@ type Props = {
   partLabel: string
   nextStatus: ApplicationStatus
   label: string
+  actionPhrase: string
   isPass: boolean
 }
 
@@ -29,6 +30,7 @@ export const StatusChangeModal = ({
   partLabel,
   nextStatus,
   label,
+  actionPhrase,
   isPass,
 }: Props) => {
   const queryClient = useQueryClient()
@@ -47,7 +49,7 @@ export const StatusChangeModal = ({
       await queryClient.invalidateQueries({
         queryKey: applicationKeys.adminDetail({ id: applicationId }),
       })
-      toast.success(`${applicantName} 지원자를 ${label} 처리했어요`)
+      toast.success(`${applicantName} 지원자를 ${actionPhrase}했어요`)
       onOpenChange(false)
     } catch (error) {
       if (error instanceof ApiError && error.is("INTERVIEW_SLOTS_NOT_READY")) {
@@ -69,7 +71,7 @@ export const StatusChangeModal = ({
             <AlertDialog.Header>
               <AlertDialog.Icon status={isPass ? "accent" : "danger"} />
               <AlertDialog.Heading>
-                {label} 처리하시겠습니까?
+                {actionPhrase}하시겠습니까?
               </AlertDialog.Heading>
             </AlertDialog.Header>
             <AlertDialog.Body>
