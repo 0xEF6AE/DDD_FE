@@ -3,6 +3,7 @@ export type ApplicationStatus =
   | "서류심사대기"
   | "서류합격"
   | "서류불합격"
+  | "면접합격"
   | "최종합격"
   | "최종불합격"
   | "활동중"
@@ -29,12 +30,16 @@ export type StatusBranch = {
  */
 export const STATUS_BRANCH: Partial<Record<ApplicationStatus, StatusBranch>> = {
   서류심사대기: {
-    pass: { status: "서류합격", label: "합격", actionPhrase: "합격 처리" },
-    fail: { status: "서류불합격", label: "불합격", actionPhrase: "불합격 처리" },
+    pass: { status: "서류합격", label: "서류 합격", actionPhrase: "서류 합격 처리" },
+    fail: { status: "서류불합격", label: "불합격", actionPhrase: "서류 불합격 처리" },
   },
   서류합격: {
-    pass: { status: "최종합격", label: "합격", actionPhrase: "합격 처리" },
-    fail: { status: "최종불합격", label: "불합격", actionPhrase: "불합격 처리" },
+    pass: { status: "면접합격", label: "면접 합격", actionPhrase: "면접 합격 처리" },
+    fail: { status: "최종불합격", label: "불합격", actionPhrase: "최종 불합격 처리" },
+  },
+  면접합격: {
+    pass: { status: "최종합격", label: "최종 합격", actionPhrase: "최종 합격 처리" },
+    fail: { status: "최종불합격", label: "불합격", actionPhrase: "최종 불합격 처리" },
   },
   최종합격: {
     pass: {
@@ -62,6 +67,7 @@ export const ALL_STATUSES: readonly ApplicationStatus[] = [
   "서류심사대기",
   "서류합격",
   "서류불합격",
+  "면접합격",
   "최종합격",
   "최종불합격",
   "활동중",
