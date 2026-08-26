@@ -6,19 +6,29 @@ import type {
 
 import type { InterviewSlotForm } from "../types"
 
-/** "2026-03-15" + "14:00:00" → "2026-03-15T14:00:00" */
+const pad = (n: number): string => `${n}`.padStart(2, "0")
+
+/**
+ * "2026-03-15" + "14:00" (브라우저 로컬 시각, KST) → UTC ISO 문자열.
+ * `new Date("...T...")` 는 offset 없는 date-time 문자열을 로컬 시각으로 해석하므로,
+ * `toISOString()` 으로 BE 계약(예: "2026-05-01T14:00:00+09:00")이 요구하는
+ * timezone-aware 값으로 변환한다.
+ */
 const combineToIsoLocal = (date: string, time: string): string => {
   const t = time.length === 5 ? `${time}:00` : time
-  return `${date}T${t}`
+  return new Date(`${date}T${t}`).toISOString()
 }
 
-/** ISO 문자열에서 날짜 부분 추출 ("2026-03-15") */
-const isoDate = (iso: string): string => iso.slice(0, 10)
+/** UTC ISO 문자열 → 로컬(KST) 기준 "YYYY-MM-DD" */
+const isoDate = (iso: string): string => {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
-/** ISO 문자열에서 시각 부분 추출 ("14:00:00") */
+/** UTC ISO 문자열 → 로컬(KST) 기준 "HH:mm:ss" */
 const isoTime = (iso: string): string => {
-  const t = iso.slice(11, 19)
-  return t.length === 5 ? `${t}:00` : t || "00:00:00"
+  const d = new Date(iso)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 const trimmedOrUndefined = (s: string): string | undefined => {
