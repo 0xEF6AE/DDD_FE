@@ -143,6 +143,8 @@ export interface ApplicationDto {
   cohortPartId: number;
   applicantName: string;
   applicantPhone?: string;
+  /** 개인정보 열람 권한이 없는 역할·파기 완료 지원서는 null 로 내려온다. */
+  applicantEmail?: string | null;
   applicantBirthDate?: string;
   applicantRegion?: string;
   answers: Record<string, unknown>;

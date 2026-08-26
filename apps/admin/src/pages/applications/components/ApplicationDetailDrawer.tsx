@@ -87,6 +87,10 @@ export const ApplicationDetailDrawer = ({
                         }
                       />
                       <InfoRow
+                        label="이메일"
+                        value={application.applicantEmail ?? "-"}
+                      />
+                      <InfoRow
                         label="생년월일"
                         value={application.applicantBirthDate ?? "-"}
                       />
