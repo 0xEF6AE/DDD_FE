@@ -84,6 +84,7 @@
 | 서류대기 | `서류심사대기` | 양쪽 | ✅ | ✅ | FE: `pages/applications/constants.ts` `ApplicationStatus` |
 | 서류불합격 | `서류불합격` | 양쪽 | ✅ | ✅ | |
 | 서류합격 | `서류합격` | 양쪽 | ✅ | ✅ | |
+| 면접합격 | `면접합격` | 양쪽 | ✅ | ✅ | 2026-08 신규. 서류합격·면접합격의 탈락은 모두 `최종불합격` 으로 수렴 |
 | 최종불합격 | `최종불합격` | 양쪽 | ✅ | ✅ | |
 | 최종합격 | `최종합격` | 양쪽 | ✅ | ✅ | |
 | 활동중 | `활동중` | 양쪽 | ✅ | ✅ | |
@@ -94,10 +95,13 @@
 
 ```
 서류심사대기 → 서류합격 | 서류불합격
-서류합격     → 최종합격 | 최종불합격
+서류합격     → 면접합격 | 최종불합격
+면접합격     → 최종합격 | 최종불합격
 최종합격     → 활동중
-활동중       → 활동완료 | 활동중단
+활동중       → 활동완료 | 활동중단   (활동중단 은 어드민 상세에서만 전환 가능)
 ```
+
+서버가 전이를 검증하며 위반 시 400 INVALID_STATUS_TRANSITION. FE 는 STATUS_BRANCH 로 동일 규칙을 미러링.
 
 FE: `pages/applications/constants.ts` `STATUS_BRANCH` 로 합격/불합격 분기 매핑.
 
@@ -117,6 +121,7 @@ FE: `pages/applications/constants.ts` `STATUS_BRANCH` 로 합격/불합격 분�
 | 상태 변경 합격/불합격 분기 UI | 프론트엔드 | – | ✅ | FE: `ApplicationDetailDrawer` Footer 버튼 + `StatusChangeModal` |
 | 서류불합격 → 불합격 이메일 자동 발송 | 백엔드 | ✅ | – | BE: `EmailEventHandler` `application.status_changed` 이벤트 |
 | 서류합격 → 면접 일정 선택 링크 이메일 발송 | 백엔드 | ✅ | – | BE: 상태 변경 이벤트로 이메일 발송 |
+| 면접합격 → 면접전형 합격 안내 이메일 발송 | 백엔드 | ✅ | – | BE: 상태 변경 이벤트로 발송 |
 | 최종불합격 → 불합격 이메일 자동 발송 | 백엔드 | ✅ | – | |
 | 최종합격 → 합격 이메일 발송 | 백엔드 | ✅ | – | |
 | **서류합격 시 슬롯 없으면 팝업 안내 → 슬롯 생성 페이지 이동** | 양쪽 | ⚠️ | ✅ | BE: `400 INTERVIEW_SLOTS_NOT_READY` 반환. FE: `StatusChangeModal` 이 분기 시 `InterviewSlotsRequiredModal` 노출 → "슬롯 등록하러 가기" 버튼이 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill) |
