@@ -18,12 +18,13 @@ export const CardSection = ({
     { title: "전체 지원", key: "total" },
     { title: "서류심사대기", key: "서류심사대기" },
     { title: "서류합격", key: "서류합격" },
+    { title: "면접합격", key: "면접합격" },
     { title: "최종합격", key: "최종합격" },
     { title: "활동중", key: "활동중" },
   ]
 
   return (
-    <GridBox className="grid-cols-5 gap-5">
+    <GridBox className="grid-cols-6 gap-5">
       {cards.map(({ title, key }) => (
         <StatCard
           key={title}
