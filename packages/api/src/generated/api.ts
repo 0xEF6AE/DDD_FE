@@ -1215,6 +1215,12 @@ export interface components {
              */
             recruitEndAt: string;
             /**
+             * Format: date-time
+             * @description 활동 종료일. 이 시각이 지나면 기수가 자동 종료되고 활동중 지원자가 활동완료로 전환된다.
+             * @example 2026-06-30T23:59:59Z
+             */
+            activityEndAt?: string;
+            /**
              * @description 기수 상태
              * @default UPCOMING
              * @enum {string}
@@ -1271,6 +1277,11 @@ export interface components {
              * @description 모집 종료일
              */
             recruitEndAt?: string;
+            /**
+             * Format: date-time
+             * @description 활동 종료일. 이 시각이 지나면 기수가 자동 종료되고 활동중 지원자가 활동완료로 전환된다. null 을 보내면 예약을 해제한다.
+             */
+            activityEndAt?: string | null;
             /**
              * @description 기수 상태
              * @enum {string}
@@ -1549,7 +1560,7 @@ export interface components {
              * @description 변경할 상태
              * @enum {string}
              */
-            status: "서류심사대기" | "서류합격" | "서류불합격" | "최종합격" | "최종불합격" | "활동중" | "활동완료" | "활동중단";
+            status: "서류심사대기" | "서류합격" | "서류불합격" | "면접합격" | "최종합격" | "최종불합격" | "활동중" | "활동완료" | "활동중단";
         };
         SaveApplicationDraftRequestDto: {
             /**
@@ -2920,7 +2931,7 @@ export interface operations {
                 /** @description 파트 ID */
                 cohortPartId?: number;
                 /** @description 지원 상태 */
-                status?: "서류심사대기" | "서류합격" | "서류불합격" | "최종합격" | "최종불합격" | "활동중" | "활동완료" | "활동중단";
+                status?: "서류심사대기" | "서류합격" | "서류불합격" | "면접합격" | "최종합격" | "최종불합격" | "활동중" | "활동완료" | "활동중단";
             };
             header?: never;
             path?: never;
