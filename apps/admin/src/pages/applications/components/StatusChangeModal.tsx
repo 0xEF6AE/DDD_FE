@@ -39,16 +39,20 @@ export const StatusChangeModal = ({
   )
   const [isSlotsRequiredOpen, setIsSlotsRequiredOpen] = useState(false)
 
+  const invalidateApplicationQueries = async () => {
+    await queryClient.invalidateQueries({ queryKey: applicationKeys.adminLists() })
+    await queryClient.invalidateQueries({
+      queryKey: applicationKeys.adminDetail({ id: applicationId }),
+    })
+  }
+
   const handleConfirm = async () => {
     try {
       await mutateAsync({
         params: { id: applicationId },
         payload: { status: nextStatus },
       })
-      await queryClient.invalidateQueries({ queryKey: applicationKeys.adminLists() })
-      await queryClient.invalidateQueries({
-        queryKey: applicationKeys.adminDetail({ id: applicationId }),
-      })
+      await invalidateApplicationQueries()
       toast.success(`${applicantName} 지원자를 ${actionPhrase}했어요`)
       onOpenChange(false)
     } catch (error) {
@@ -60,10 +64,7 @@ export const StatusChangeModal = ({
         toast.danger("이미 상태가 변경된 지원자예요", {
           description: "최신 상태를 다시 불러왔어요. 확인 후 다시 시도해 주세요.",
         })
-        await queryClient.invalidateQueries({ queryKey: applicationKeys.adminLists() })
-        await queryClient.invalidateQueries({
-          queryKey: applicationKeys.adminDetail({ id: applicationId }),
-        })
+        await invalidateApplicationQueries()
         onOpenChange(false)
         return
       }
@@ -93,7 +94,7 @@ export const StatusChangeModal = ({
                   " 불합격 안내 이메일이 자동 발송됩니다."}
                 {nextStatus === "서류합격" && " 서류전형 합격 안내(면접 일정 선택 링크) 이메일이 발송됩니다."}
                 {nextStatus === "면접합격" && " 면접전형 합격 안내 이메일이 발송됩니다."}
-                {nextStatus === "최종합격" && " 최종 합격 안내 이메일(Discord 연결 버튼 포함)이 발송됩니다."}
+                {nextStatus === "최종합격" && " 최종 합격 안내 이메일이 발송됩니다."}
                 {["활동중", "활동완료", "활동중단"].includes(nextStatus) &&
                   " 지원자에게 이메일은 발송되지 않습니다."}
               </p>
