@@ -134,10 +134,22 @@ export const STATUS_BRANCH: Partial<Record<ApplicationStatus, StatusBranch>> = {
       actionPhrase: "활동중으로 전환",
     },
   },
+  활동중: {
+    pass: {
+      status: "활동완료",
+      label: "활동 완료 처리",
+      actionPhrase: "활동 완료 처리",
+    },
+    fail: {
+      status: "활동중단",
+      label: "활동 중단 처리",
+      actionPhrase: "활동 중단 처리",
+    },
+  },
 }
 ```
 
-(`활동중 → 활동완료·활동중단` 은 스펙상 존재하지만 어드민 지원자 상세에서 다루지 않는 기존 결정을 유지한다 — 기수 종료 처리로 일괄 전환되는 흐름이기 때문. Task 6 문서에 이 결정을 명기한다.)
+(`활동중` 전이도 스펙 표대로 유지 — 활동중단은 기수 종료 일괄 전환 대상이 아니라 이 드로어가 유일한 경로다.)
 
 - [ ] **Step 3: `ALL_STATUSES` 에 면접합격 삽입 (서류불합격 다음)**
 
@@ -229,11 +241,13 @@ git commit -m "feat(admin/applications): 상태 카드에 면접합격 추가"
 교체:
 
 ```tsx
-{!isPass && " 불합격 안내 이메일이 자동 발송됩니다."}
+{(nextStatus === "서류불합격" || nextStatus === "최종불합격") &&
+  " 불합격 안내 이메일이 자동 발송됩니다."}
 {nextStatus === "서류합격" && " 서류전형 합격 안내(면접 일정 선택 링크) 이메일이 발송됩니다."}
 {nextStatus === "면접합격" && " 면접전형 합격 안내 이메일이 발송됩니다."}
 {nextStatus === "최종합격" && " 최종 합격 안내 이메일(Discord 연결 버튼 포함)이 발송됩니다."}
-{nextStatus === "활동중" && " 지원자에게 이메일은 발송되지 않습니다."}
+{["활동중", "활동완료", "활동중단"].includes(nextStatus) &&
+  " 지원자에게 이메일은 발송되지 않습니다."}
 ```
 
 - [ ] **Step 2: `handleConfirm` catch 에 `INVALID_STATUS_TRANSITION` 분기 추가**
@@ -262,7 +276,7 @@ Run: `pnpm --filter @ddd/admin typecheck && pnpm lint`
 1. 서류심사대기 → [서류 합격] → 모달에 "서류합격" + 면접 일정 링크 문구 → 확정 (슬롯 없으면 `InterviewSlotsRequiredModal` 노출 확인)
 2. 서류합격 → 버튼이 [불합격]·[면접 합격] 인지, [면접 합격] 모달에 **면접합격** 이 표기되는지 — **이번 이슈의 재현 케이스, 최종합격 문구가 나오면 실패**
 3. 면접합격 → [최종 합격] → 최종합격 전환 + Discord 문구
-4. 최종합격 → [활동중으로 전환] → 이메일 미발송 문구
+4. 최종합격 → [활동중으로 전환] → 이메일 미발송 문구, 활동중 → [활동 완료 처리]·[활동 중단 처리] 버튼 노출 확인
 
 - [ ] **Step 4: 커밋**
 
@@ -293,7 +307,7 @@ git commit -m "fix(admin/applications): 상태 변경 모달 메일 안내 스�
 서류합격     → 면접합격 | 최종불합격
 면접합격     → 최종합격 | 최종불합격
 최종합격     → 활동중
-활동중       → 활동완료 | 활동중단   (어드민 상세 UI 미노출 — 기수 종료 처리로 일괄 전환)
+활동중       → 활동완료 | 활동중단   (활동중단 은 어드민 상세에서만 전환 가능)
 ```
 
 블록 아래에 한 줄 추가: `서버가 전이를 검증하며 위반 시 400 INVALID_STATUS_TRANSITION. FE 는 STATUS_BRANCH 로 동일 규칙을 미러링.`
