@@ -38,23 +38,44 @@ const glassRim: CSSObject = {
   pointerEvents: "none",
 };
 
-/** 표면 상단에 고이는 광택(gloss) */
-const glassGloss: CSSObject = {
+/**
+ * 표면 상단에 고이는 광택(gloss).
+ *
+ * 부모와 같은 실루엣(`inset: 1px` + `borderRadius: inherit`)으로 깔고, 높이는 그라디언트
+ * 정지점으로만 준다. 예전처럼 `height: 48%` 박스를 쓰면 그 박스의 `border-radius: 99px`
+ * 가 부모가 아니라 자기 높이 기준으로 다시 clamp 돼(≈11px) 부모 코너(≈24px)보다 훨씬
+ * 각지고, 그 차이만큼 좌우 상단 모서리 밖으로 광택이 삐져나온다. 네비바 양 끝에 회색
+ * 사각형이 붙어 보이던 원인이 이것이다.
+ */
+const createGlassGloss = (fadeStop: string): CSSObject => ({
   content: '""',
   position: "absolute",
-  top: "1px",
-  left: "1px",
-  right: "1px",
-  height: "48%",
+  inset: "1px",
   borderRadius: "inherit",
-  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0))",
+  background: `linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) ${fadeStop})`,
   pointerEvents: "none",
-};
+});
 
 /** 광택 레이어 위로 콘텐츠를 올리기 위한 레이어링 */
 const glassContent: CSSObject = {
   position: "relative",
   zIndex: 1,
+};
+
+/** 로고·네비바·메뉴버튼·드로어가 공유하는 유리 재질 */
+const glassSurface: CSSObject = {
+  position: "relative",
+  isolation: "isolate",
+  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.48))",
+  backdropFilter: GLASS_FILTER,
+  WebkitBackdropFilter: GLASS_FILTER,
+
+  "&::before": glassRim,
+  "&::after": createGlassGloss("48%"),
+
+  [NO_BACKDROP_SUPPORT]: {
+    background: "rgba(255, 255, 255, 0.92)",
+  },
 };
 
 const Header = styled.header({
@@ -87,13 +108,51 @@ const Inner = styled.div({
 });
 
 const LogoLink = styled(Link)({
+  ...glassSurface,
   display: "flex",
   flexShrink: 0,
+  alignItems: "center",
+  justifyContent: "center",
+  width: "55px",
+  height: "55px",
+  borderRadius: "99px",
+  boxShadow: [
+    "0 12px 28px rgba(2, 17, 31, 0.26)",
+    "inset 0 1px 1px rgba(255, 255, 255, 0.75)",
+    "inset 0 -6px 14px rgba(255, 255, 255, 0.25)",
+  ].join(", "),
+
+  "@media (max-width: 768px)": {
+    width: "48px",
+    height: "48px",
+  },
+});
+
+/**
+ * 로고를 유리 위에 얹기 위한 마스크 레이어.
+ *
+ * 원본 PNG 는 흰색 마크라 밝은 유리 표면에서는 보이지 않는다. 알파를 마스크로만 쓰고
+ * 색은 메뉴 아이콘과 같은 `textPrimary` 로 채워, 유리 위 요소들의 명도를 맞춘다.
+ */
+const LogoMark = styled.span({
+  ...glassContent,
+  width: "100%",
+  height: "100%",
+  background: colors.textPrimary,
+  WebkitMaskImage: `url("${assets.logo}")`,
+  maskImage: `url("${assets.logo}")`,
+  WebkitMaskRepeat: "no-repeat",
+  maskRepeat: "no-repeat",
+  WebkitMaskPosition: "center",
+  maskPosition: "center",
+  WebkitMaskSize: "contain",
+  maskSize: "contain",
 });
 
 const DesktopGroup = styled.div({
   display: "flex",
   alignItems: "center",
+  gap: "12px",
 
   "@media (max-width: 768px)": {
     display: "none",
@@ -101,29 +160,18 @@ const DesktopGroup = styled.div({
 });
 
 const NavPill = styled.nav({
-  position: "relative",
-  isolation: "isolate",
+  ...glassSurface,
   display: "flex",
   alignItems: "center",
   gap: "2px",
   padding: "4px",
   borderRadius: "99px",
-  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.48))",
-  backdropFilter: GLASS_FILTER,
-  WebkitBackdropFilter: GLASS_FILTER,
   boxShadow: [
     "0 18px 40px rgba(2, 17, 31, 0.28)",
     "0 2px 8px rgba(2, 17, 31, 0.12)",
     "inset 0 1px 1px rgba(255, 255, 255, 0.75)",
     "inset 0 -8px 18px rgba(255, 255, 255, 0.25)",
   ].join(", "),
-
-  "&::before": glassRim,
-  "&::after": glassGloss,
-
-  [NO_BACKDROP_SUPPORT]: {
-    background: "rgba(255, 255, 255, 0.92)",
-  },
 });
 
 const NavItem = styled(Link)({
@@ -224,8 +272,7 @@ const MobileBar = styled.div({
 });
 
 const MobileMenuButton = styled.button({
-  position: "relative",
-  isolation: "isolate",
+  ...glassSurface,
   borderRadius: "99px",
   border: "none",
   display: "flex",
@@ -234,9 +281,6 @@ const MobileMenuButton = styled.button({
   alignItems: "center",
   gap: "2px",
   cursor: "pointer",
-  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5))",
-  backdropFilter: GLASS_FILTER,
-  WebkitBackdropFilter: GLASS_FILTER,
   boxShadow: [
     "0 12px 28px rgba(2, 17, 31, 0.26)",
     "inset 0 1px 1px rgba(255, 255, 255, 0.75)",
@@ -244,17 +288,10 @@ const MobileMenuButton = styled.button({
   ].join(", "),
   transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
 
-  "&::before": glassRim,
-  "&::after": glassGloss,
-
   "& svg": glassContent,
 
   "&:active": {
     transform: "scale(0.94)",
-  },
-
-  [NO_BACKDROP_SUPPORT]: {
-    background: "rgba(255, 255, 255, 0.92)",
   },
 
   "@media (prefers-reduced-motion: reduce)": {
@@ -266,9 +303,9 @@ const MobileMenuButton = styled.button({
 });
 
 const MobileDrawer = styled.nav<{ open: boolean }>(({ open }) => ({
+  ...glassSurface,
   display: open ? "flex" : "none",
   position: "absolute",
-  isolation: "isolate",
   top: "84px",
   left: "16px",
   right: "16px",
@@ -276,7 +313,6 @@ const MobileDrawer = styled.nav<{ open: boolean }>(({ open }) => ({
   padding: "12px",
   flexDirection: "column",
   gap: "8px",
-  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5))",
   backdropFilter: GLASS_FILTER_STRONG,
   WebkitBackdropFilter: GLASS_FILTER_STRONG,
   boxShadow: [
@@ -286,8 +322,7 @@ const MobileDrawer = styled.nav<{ open: boolean }>(({ open }) => ({
   ].join(", "),
   pointerEvents: "auto",
 
-  "&::before": glassRim,
-  "&::after": { ...glassGloss, height: "38%" },
+  "&::after": createGlassGloss("38%"),
 
   [NO_BACKDROP_SUPPORT]: {
     background: "rgba(255, 255, 255, 0.94)",
@@ -355,7 +390,7 @@ export const Navigation = () => {
       <Inner>
         <DesktopGroup>
           <LogoLink href="/" aria-label="DDD 홈으로">
-            <img src={assets.logo} alt="DDD" width={55} height={55} />
+            <LogoMark />
           </LogoLink>
           <NavPill>
             {NAV_LINKS.map(({ label, href }) => (
@@ -367,7 +402,7 @@ export const Navigation = () => {
         </DesktopGroup>
         <MobileBar>
           <LogoLink href="/" aria-label="DDD 홈으로">
-            <img src={assets.logo} alt="DDD" width={48} height={48} />
+            <LogoMark />
           </LogoLink>
           <MobileMenuButton
             type="button"
