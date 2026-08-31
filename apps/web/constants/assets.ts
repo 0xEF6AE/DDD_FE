@@ -20,7 +20,6 @@ export const assets = {
   bannerBg: "/images/banner/banner-bg.jpg",
   heroTextBg: "https://www.figma.com/api/mcp/asset/b0a8d8db-c55b-4d71-9a03-7bba5fbcd1a6",
   recruitHeroTextBg: "https://www.figma.com/api/mcp/asset/e7dc7d16-f496-491c-9ad9-ac2771191474",
-  recruit3d: "https://www.figma.com/api/mcp/asset/e16d4787-f270-41f0-ad5d-0c40683b9c77",
   hero3d: "/images/hero/main-hero-3d.png",
   hero3d1024: "https://www.figma.com/api/mcp/asset/baac66b4-230e-4fa2-8529-3fdf3ca3988e",
   hero3d768: "https://www.figma.com/api/mcp/asset/500cd51c-3def-4ced-bf9a-c3bafa84f13d",

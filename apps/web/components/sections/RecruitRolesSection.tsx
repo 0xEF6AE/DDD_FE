@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import styled from "@emotion/styled";
 import { colors, fontWeights } from "@/constants/tokens";
 import { recruitParts } from "@/constants/recruit";
@@ -77,6 +78,17 @@ const Card = styled.article({
     background: colors.primary,
   },
 
+  // 터치 기기에는 hover 가 없다. 탭한 카드에 is-open 을 붙여 hover 와 같은
+  // 상태로 만든다. pointer 커서는 iOS Safari 가 비대화형 요소의 click 을
+  // 무시하지 않게 하는 조건이라 함께 둔다.
+  "@media (hover: none)": {
+    cursor: "pointer",
+
+    "&.is-open": {
+      background: colors.primary,
+    },
+  },
+
   "@media (max-width: 767px)": {
     padding: "20px",
     borderRadius: "24px",
@@ -122,31 +134,40 @@ const RoleDescription = styled.p({
     marginTop: "12px",
   },
 
+  // 터치 기기에는 hover 가 없다. 탭한 카드만 hover 처럼 소개를 펼친다.
+  "@media (hover: none)": {
+    ".role-card.is-open &": {
+      maxHeight: "240px",
+      opacity: 1,
+      marginTop: "12px",
+    },
+  },
+
   "@media (max-width: 1024px)": { fontSize: "18px", lineHeight: "23px" },
   "@media (max-width: 768px)": { fontSize: "16px", lineHeight: "20px" },
   "@media (max-width: 767px)": { fontSize: "14px", lineHeight: "18px" },
-
-  // 터치 기기에는 hover 가 없어 소개를 열 방법이 없다. 폭이 아니라 hover 지원
-  // 여부로 갈라서(태블릿 포함) 항상 펼친 상태로 둔다.
-  "@media (hover: none)": {
-    maxHeight: "none",
-    opacity: 1,
-    marginTop: "12px",
-    transition: "none",
-  },
 });
 
 export const RecruitRolesSection = () => {
+  const [openPart, setOpenPart] = useState<string | null>(null);
+
   return (
     <Section>
       <Inner>
         <Title>6개의 직군을 모집 하고 있어요.</Title>
         <Grid>
           {recruitParts.map((part) => {
+            const isOpen = openPart === part.name;
+
             return (
-              // 카드에 CTA 가 없어 설명은 hover 로 열린다. 키보드 사용자도 열 수
-              // 있도록 카드 자체를 포커스 대상으로 둔다. (터치는 항상 펼침)
-              <Card key={part.name} className="role-card" tabIndex={0}>
+              // 카드에 CTA 가 없어 설명은 hover 로 열린다. 키보드 사용자는
+              // 포커스로, 터치 사용자는 탭으로 같은 상태에 도달한다.
+              <Card
+                key={part.name}
+                className={isOpen ? "role-card is-open" : "role-card"}
+                tabIndex={0}
+                onClick={() => setOpenPart(isOpen ? null : part.name)}
+              >
                 <RoleName>{part.name}</RoleName>
                 <RoleDescription>{part.description}</RoleDescription>
               </Card>

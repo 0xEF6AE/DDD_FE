@@ -9,4 +9,15 @@
 body {
   background-color: #0c0e0f;
   font-family: 'Pretendard', sans-serif;
+
+  /*
+   * 시안과 같은 조건으로 글자를 그린다.
+   *
+   * Figma 캔버스는 grayscale 안티에일리어싱을 쓰는데, 브라우저 기본값은 획을 더
+   * 두껍게 그린다. 그래서 같은 font-weight 라도 구현이 시안보다 굵어 보이고,
+   * 획이 많은 한글에서 차이가 특히 벌어진다. 개별 컴포넌트의 weight 는 시안과
+   * 맞는데도 "전체적으로 굵다" 는 피드백이 나온 원인이 이것이다.
+   */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
