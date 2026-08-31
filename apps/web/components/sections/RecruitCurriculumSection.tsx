@@ -1,7 +1,6 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { assets } from "@/constants/assets";
 import { colors, fontWeights } from "@/constants/tokens";
 import type { RecruitCurriculumItem } from "@/lib/mappers/recruit";
 
@@ -16,7 +15,6 @@ const Section = styled.section({
 });
 
 const Inner = styled.div({
-  position: "relative",
   width: "100%",
   maxWidth: "1280px",
   margin: "0 auto",
@@ -53,8 +51,6 @@ const Item = styled.article({
   // minmax(0, 1fr): 콘텐츠 최소 너비로 그리드가 뷰포트를 밀어내지 않도록 함
   gridTemplateColumns: "minmax(0, 1fr) 84px",
   gap: "32px",
-  position: "relative",
-  zIndex: 1,
   minWidth: 0,
   width: "100%",
   maxWidth: "100%",
@@ -121,19 +117,6 @@ const Description = styled.p({
   "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
-const Floating3D = styled.img({
-  position: "absolute",
-  left: "50%",
-  top: "38%",
-  width: "610px",
-  transform: "translateX(-50%) rotate(6deg)",
-  opacity: 0.4,
-  pointerEvents: "none",
-
-  "@media (max-width: 768px)": { width: "420px", top: "46%" },
-  "@media (max-width: 767px)": { width: "220px", top: "56%" },
-});
-
 export const RecruitCurriculumSection = ({
   cohortName,
   curriculum,
@@ -149,7 +132,6 @@ export const RecruitCurriculumSection = ({
     <Section>
       <Inner>
         <Title>{cohortName ? `${cohortName} 커리큘럼` : "커리큘럼"}</Title>
-        <Floating3D src={assets.recruit3d} alt="" />
         <Grid>
           {curriculum.map((item) => (
             <Item key={item.week}>
