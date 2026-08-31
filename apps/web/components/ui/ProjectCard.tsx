@@ -29,7 +29,10 @@ const Thumbnail = styled.div({
   flexShrink: 0,
   background: colors.categoryBg,
 
+  // img 가 inline 이면 baseline 아래 여백만큼 박스가 이미지보다 커져서
+  // 썸네일 하단에 categoryBg 회색 띠가 드러난다. block 으로 그린다.
   "& img": {
+    display: "block",
     width: "100%",
     height: "100%",
     objectFit: "cover",
