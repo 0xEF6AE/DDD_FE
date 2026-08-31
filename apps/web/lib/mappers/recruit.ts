@@ -5,7 +5,10 @@ import { findCurriculumDescription } from "@/constants/recruit";
 export type RecruitScheduleItem = {
   step: string;
   label: string;
+  /** 시작일. 단일 날짜 일정이면 이 값만 채워진다. */
   date: string;
+  /** 기간 일정의 종료일. 모바일에서 이 값만 다음 줄로 내려 표기한다. */
+  dateEnd?: string;
 };
 
 /**
@@ -55,15 +58,19 @@ function formatSingleDate(value: unknown, options?: { withWeekday: boolean }): s
   return options?.withWeekday ? `${base} (${parts.weekday})` : base;
 }
 
-/** "2026.08.29 (토) - 09.05 (토)" — 종료일은 연도를 반복하지 않는다. */
-function formatDateRange(start: unknown, end: unknown): string | null {
+/**
+ * "2026.08.29 (토)" + "09.05 (토)" — 종료일은 연도를 반복하지 않는다.
+ * 화면에서 시작일/종료일을 각각 한 줄로 끊어야 하므로 합치지 않고 나눠서 돌려준다.
+ */
+function formatDateRange(start: unknown, end: unknown): { date: string; dateEnd: string } | null {
   const startParts = parseDateParts(start);
   const endParts = parseDateParts(end);
   if (!startParts || !endParts) return null;
 
-  const startText = `${startParts.year}.${startParts.month}.${startParts.day} (${startParts.weekday})`;
-  const endText = `${endParts.month}.${endParts.day} (${endParts.weekday})`;
-  return `${startText} - ${endText}`;
+  return {
+    date: `${startParts.year}.${startParts.month}.${startParts.day} (${startParts.weekday})`,
+    dateEnd: `${endParts.month}.${endParts.day} (${endParts.weekday})`,
+  };
 }
 
 /**
@@ -76,18 +83,24 @@ export function buildRecruitSchedules(cohort: PublicCohortDto | null | undefined
   if (!cohort) return [];
 
   const process = isRecord(cohort.process) ? cohort.process : {};
-  const stages: Array<{ label: string; date: string | null }> = [
-    { label: "서류 접수", date: formatDateRange(cohort.recruitStartAt, cohort.recruitEndAt) },
+  const documentRange = formatDateRange(cohort.recruitStartAt, cohort.recruitEndAt);
+  const interviewRange = formatDateRange(process.interviewStartDate, process.interviewEndDate);
+
+  const stages: Array<{ label: string; date: string | null; dateEnd?: string }> = [
+    { label: "서류 접수", date: documentRange?.date ?? null, dateEnd: documentRange?.dateEnd },
     { label: "서류 발표", date: formatSingleDate(process.documentResultDate) },
     {
       label: "온라인 인터뷰",
-      date: formatDateRange(process.interviewStartDate, process.interviewEndDate),
+      date: interviewRange?.date ?? null,
+      dateEnd: interviewRange?.dateEnd,
     },
     { label: "최종 발표", date: formatSingleDate(process.finalResultDate, { withWeekday: true }) },
   ];
 
   return stages
-    .flatMap((stage) => (stage.date === null ? [] : [{ label: stage.label, date: stage.date }]))
+    .flatMap((stage) =>
+      stage.date === null ? [] : [{ label: stage.label, date: stage.date, dateEnd: stage.dateEnd }],
+    )
     .map((stage, index) => ({ step: String(index + 1).padStart(2, "0"), ...stage }));
 }
 

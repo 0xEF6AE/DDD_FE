@@ -84,16 +84,31 @@ const Label = styled.p({
   "@media (max-width: 767px)": { fontSize: "16px", lineHeight: "20px" },
 });
 
+// 시작일/종료일을 각각 nowrap 조각으로 두고 flex 로 배치한다 — 폭이 모자랄 때
+// "(일)" 같은 꼬리만 떨어져 나가지 않고 항상 날짜 단위로만 줄이 나뉜다.
 const DateText = styled.p({
   margin: 0,
   marginTop: "10px",
   color: colors.textInverse,
-  fontSize: "40px ",
+  fontSize: "40px",
   lineHeight: "50px",
   fontWeight: fontWeights.bold,
+  display: "flex",
+  flexWrap: "wrap",
+  columnGap: "0.25em",
   "@media (max-width: 1024px)": { fontSize: "34px", lineHeight: "45px" },
   "@media (max-width: 768px)": { fontSize: "30px", lineHeight: "38px" },
-  "@media (max-width: 767px)": { fontSize: "20px", lineHeight: "25px", marginTop: "10px" },
+  // 375 프레임: 기간 일정은 "시작일 / - 종료일" 두 줄로 끊어 읽는다.
+  "@media (max-width: 767px)": {
+    fontSize: "20px",
+    lineHeight: "25px",
+    marginTop: "10px",
+    flexDirection: "column",
+  },
+});
+
+const DatePart = styled.span({
+  whiteSpace: "nowrap",
 });
 
 export const RecruitScheduleSection = ({
@@ -117,7 +132,10 @@ export const RecruitScheduleSection = ({
               <Step>{item.step}</Step>
               <div>
                 <Label>{item.label}</Label>
-                <DateText>{item.date}</DateText>
+                <DateText>
+                  <DatePart>{item.date}</DatePart>
+                  {item.dateEnd ? <DatePart>- {item.dateEnd}</DatePart> : null}
+                </DateText>
               </div>
             </Item>
           ))}
